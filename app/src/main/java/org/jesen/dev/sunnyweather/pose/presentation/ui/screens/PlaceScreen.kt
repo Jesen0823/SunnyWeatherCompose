@@ -28,6 +28,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.receiveAsFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
@@ -39,7 +44,7 @@ import org.jesen.dev.sunnyweather.pose.domain.model.Place
 import org.jesen.dev.sunnyweather.pose.presentation.viewmodel.UiState
 import org.jesen.dev.sunnyweather.pose.presentation.viewmodel.WeatherViewModel
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, kotlinx.coroutines.FlowPreview::class)
 @Composable
 fun PlaceScreen(
     viewModel: WeatherViewModel,
@@ -48,9 +53,21 @@ fun PlaceScreen(
     var searchQuery by remember { mutableStateOf("") }
     val placesState = viewModel.placesState.collectAsState()
     
+    val searchChannel = remember { Channel<String>(Channel.CONFLATED) }
+    val searchFlow: Flow<String> = remember { 
+        @OptIn(kotlinx.coroutines.FlowPreview::class)
+        searchChannel.receiveAsFlow().debounce(500) 
+    }
+    
     LaunchedEffect(searchQuery) {
-        if (searchQuery.isNotEmpty()) {
-            viewModel.searchPlaces(searchQuery)
+        searchChannel.trySend(searchQuery)
+    }
+    
+    LaunchedEffect(Unit) {
+        searchFlow.collect { query ->
+            if (query.isNotEmpty()) {
+                viewModel.searchPlaces(query)
+            }
         }
     }
     

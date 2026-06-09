@@ -12,7 +12,7 @@ data class Location(
 data class Place(
     val name: String,
     val location: Location,
-    val address: String
+    @kotlinx.serialization.SerialName("formatted_address") val address: String
 )
 
 @Serializable

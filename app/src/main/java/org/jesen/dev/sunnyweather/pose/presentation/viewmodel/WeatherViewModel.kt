@@ -1,5 +1,6 @@
 package org.jesen.dev.sunnyweather.pose.presentation.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -52,7 +53,9 @@ class WeatherViewModel(private val useCases: WeatherUseCases) : ViewModel() {
     fun searchPlaces(query: String) {
         viewModelScope.launch {
             _placesState.value = UiState.Loading
-            when (val result = useCases.searchPlaces(query)) {
+            val result = useCases.searchPlaces(query)
+            Log.d("WeatherViewModel,result",result.toString())
+            when (result) {
                 is ApiResult.Success -> {
                     if (result.data.status == "ok") {
                         _placesState.value = UiState.Success(result.data.places)
@@ -71,7 +74,9 @@ class WeatherViewModel(private val useCases: WeatherUseCases) : ViewModel() {
     fun fetchWeather(lng: String, lat: String) {
         viewModelScope.launch {
             _weatherState.value = UiState.Loading
-            when (val result = useCases.fetchWeather(lng, lat)) {
+            val result = useCases.fetchWeather(lng, lat)
+            Log.d("WeatherViewModel,fetchWeather",result.toString())
+            when (result) {
                 is ApiResult.Success -> {
                     _weatherState.value = UiState.Success(result.data)
                 }

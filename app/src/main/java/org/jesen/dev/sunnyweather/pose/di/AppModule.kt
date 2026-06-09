@@ -10,27 +10,31 @@ import org.jesen.dev.sunnyweather.pose.presentation.viewmodel.WeatherViewModel
 
 object AppModule {
     lateinit var context: Context
-    
+
     fun init(context: Context) {
         AppModule.context = context
     }
-    
+
     val weatherApiService: WeatherApiService by lazy {
         WeatherApiService()
     }
-    
+
     val placeStore: PlaceStore by lazy {
         PlaceStore(context)
     }
-    
+
     val weatherRepository: WeatherRepository by lazy {
         WeatherRepository(weatherApiService, placeStore)
     }
-    
+
     val weatherUseCases: WeatherUseCases by lazy {
         WeatherUseCases(weatherRepository)
     }
-    
+
+    val weatherViewModelFactory: WeatherViewModelFactory by lazy {
+        WeatherViewModelFactory(weatherUseCases)
+    }
+
     val weatherViewModel: WeatherViewModel by lazy {
         WeatherViewModel(weatherUseCases)
     }

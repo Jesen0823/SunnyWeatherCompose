@@ -17,6 +17,7 @@ data class AirQuality(
 data class Realtime(
     val skycon: String,
     val temperature: Float,
+    @kotlinx.serialization.SerialName("air_quality") 
     val airQuality: AirQuality
 )
 
@@ -40,7 +41,7 @@ data class Temperature(
 @Serializable
 data class Skycon(
     val value: String,
-    val date: Long
+    val date: String
 )
 
 @Serializable
@@ -60,7 +61,7 @@ data class LifeIndex(
 data class Daily(
     val temperature: List<Temperature>,
     val skycon: List<Skycon>,
-    val lifeIndex: LifeIndex
+    @kotlinx.serialization.SerialName("life_index") val lifeIndex: LifeIndex
 )
 
 @Serializable

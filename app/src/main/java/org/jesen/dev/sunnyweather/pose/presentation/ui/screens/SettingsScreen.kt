@@ -15,7 +15,8 @@ import androidx.compose.ui.unit.dp
 
 @Composable
 fun SettingsScreen(
-    onClearPlace: () -> Unit = {}
+    onClearPlace: () -> Unit = {},
+    onBack: () -> Unit = {}
 ) {
     androidx.compose.foundation.lazy.LazyColumn(modifier = Modifier.fillMaxSize()) {
         item {

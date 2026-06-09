@@ -1,73 +1,130 @@
 package org.jesen.dev.sunnyweather.pose.presentation.ui.screens
 
+import androidx.compose.animation.*
+import androidx.compose.animation.core.*
+import androidx.compose.ui.graphics.Color.Companion.Green
+import androidx.compose.ui.graphics.Color.Companion.Yellow
+import androidx.compose.ui.graphics.Color.Companion.Red
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import org.jesen.dev.sunnyweather.pose.R
 import org.jesen.dev.sunnyweather.pose.domain.model.Sky
 import org.jesen.dev.sunnyweather.pose.domain.model.Weather
 import org.jesen.dev.sunnyweather.pose.presentation.ui.components.PullToRefresh
+import org.jesen.dev.sunnyweather.pose.presentation.ui.widget.EmptyContentView
 import org.jesen.dev.sunnyweather.pose.presentation.viewmodel.UiState
 import org.jesen.dev.sunnyweather.pose.presentation.viewmodel.WeatherViewModel
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WeatherScreen(
     viewModel: WeatherViewModel,
     placeName: String,
     lng: String,
     lat: String,
-    onNavigateToPlace: () -> Unit
+    onNavigateToPlace: () -> Unit,
+    onNavigateToSettings: () -> Unit = {}
 ) {
     val weatherState = viewModel.weatherState.collectAsState()
     
+    // 独立的刷新状态，不与 UiState 耦合
+    var isRefreshing by remember { mutableStateOf(false) }
+    
+    // 初始化时加载数据
     LaunchedEffect(lng, lat) {
         viewModel.fetchWeather(lng, lat)
     }
     
-    PullToRefresh(
-        isRefreshing = weatherState.value is UiState.Loading,
-        onRefresh = { viewModel.fetchWeather(lng, lat) }
-    ) {
-        Box(modifier = Modifier.fillMaxSize()) {
+    // 监听刷新状态，执行刷新逻辑
+    LaunchedEffect(isRefreshing) {
+        if (isRefreshing) {
+            viewModel.fetchWeather(lng, lat)
+            isRefreshing = false
+        }
+    }
+    
+    Box(modifier = Modifier.fillMaxSize()) {
+        val sky = if (weatherState.value is UiState.Success) {
+            Sky.getSky((weatherState.value as UiState.Success<Weather>).data.realtime.skycon)
+        } else {
+            Sky.getSky("CLEAR_DAY")
+        }
+        
+        AnimatedBackground(sky = sky)
+        
+        Scaffold(
+            topBar = {
+                CenterAlignedTopAppBar(
+                    title = {
+                        Text(
+                            text = placeName,
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Medium,
+                            color = Color.White
+                        )
+                    },
+                    actions = {
+                        IconButton(onClick = onNavigateToPlace) {
+                            Icon(
+                                imageVector = Icons.Default.Search,
+                                contentDescription = "搜索城市",
+                                tint = Color.White
+                            )
+                        }
+                    },
+                    colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                        containerColor = Color.Transparent,
+                        scrolledContainerColor = Color.Transparent
+                    ),
+                    modifier = Modifier.padding(top = 16.dp)
+                )
+            }
+        ) { innerPadding ->
             when (val state = weatherState.value) {
                 is UiState.Loading -> WeatherLoadingState()
-                is UiState.Error -> WeatherErrorState(state.message)
-                is UiState.Success -> WeatherContent(
-                    weather = state.data,
-                    placeName = placeName,
-                    onNavigateToPlace = onNavigateToPlace
+                is UiState.Error -> EmptyContentView(
+                    message = state.message,
+                    onRetry = { isRefreshing = true },
+                    contentPadding = innerPadding
                 )
+                is UiState.Success -> {
+                    PullToRefresh(
+                        modifier = Modifier.fillMaxSize(),
+                        isRefreshing = isRefreshing,
+                        onRefresh = { isRefreshing = true }
+                    ) {
+                        WeatherContent(
+                            weather = state.data,
+                            placeName = placeName,
+                            onNavigateToPlace = onNavigateToPlace,
+                            contentPadding = innerPadding
+                        )
+                    }
+                }
             }
         }
     }
@@ -80,32 +137,30 @@ private fun WeatherLoadingState() {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        CircularProgressIndicator()
-        Spacer(modifier = Modifier.height(16.dp))
+        val infiniteTransition = rememberInfiniteTransition(label = "loading-animation")
+        val scaleState = infiniteTransition.animateFloat(
+            initialValue = 0.8f,
+            targetValue = 1.2f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(1000, easing = FastOutSlowInEasing),
+                repeatMode = RepeatMode.Reverse
+            ),
+            label = "loading-scale"
+        )
+        val scale = scaleState.value
+        
+        CircularProgressIndicator(
+            modifier = Modifier
+                .size(64.dp)
+                .scale(scale),
+            strokeWidth = 4.dp,
+            color = Color.White
+        )
+        Spacer(modifier = Modifier.height(24.dp))
         Text(
             text = "加载中...",
-            style = MaterialTheme.typography.bodyLarge
-        )
-    }
-}
-
-@Composable
-private fun WeatherErrorState(message: String) {
-    Column(
-        modifier = Modifier.fillMaxSize(),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Text(
-            text = "加载失败",
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            text = message,
-            style = MaterialTheme.typography.bodyMedium,
-            color = Color.Gray
+            style = MaterialTheme.typography.bodyLarge,
+            color = Color.White.copy(alpha = 0.8f)
         )
     }
 }
@@ -114,42 +169,99 @@ private fun WeatherErrorState(message: String) {
 private fun WeatherContent(
     weather: Weather,
     placeName: String,
-    onNavigateToPlace: () -> Unit
+    onNavigateToPlace: () -> Unit,
+    contentPadding: PaddingValues
 ) {
     val sky = Sky.getSky(weather.realtime.skycon)
     
-    Box(
-        modifier = Modifier.fillMaxSize()
-    ) {
-        Image(
-            painter = painterResource(id = sky.bg),
-            contentDescription = null,
-            modifier = Modifier.fillMaxSize()
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(
+            top = contentPadding.calculateTopPadding() + 16.dp,
+            bottom = 24.dp
         )
-        
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(top = 16.dp, bottom = 16.dp)
-        ) {
-            item {
+    ) {
+        item {
+            AnimatedVisibility(
+                visible = true,
+                enter = slideInVertically(
+                    initialOffsetY = { -60 },
+                    animationSpec = TweenSpec(
+                        durationMillis = 600,
+                        easing = FastOutSlowInEasing
+                    )
+                ) + fadeIn(animationSpec = TweenSpec(500))
+            ) {
                 CurrentWeatherCard(
                     weather = weather,
                     placeName = placeName,
                     onNavigateToPlace = onNavigateToPlace
                 )
-                Spacer(modifier = Modifier.height(16.dp))
             }
-            
-            item {
+            Spacer(modifier = Modifier.height(20.dp))
+        }
+        
+        item {
+            AnimatedVisibility(
+                visible = true,
+                enter = slideInVertically(
+                    initialOffsetY = { 60 },
+                    animationSpec = tween(
+                        durationMillis = 600,
+                        easing = FastOutSlowInEasing,
+                        delayMillis = 150
+                    )
+                ) + fadeIn(animationSpec = tween(500, delayMillis = 150))
+            ) {
                 ForecastSection(weather = weather)
-                Spacer(modifier = Modifier.height(16.dp))
             }
-            
-            item {
+            Spacer(modifier = Modifier.height(20.dp))
+        }
+        
+        item {
+            AnimatedVisibility(
+                visible = true,
+                enter = slideInVertically(
+                    initialOffsetY = { 60 },
+                    animationSpec = tween(
+                        durationMillis = 600,
+                        easing = FastOutSlowInEasing,
+                        delayMillis = 300
+                    )
+                ) + fadeIn(animationSpec = tween(500, delayMillis = 300))
+            ) {
                 LifeIndexSection(weather = weather)
             }
         }
     }
+}
+
+@Composable
+private fun AnimatedBackground(sky: Sky) {
+    val infiniteTransition = rememberInfiniteTransition(label = "background-animation")
+    val alphaState = infiniteTransition.animateFloat(
+        initialValue = 0.9f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(4000, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "background-alpha"
+    )
+    val alpha = alphaState.value
+    
+    Image(
+        painter = painterResource(id = sky.bg),
+        contentDescription = null,
+        contentScale = ContentScale.Crop,
+        modifier = Modifier
+            .fillMaxSize()
+            .graphicsLayer {
+                this.alpha = alpha
+                scaleX = 1.02f
+                scaleY = 1.02f
+            }
+    )
 }
 
 @Composable
@@ -161,60 +273,101 @@ fun CurrentWeatherCard(
     val sky = Sky.getSky(weather.realtime.skycon)
     val realtime = weather.realtime
     
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed = interactionSource.collectIsPressedAsState().value
+    val scale = animateFloatAsState(
+        targetValue = if (isPressed) 0.98f else 1f,
+        animationSpec = TweenSpec(150),
+        label = "card-scale"
+    )
+    val elevation = animateDpAsState(
+        targetValue = if (isPressed) 4.dp else 12.dp,
+        animationSpec = TweenSpec(150),
+        label = "card-elevation"
+    )
+    
     Surface(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp)
-            .clip(RoundedCornerShape(16.dp)),
-        color = Color.White.copy(alpha = 0.8f)
+            .clip(RoundedCornerShape(20.dp))
+            .scale(scale.value),
+        color = Color.White.copy(alpha = 0.9f),
+        shadowElevation = elevation.value
     ) {
         Column(
-            modifier = Modifier.padding(16.dp),
+            modifier = Modifier.padding(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Surface(
                 onClick = onNavigateToPlace,
-                color = Color.Transparent
+                color = Color.Transparent,
+                interactionSource = interactionSource
             ) {
                 Text(
                     text = placeName,
                     style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    color = Color.Black.copy(alpha = 0.8f)
                 )
             }
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(12.dp))
             
             Row(
                 verticalAlignment = Alignment.CenterVertically
             ) {
+                val tempScale = remember { Animatable(0f) }
+                LaunchedEffect(Unit) {
+                    tempScale.animateTo(1f, tween(800, easing = FastOutSlowInEasing))
+                }
+                
                 Text(
                     text = "${realtime.temperature.toInt()}",
-                    fontSize = 64.sp,
-                    fontWeight = FontWeight.Bold
+                    fontSize = 72.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.Black.copy(alpha = 0.9f),
+                    modifier = Modifier.graphicsLayer { scaleX = tempScale.value }
                 )
                 Text(
                     text = "°C",
-                    fontSize = 24.sp
+                    fontSize = 28.sp,
+                    color = Color.Black.copy(alpha = 0.6f)
                 )
-                Spacer(modifier = Modifier.width(16.dp))
+                Spacer(modifier = Modifier.width(20.dp))
+                
+                val iconScale = remember { Animatable(0.5f) }
+                LaunchedEffect(Unit) {
+                    iconScale.animateTo(1f, tween(600, easing = FastOutSlowInEasing))
+                }
                 Image(
                     painter = painterResource(id = sky.icon),
                     contentDescription = sky.info,
-                    modifier = Modifier.size(64.dp)
+                    modifier = Modifier
+                        .size(72.dp)
+                        .graphicsLayer { scaleX = iconScale.value; scaleY = iconScale.value }
                 )
             }
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(12.dp))
             
             Text(
                 text = sky.info,
                 style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Medium
+                fontWeight = FontWeight.Medium,
+                color = Color.Black.copy(alpha = 0.8f)
             )
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(6.dp))
             
+            val aqiColor = when (realtime.airQuality.aqi.chn.toInt()) {
+                in 0..50 -> Green
+                in 51..100 -> Yellow
+                in 101..150 -> Color(0xFFFFA500)
+                in 151..200 -> Red
+                else -> Color(0xFF800080)
+            }
             Text(
                 text = "空气指数 ${realtime.airQuality.aqi.chn.toInt()}",
-                style = MaterialTheme.typography.bodyMedium
+                style = MaterialTheme.typography.bodyMedium,
+                color = aqiColor
             )
         }
     }
@@ -226,24 +379,26 @@ fun ForecastSection(weather: Weather) {
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp)
-            .clip(RoundedCornerShape(16.dp)),
-        color = Color.White.copy(alpha = 0.8f)
+            .clip(RoundedCornerShape(20.dp)),
+        color = Color.White.copy(alpha = 0.9f),
+        shadowElevation = 8.dp
     ) {
         Column(
-            modifier = Modifier.padding(16.dp)
+            modifier = Modifier.padding(20.dp)
         ) {
             Text(
                 text = "未来天气预报",
                 style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
+                color = Color.Black.copy(alpha = 0.8f)
             )
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(16.dp))
             
-            LazyColumn {
-                items(weather.daily.skycon) { skycon ->
-                    val index = weather.daily.skycon.indexOf(skycon)
+            Column {
+                weather.daily.skycon.forEachIndexed { index, skycon ->
                     val temperature = weather.daily.temperature[index]
-                    ForecastItem(
+                    AnimatedForecastItem(
+                        index = index,
                         skycon = skycon.value,
                         date = skycon.date,
                         tempMin = temperature.min.toInt(),
@@ -256,41 +411,72 @@ fun ForecastSection(weather: Weather) {
 }
 
 @Composable
-fun ForecastItem(skycon: String, date: Long, tempMin: Int, tempMax: Int) {
+fun AnimatedForecastItem(index: Int, skycon: String, date: String, tempMin: Int, tempMax: Int) {
     val sky = Sky.getSky(skycon)
-    val sdf = SimpleDateFormat("MM-dd", Locale.getDefault())
+    val parsedDate = try {
+        val isoFormat = java.time.format.DateTimeFormatter.ISO_OFFSET_DATE_TIME
+        val dateTime = java.time.LocalDateTime.parse(date, isoFormat)
+        dateTime.format(java.time.format.DateTimeFormatter.ofPattern("MM-dd"))
+    } catch (e: Exception) {
+        date
+    }
     
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed = interactionSource.collectIsPressedAsState().value
+    val scale = animateFloatAsState(
+        targetValue = if (isPressed) 0.98f else 1f,
+        animationSpec = TweenSpec(100),
+        label = "forecast-item-scale"
+    )
+    val alpha = remember { Animatable(0f) }
+    
+    LaunchedEffect(Unit) {
+        alpha.animateTo(1f, tween(300, delayMillis = index * 100))
+    }
+    
+    Surface(
+        onClick = {},
+        interactionSource = interactionSource,
+        color = Color.Transparent,
+        modifier = Modifier.scale(scale.value)
     ) {
-        Text(
-            text = sdf.format(Date(date)),
-            style = MaterialTheme.typography.bodyMedium
-        )
-        
         Row(
-            verticalAlignment = Alignment.CenterVertically
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 10.dp)
+                .graphicsLayer { this.alpha = alpha.value },
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Image(
-                painter = painterResource(id = sky.icon),
-                contentDescription = sky.info,
-                modifier = Modifier.size(24.dp)
-            )
-            Spacer(modifier = Modifier.width(8.dp))
             Text(
-                text = sky.info,
-                style = MaterialTheme.typography.bodyMedium
+                text = parsedDate,
+                style = MaterialTheme.typography.bodyMedium,
+                color = Color.Black.copy(alpha = 0.7f)
+            )
+            
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Image(
+                    painter = painterResource(id = sky.icon),
+                    contentDescription = sky.info,
+                    modifier = Modifier.size(28.dp)
+                )
+                Spacer(modifier = Modifier.width(10.dp))
+                Text(
+                    text = sky.info,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color.Black.copy(alpha = 0.7f)
+                )
+            }
+            
+            Text(
+                text = "$tempMin° ~ $tempMax°",
+                style = MaterialTheme.typography.bodyMedium,
+                color = Color.Black.copy(alpha = 0.8f),
+                fontWeight = FontWeight.Medium
             )
         }
-        
-        Text(
-            text = "$tempMin° ~ $tempMax°",
-            style = MaterialTheme.typography.bodyMedium
-        )
     }
 }
 
@@ -300,46 +486,61 @@ fun LifeIndexSection(weather: Weather) {
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp)
-            .clip(RoundedCornerShape(16.dp)),
-        color = Color.White.copy(alpha = 0.8f)
+            .clip(RoundedCornerShape(20.dp)),
+        color = Color.White.copy(alpha = 0.9f),
+        shadowElevation = 8.dp
     ) {
         Column(
-            modifier = Modifier.padding(16.dp)
+            modifier = Modifier.padding(20.dp)
         ) {
             Text(
                 text = "生活指数",
                 style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
+                color = Color.Black.copy(alpha = 0.8f)
             )
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(16.dp))
             
             val lifeIndex = weather.daily.lifeIndex
             
-            LifeIndexItem("穿衣指数", lifeIndex.dressing[0].desc)
-            LifeIndexItem("感冒风险", lifeIndex.coldRisk[0].desc)
-            LifeIndexItem("紫外线", lifeIndex.ultraviolet[0].desc)
-            LifeIndexItem("洗车指数", lifeIndex.carWashing[0].desc)
+            AnimatedLifeIndexItem(0, "穿衣指数", lifeIndex.dressing[0].desc)
+            AnimatedLifeIndexItem(1, "感冒风险", lifeIndex.coldRisk[0].desc)
+            AnimatedLifeIndexItem(2, "紫外线", lifeIndex.ultraviolet[0].desc)
+            AnimatedLifeIndexItem(3, "洗车指数", lifeIndex.carWashing[0].desc)
         }
     }
 }
 
 @Composable
-fun LifeIndexItem(title: String, desc: String) {
+fun AnimatedLifeIndexItem(index: Int, title: String, desc: String) {
+    val alpha = remember { Animatable(0f) }
+    val offsetX = remember { Animatable(20f) }
+    
+    LaunchedEffect(Unit) {
+        alpha.animateTo(1f, tween(300, delayMillis = index * 100))
+        offsetX.animateTo(0f, tween(300, delayMillis = index * 100, easing = FastOutSlowInEasing))
+    }
+    
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 6.dp),
+            .padding(vertical = 8.dp)
+            .graphicsLayer {
+                this.alpha = alpha.value
+                translationX = offsetX.value
+            },
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         Text(
             text = title,
             style = MaterialTheme.typography.bodyMedium,
-            fontWeight = FontWeight.Medium
+            fontWeight = FontWeight.Medium,
+            color = Color.Black.copy(alpha = 0.7f)
         )
         Text(
             text = desc,
-            style = MaterialTheme.typography.bodyMedium
+            style = MaterialTheme.typography.bodyMedium,
+            color = Color.Black.copy(alpha = 0.8f)
         )
     }
 }
-

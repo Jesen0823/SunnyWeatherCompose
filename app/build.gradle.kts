@@ -1,13 +1,13 @@
 plugins {
     alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
+    // alias(libs.plugins.kotlin.android) // 需要移除 org.jetbrains.kotlin.android 插件，因为 AGP 9.0+ 已经内置了 Kotlin 支持
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.jetbrains.kotlin.serialization)
 }
 
 android {
     namespace = "org.jesen.dev.sunnyweather.pose"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "org.jesen.dev.sunnyweather.pose"
