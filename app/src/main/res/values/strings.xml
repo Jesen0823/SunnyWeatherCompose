@@ -1,6 +1,6 @@
 <resources>
-    <string name="app_name">SunnyWeatherCompose</string>
-     <string name="search_edit">输入地址</string>
+    <string name="app_name">阳光天气</string>
+    <string name="search_edit">输入地址</string>
     <string name="no_place_search">未查询到任何地点</string>
     <string name="broadcast_fore">预报</string>
     <string name="life_adv">生活指数</string>
@@ -9,4 +9,25 @@
     <string name="ultraviolet">实时紫外线</string>
     <string name="wash_car">洗车</string>
     <string name="get_weather_faild">无法成功获取天气信息</string>
+    <string name="weather_loading">加载中...</string>
+    <string name="weather_error">获取天气失败</string>
+    <string name="search_hint">搜索城市</string>
+    <string name="search_default">搜索你想查询天气的城市</string>
+    <string name="search_loading">搜索中...</string>
+    <string name="search_error">搜索失败</string>
+    <string name="settings_clear_cache">清除缓存</string>
+    <string name="settings_about">关于我们</string>
+    <string name="settings_version">版本信息</string>
+    <string name="settings_theme">主题设置</string>
+    <string name="settings_language">语言设置</string>
+    <string name="retry">重试</string>
+    <string name="clear">清除</string>
+    <string name="back">返回</string>
+    <string name="ok">确定</string>
+    <string name="cancel">取消</string>
+    <string name="unknown_title">无法获取天气信息</string>
+    <string name="unknown_message">请开启定位权限或手动选择城市</string>
+    <string name="unknown_open_location">打开定位</string>
+    <string name="unknown_select_city">选择城市</string>
+    <string name="empty_loading_failed">加载失败</string>
 </resources>

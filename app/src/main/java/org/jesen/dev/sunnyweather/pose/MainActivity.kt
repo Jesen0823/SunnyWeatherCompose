@@ -20,7 +20,7 @@ class MainActivity : ComponentActivity() {
         AppModule.init(applicationContext)
         
         setContent {
-            SunnyWeatherComposeTheme {
+            SunnyWeatherComposeTheme(themeManager = AppModule.themeManager) {
                 SunnyWeatherApp()
                 // Navigation3Demo()
             }

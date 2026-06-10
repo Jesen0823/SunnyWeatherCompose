@@ -9,7 +9,48 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.ReadOnlyComposable
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+
+enum class AppTheme {
+    LIGHT,
+    DARK,
+    SYSTEM
+}
+
+class ThemeManager {
+    private val _currentTheme = MutableStateFlow(AppTheme.SYSTEM)
+    val currentTheme: StateFlow<AppTheme> = _currentTheme.asStateFlow()
+
+    fun setTheme(theme: AppTheme) {
+        _currentTheme.value = theme
+    }
+
+    @Composable
+    fun isDarkTheme(): Boolean {
+        return when (_currentTheme.collectAsState().value) {
+            AppTheme.LIGHT -> false
+            AppTheme.DARK -> true
+            AppTheme.SYSTEM -> isSystemInDarkTheme()
+        }
+    }
+}
+
+val LocalThemeManager = staticCompositionLocalOf<ThemeManager> {
+    error("ThemeManager not provided")
+}
+
+val LocalAppTheme = staticCompositionLocalOf<AppTheme> {
+    AppTheme.SYSTEM
+}
 
 private val DarkColorScheme = darkColorScheme(
     primary = Purple80,
@@ -21,38 +62,40 @@ private val LightColorScheme = lightColorScheme(
     primary = Purple40,
     secondary = PurpleGrey40,
     tertiary = Pink40
-
-    /* Other default colors to override
-    background = Color(0xFFFFFBFE),
-    surface = Color(0xFFFFFBFE),
-    onPrimary = Color.White,
-    onSecondary = Color.White,
-    onTertiary = Color.White,
-    onBackground = Color(0xFF1C1B1F),
-    onSurface = Color(0xFF1C1B1F),
-    */
 )
 
 @Composable
 fun SunnyWeatherComposeTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
-    // Dynamic color is available on Android 12+
+    themeManager: ThemeManager,
     dynamicColor: Boolean = true,
     content: @Composable () -> Unit
 ) {
+    val currentTheme by themeManager.currentTheme.collectAsStateWithLifecycle()
+    
+    val darkTheme = when (currentTheme) {
+        AppTheme.LIGHT -> false
+        AppTheme.DARK -> true
+        AppTheme.SYSTEM -> isSystemInDarkTheme()
+    }
+
     val colorScheme = when {
         dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
             val context = LocalContext.current
             if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
         }
-
         darkTheme -> DarkColorScheme
         else -> LightColorScheme
     }
 
-    MaterialTheme(
-        colorScheme = colorScheme,
-        typography = Typography,
-        content = content
-    )
+    CompositionLocalProvider(
+        LocalThemeManager provides themeManager,
+        LocalAppTheme provides currentTheme
+    ) {
+        MaterialTheme(
+            colorScheme = colorScheme,
+            typography = Typography,
+            content = content
+        )
+    }
 }
+

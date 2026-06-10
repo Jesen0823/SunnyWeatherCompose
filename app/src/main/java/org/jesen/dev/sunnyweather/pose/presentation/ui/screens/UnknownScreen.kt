@@ -13,6 +13,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import org.jesen.dev.sunnyweather.pose.R
@@ -36,7 +37,7 @@ fun UnknownScreen(
         Spacer(modifier = Modifier.size(24.dp))
         
         Text(
-            text = "无法获取天气信息",
+            text = stringResource(id = R.string.unknown_title),
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold
         )
@@ -44,7 +45,7 @@ fun UnknownScreen(
         Spacer(modifier = Modifier.size(8.dp))
         
         Text(
-            text = "请开启定位权限或手动选择城市",
+            text = stringResource(id = R.string.unknown_message),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
         )
@@ -55,7 +56,7 @@ fun UnknownScreen(
             onClick = onOpenLocationSettings,
             modifier = Modifier.size(width = 200.dp, height = 48.dp)
         ) {
-            Text(text = "打开定位")
+            Text(text = stringResource(id = R.string.unknown_open_location))
         }
         
         Spacer(modifier = Modifier.size(16.dp))
@@ -65,7 +66,7 @@ fun UnknownScreen(
             modifier = Modifier.size(width = 200.dp, height = 48.dp),
             enabled = true
         ) {
-            Text(text = "选择城市")
+            Text(text = stringResource(id = R.string.unknown_select_city))
         }
     }
 }

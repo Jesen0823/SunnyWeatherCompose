@@ -5,8 +5,9 @@ import org.jesen.dev.sunnyweather.pose.data.network.KtorClient
 import org.jesen.dev.sunnyweather.pose.data.network.WeatherApiService
 import org.jesen.dev.sunnyweather.pose.data.repository.WeatherRepository
 import org.jesen.dev.sunnyweather.pose.data.store.PlaceStore
-import org.jesen.dev.sunnyweather.pose.domain.usecase.WeatherUseCases
-import org.jesen.dev.sunnyweather.pose.presentation.viewmodel.WeatherViewModel
+import org.jesen.dev.sunnyweather.pose.domain.usecase.*
+import org.jesen.dev.sunnyweather.pose.ui.locale.LocaleManager
+import org.jesen.dev.sunnyweather.pose.ui.theme.ThemeManager
 
 object AppModule {
     lateinit var context: Context
@@ -27,15 +28,50 @@ object AppModule {
         WeatherRepository(weatherApiService, placeStore)
     }
 
-    val weatherUseCases: WeatherUseCases by lazy {
-        WeatherUseCases(weatherRepository)
+    // UseCase 注册
+    val searchPlacesUseCase: SearchPlacesUseCase by lazy {
+        SearchPlacesUseCase(weatherRepository)
     }
 
-    val weatherViewModelFactory: WeatherViewModelFactory by lazy {
-        WeatherViewModelFactory(weatherUseCases)
+    val fetchWeatherUseCase: FetchWeatherUseCase by lazy {
+        FetchWeatherUseCase(weatherRepository)
     }
 
-    val weatherViewModel: WeatherViewModel by lazy {
-        WeatherViewModel(weatherUseCases)
+    val savePlaceUseCase: SavePlaceUseCase by lazy {
+        SavePlaceUseCase(weatherRepository)
+    }
+
+    val getSavedPlaceUseCase: GetSavedPlaceUseCase by lazy {
+        GetSavedPlaceUseCase(weatherRepository)
+    }
+
+    val getIsPlaceSavedUseCase: GetIsPlaceSavedUseCase by lazy {
+        GetIsPlaceSavedUseCase(weatherRepository)
+    }
+
+    val clearPlaceUseCase: ClearPlaceUseCase by lazy {
+        ClearPlaceUseCase(weatherRepository)
+    }
+
+    // ViewModelFactory 注册
+    val appViewModelFactory: AppViewModelFactory by lazy {
+        AppViewModelFactory(
+            searchPlacesUseCase,
+            fetchWeatherUseCase,
+            savePlaceUseCase,
+            getSavedPlaceUseCase,
+            getIsPlaceSavedUseCase,
+            clearPlaceUseCase
+        )
+    }
+
+    // 主题管理器
+    val themeManager: ThemeManager by lazy {
+        ThemeManager()
+    }
+
+    // 语言管理器
+    val localeManager: LocaleManager by lazy {
+        LocaleManager(context)
     }
 }

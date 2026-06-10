@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
 plugins {
     alias(libs.plugins.android.application)
     // alias(libs.plugins.kotlin.android) // 需要移除 org.jetbrains.kotlin.android 插件，因为 AGP 9.0+ 已经内置了 Kotlin 支持
@@ -34,7 +36,7 @@ android {
     }
     kotlin {
         compilerOptions {
-            jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11)
+            jvmTarget.set(JvmTarget.JVM_11)
         }
     }
     buildFeatures {
@@ -43,6 +45,7 @@ android {
 }
 
 dependencies {
+    implementation(libs.androidx.compose.runtime)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -80,4 +83,8 @@ dependencies {
     implementation(libs.androidx.datastore.preferences)
     // Alternatively - without an Android dependency.
     implementation(libs.androidx.datastore.preferences.core)
+
+    // lifecycle of compose
+    implementation(libs.androidx.lifecycle.runtime.compose)
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
 }

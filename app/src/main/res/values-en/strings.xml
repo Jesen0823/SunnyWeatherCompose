@@ -1,0 +1,33 @@
+<resources>
+    <string name="app_name">Sunny Weather</string>
+    <string name="search_edit">Enter address</string>
+    <string name="no_place_search">No places found</string>
+    <string name="broadcast_fore">Forecast</string>
+    <string name="life_adv">Life Index</string>
+    <string name="influenza">Cold Risk</string>
+    <string name="clothers">Clothing</string>
+    <string name="ultraviolet">UV Index</string>
+    <string name="wash_car">Car Wash</string>
+    <string name="get_weather_faild">Failed to get weather information</string>
+    <string name="weather_loading">Loading...</string>
+    <string name="weather_error">Failed to fetch weather</string>
+    <string name="search_hint">Search city</string>
+    <string name="search_default">Search for the city you want to check weather</string>
+    <string name="search_loading">Searching...</string>
+    <string name="search_error">Search failed</string>
+    <string name="settings_clear_cache">Clear Cache</string>
+    <string name="settings_about">About Us</string>
+    <string name="settings_version">Version Info</string>
+    <string name="settings_theme">Theme Settings</string>
+    <string name="settings_language">Language Settings</string>
+    <string name="retry">Retry</string>
+    <string name="clear">Clear</string>
+    <string name="back">Back</string>
+    <string name="ok">OK</string>
+    <string name="cancel">Cancel</string>
+    <string name="unknown_title">Unable to get weather information</string>
+    <string name="unknown_message">Please enable location permission or select city manually</string>
+    <string name="unknown_open_location">Open Location</string>
+    <string name="unknown_select_city">Select City</string>
+    <string name="empty_loading_failed">Loading Failed</string>
+</resources>

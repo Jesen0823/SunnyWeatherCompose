@@ -1,18 +1,23 @@
 package org.jesen.dev.sunnyweather.pose.navigation
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
+import androidx.lifecycle.viewmodel.compose.viewModel
 import org.jesen.dev.sunnyweather.pose.domain.model.Place
+import org.jesen.dev.sunnyweather.pose.di.AppModule
+import org.jesen.dev.sunnyweather.pose.presentation.ui.screens.NavigationDrawerExamples
 import org.jesen.dev.sunnyweather.pose.presentation.ui.screens.PlaceScreen
 import org.jesen.dev.sunnyweather.pose.presentation.ui.screens.SettingsScreen
+import org.jesen.dev.sunnyweather.pose.presentation.ui.screens.SimpleCenterAlignedTopAppBar
+import org.jesen.dev.sunnyweather.pose.presentation.ui.screens.TestPageScreen
 import org.jesen.dev.sunnyweather.pose.presentation.ui.screens.UnknownScreen
 import org.jesen.dev.sunnyweather.pose.presentation.ui.screens.WeatherScreen
+import org.jesen.dev.sunnyweather.pose.presentation.viewmodel.PlaceViewModel
+import org.jesen.dev.sunnyweather.pose.presentation.viewmodel.SettingsViewModel
 import org.jesen.dev.sunnyweather.pose.presentation.viewmodel.WeatherViewModel
-import androidx.lifecycle.viewmodel.compose.viewModel
 
 @Composable
 fun AppNavigator(
@@ -20,10 +25,15 @@ fun AppNavigator(
     selectedPlace: Place?,
     onOpenLocationSettings: () -> Unit,
     onPlaceSelected: (Place) -> Unit,
-    onClearPlace: () -> Unit
+    onClearPlace: () -> Unit,
+    onLanguageChanged: () -> Unit = {}
 ) {
     val backStack = rememberNavBackStack(initialKey)
-    val viewModel: WeatherViewModel = viewModel()
+    
+    // 使用统一的 ViewModelFactory 创建 ViewModel
+    val weatherViewModel: WeatherViewModel = viewModel(factory = AppModule.appViewModelFactory)
+    val placeViewModel: PlaceViewModel = viewModel(factory = AppModule.appViewModelFactory)
+    val settingsViewModel: SettingsViewModel = viewModel(factory = AppModule.appViewModelFactory)
 
     NavDisplay(
         backStack = backStack,
@@ -33,12 +43,12 @@ fun AppNavigator(
                 is WeatherKey -> NavEntry(key) {
                     selectedPlace?.let { place ->
                         WeatherScreen(
-                            viewModel = viewModel,
+                            viewModel = weatherViewModel,
                             placeName = place.name,
                             lng = place.location.lng,
                             lat = place.location.lat,
                             onNavigateToPlace = { backStack.add(PlaceKey) },
-                            onNavigateToSettings = { backStack.add(SettingsKey) }
+                            onNavigateToSettings = { backStack.add(TestPageKey) }
                         )
                     } ?: UnknownScreen(
                         onOpenLocationSettings = onOpenLocationSettings,
@@ -48,11 +58,15 @@ fun AppNavigator(
 
                 is PlaceKey -> NavEntry(key) {
                     PlaceScreen(
-                        viewModel = viewModel,
+                        viewModel = placeViewModel,
                         onPlaceSelected = { place ->
                             onPlaceSelected(place)
                             backStack.clear()
                             backStack.add(WeatherKey)
+                        },
+                        onNavigateToTestPage = {
+                            backStack.add(TestPageKey)
+                            //backStack.add(DrawerExamplesKey)
                         }
                     )
                 }
@@ -66,13 +80,27 @@ fun AppNavigator(
 
                 is SettingsKey -> NavEntry(key) {
                     SettingsScreen(
-                        onClearPlace = {
+                        viewModel = settingsViewModel,
+                        onCacheCleared = {
                             onClearPlace()
                             backStack.clear()
                             backStack.add(UnknownKey)
                         },
+                        onBack = { backStack.removeLastOrNull() },
+                        onLanguageChanged = onLanguageChanged
+                    )
+                }
+
+                is TestPageKey -> NavEntry(key) {
+                    // SimpleCenterAlignedTopAppBar()
+                    TestPageScreen(
                         onBack = { backStack.removeLastOrNull() }
                     )
+                }
+
+                is DrawerExamplesKey -> NavEntry(key){
+                    //NavigationDrawerExamples()
+
                 }
 
                 else -> error("Unknown navigation key: $key")
