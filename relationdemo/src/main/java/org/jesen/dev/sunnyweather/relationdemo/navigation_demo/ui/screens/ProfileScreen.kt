@@ -1,4 +1,4 @@
-package org.jesen.dev.sunnyweather.pose.navigation_demo.ui.screens
+package org.jesen.dev.sunnyweather.relationdemo.navigation_demo.ui.screens
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
@@ -14,7 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
-import org.jesen.dev.sunnyweather.pose.R
+import org.jesen.dev.sunnyweather.relationdemo.R
 
 @Composable
 fun ProfileScreen() {

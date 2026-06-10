@@ -1,4 +1,4 @@
-package org.jesen.dev.sunnyweather.pose.navigation_demo.ui.screens
+package org.jesen.dev.sunnyweather.relationdemo.navigation_demo.ui.screens
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column

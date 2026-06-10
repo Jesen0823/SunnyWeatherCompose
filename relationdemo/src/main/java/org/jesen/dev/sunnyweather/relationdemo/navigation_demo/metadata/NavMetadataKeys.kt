@@ -1,4 +1,4 @@
-package org.jesen.dev.sunnyweather.pose.navigation_demo.metadata
+package org.jesen.dev.sunnyweather.relationdemo.navigation_demo.metadata
 
 /**
  * NavMetadata 键定义

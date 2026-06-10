@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Scaffold
 import androidx.compose.ui.Modifier
 import org.jesen.dev.sunnyweather.pose.di.AppModule
-import org.jesen.dev.sunnyweather.pose.navigation_demo.Navigation3Demo
 import org.jesen.dev.sunnyweather.pose.presentation.ui.SunnyWeatherApp
 import org.jesen.dev.sunnyweather.pose.ui.theme.SunnyWeatherComposeTheme
 
@@ -22,7 +21,6 @@ class MainActivity : ComponentActivity() {
         setContent {
             SunnyWeatherComposeTheme(themeManager = AppModule.themeManager) {
                 SunnyWeatherApp()
-                // Navigation3Demo()
             }
         }
     }

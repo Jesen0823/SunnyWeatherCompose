@@ -1,4 +1,4 @@
-package org.jesen.dev.sunnyweather.pose.navigation_demo.ui.screens
+package org.jesen.dev.sunnyweather.relationdemo.navigation_demo.ui.screens
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -33,9 +33,15 @@ fun SettingsScreen() {
             style = MaterialTheme.typography.headlineLarge,
             modifier = Modifier.padding(bottom = 32.dp)
         )
-        
-        SettingsRow("通知", notificationsEnabled.value) { notificationsEnabled.value = it }
-        SettingsRow("深色模式", darkModeEnabled.value) { darkModeEnabled.value = it }
+
+        SettingsRow(
+            "通知",
+            notificationsEnabled.value
+        ) { notificationsEnabled.value = it }
+        SettingsRow(
+            "深色模式",
+            darkModeEnabled.value
+        ) { darkModeEnabled.value = it }
     }
 }
 

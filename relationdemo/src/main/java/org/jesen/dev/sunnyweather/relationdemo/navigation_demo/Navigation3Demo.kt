@@ -1,4 +1,4 @@
-package org.jesen.dev.sunnyweather.pose.navigation_demo
+package org.jesen.dev.sunnyweather.relationdemo.navigation_demo
 
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
 import androidx.compose.runtime.Composable
@@ -6,17 +6,17 @@ import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
-import org.jesen.dev.sunnyweather.pose.navigation_demo.decorator.AppBarDecorator
-import org.jesen.dev.sunnyweather.pose.navigation_demo.route.DialogRoute
-import org.jesen.dev.sunnyweather.pose.navigation_demo.route.HomeRoute
-import org.jesen.dev.sunnyweather.pose.navigation_demo.route.ProfileRoute
-import org.jesen.dev.sunnyweather.pose.navigation_demo.route.SettingsRoute
-import org.jesen.dev.sunnyweather.pose.navigation_demo.route.WeatherRoute
-import org.jesen.dev.sunnyweather.pose.navigation_demo.ui.screens.DialogScreen
-import org.jesen.dev.sunnyweather.pose.navigation_demo.ui.screens.HomeScreen
-import org.jesen.dev.sunnyweather.pose.navigation_demo.ui.screens.ProfileScreen
-import org.jesen.dev.sunnyweather.pose.navigation_demo.ui.screens.SettingsScreen
-import org.jesen.dev.sunnyweather.pose.navigation_demo.ui.screens.WeatherScreen
+import org.jesen.dev.sunnyweather.relationdemo.navigation_demo.decorator.AppBarDecorator
+import org.jesen.dev.sunnyweather.relationdemo.navigation_demo.route.DialogRoute
+import org.jesen.dev.sunnyweather.relationdemo.navigation_demo.route.HomeRoute
+import org.jesen.dev.sunnyweather.relationdemo.navigation_demo.route.ProfileRoute
+import org.jesen.dev.sunnyweather.relationdemo.navigation_demo.route.SettingsRoute
+import org.jesen.dev.sunnyweather.relationdemo.navigation_demo.route.WeatherRoute
+import org.jesen.dev.sunnyweather.relationdemo.navigation_demo.ui.screens.DialogScreen
+import org.jesen.dev.sunnyweather.relationdemo.navigation_demo.ui.screens.HomeScreen
+import org.jesen.dev.sunnyweather.relationdemo.navigation_demo.ui.screens.ProfileScreen
+import org.jesen.dev.sunnyweather.relationdemo.navigation_demo.ui.screens.SettingsScreen
+import org.jesen.dev.sunnyweather.relationdemo.navigation_demo.ui.screens.WeatherScreen
 
 /**
  * Navigation3 高级特性演示主入口
@@ -101,7 +101,9 @@ fun Navigation3Demo(
                     }
                 }
 
-                is SettingsRoute -> NavEntry(key) {
+                is SettingsRoute -> NavEntry(
+                    key
+                ) {
                     AppBarDecorator(
                         title = "设置",
                         showBackButton = true,
@@ -111,7 +113,9 @@ fun Navigation3Demo(
                     }
                 }
 
-                is ProfileRoute -> NavEntry(key) {
+                is ProfileRoute -> NavEntry(
+                    key
+                ) {
                     AppBarDecorator(
                         title = "个人中心",
                         showBackButton = true,
@@ -121,7 +125,9 @@ fun Navigation3Demo(
                     }
                 }
 
-                is DialogRoute -> NavEntry(key) {
+                is DialogRoute -> NavEntry(
+                    key
+                ) {
                     DialogScreen(
                         onDismiss = { backStack.removeLastOrNull() },
                         onConfirm = { backStack.removeLastOrNull() }

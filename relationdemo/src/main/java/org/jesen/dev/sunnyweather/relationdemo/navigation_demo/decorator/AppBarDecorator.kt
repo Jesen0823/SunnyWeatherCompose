@@ -1,4 +1,4 @@
-package org.jesen.dev.sunnyweather.pose.navigation_demo.decorator
+package org.jesen.dev.sunnyweather.relationdemo.navigation_demo.decorator
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -15,7 +15,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import org.jesen.dev.sunnyweather.pose.navigation_demo.metadata.NavMetadataKeys
+import org.jesen.dev.sunnyweather.relationdemo.navigation_demo.metadata.NavMetadataKeys
 
 /**
  * AppBar 装饰器实现

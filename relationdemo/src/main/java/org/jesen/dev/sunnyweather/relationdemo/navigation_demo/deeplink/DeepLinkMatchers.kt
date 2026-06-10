@@ -1,9 +1,9 @@
-package org.jesen.dev.sunnyweather.pose.navigation_demo.deeplink
+package org.jesen.dev.sunnyweather.relationdemo.navigation_demo.deeplink
 
 import androidx.navigation3.runtime.NavKey
-import org.jesen.dev.sunnyweather.pose.navigation_demo.route.HomeRoute
-import org.jesen.dev.sunnyweather.pose.navigation_demo.route.SettingsRoute
-import org.jesen.dev.sunnyweather.pose.navigation_demo.route.WeatherRoute
+import org.jesen.dev.sunnyweather.relationdemo.navigation_demo.route.HomeRoute
+import org.jesen.dev.sunnyweather.relationdemo.navigation_demo.route.SettingsRoute
+import org.jesen.dev.sunnyweather.relationdemo.navigation_demo.route.WeatherRoute
 
 /**
  * DeepLink 匹配器实现
@@ -61,7 +61,9 @@ object DeepLinkMatchers {
             "weather" -> {
                 // 从 URL 参数中提取城市名称
                 val city = uri.getQueryParameter("city") ?: "Unknown"
-                WeatherRoute(city)
+                WeatherRoute(
+                    city
+                )
             }
             else -> null
         }

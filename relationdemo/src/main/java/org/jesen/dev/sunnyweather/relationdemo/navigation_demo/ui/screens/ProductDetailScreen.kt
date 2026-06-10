@@ -1,4 +1,4 @@
-package org.jesen.dev.sunnyweather.pose.navigation_demo.ui.screens
+package org.jesen.dev.sunnyweather.relationdemo.navigation_demo.ui.screens
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -11,11 +11,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import org.jesen.dev.sunnyweather.pose.navigation_demo.route.ProductDetail
+import org.jesen.dev.sunnyweather.relationdemo.navigation_demo.route.ProductDetail
 
 @Composable
 fun ProductDetailScreen(
-    product: ProductDetail,
+    product: org.jesen.dev.sunnyweather.relationdemo.navigation_demo.route.ProductDetail,
     modifier: Modifier= Modifier
 ){
     Column(

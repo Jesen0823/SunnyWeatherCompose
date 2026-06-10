@@ -8,10 +8,8 @@ import androidx.navigation3.ui.NavDisplay
 import androidx.lifecycle.viewmodel.compose.viewModel
 import org.jesen.dev.sunnyweather.pose.domain.model.Place
 import org.jesen.dev.sunnyweather.pose.di.AppModule
-import org.jesen.dev.sunnyweather.pose.presentation.ui.screens.NavigationDrawerExamples
 import org.jesen.dev.sunnyweather.pose.presentation.ui.screens.PlaceScreen
 import org.jesen.dev.sunnyweather.pose.presentation.ui.screens.SettingsScreen
-import org.jesen.dev.sunnyweather.pose.presentation.ui.screens.SimpleCenterAlignedTopAppBar
 import org.jesen.dev.sunnyweather.pose.presentation.ui.screens.TestPageScreen
 import org.jesen.dev.sunnyweather.pose.presentation.ui.screens.UnknownScreen
 import org.jesen.dev.sunnyweather.pose.presentation.ui.screens.WeatherScreen
@@ -92,7 +90,6 @@ fun AppNavigator(
                 }
 
                 is TestPageKey -> NavEntry(key) {
-                    // SimpleCenterAlignedTopAppBar()
                     TestPageScreen(
                         onBack = { backStack.removeLastOrNull() }
                     )
