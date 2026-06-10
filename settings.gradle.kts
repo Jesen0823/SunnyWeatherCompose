@@ -29,4 +29,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "SunnyWeatherCompose"
 include(":app")
- 
+include(":relationdemo")
