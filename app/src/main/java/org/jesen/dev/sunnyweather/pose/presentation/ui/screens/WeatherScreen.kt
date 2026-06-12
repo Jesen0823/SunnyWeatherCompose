@@ -20,7 +20,9 @@ import androidx.compose.ui.unit.dp
 import org.jesen.dev.sunnyweather.pose.domain.model.Sky
 import org.jesen.dev.sunnyweather.pose.domain.model.Weather
 import org.jesen.dev.sunnyweather.pose.presentation.ui.components.AnimatedBackground
+import org.jesen.dev.sunnyweather.pose.presentation.ui.components.AppNavigation
 import org.jesen.dev.sunnyweather.pose.presentation.ui.components.PullToRefresh
+import org.jesen.dev.sunnyweather.pose.presentation.ui.components.Screen
 import org.jesen.dev.sunnyweather.pose.presentation.ui.components.weather.*
 import org.jesen.dev.sunnyweather.pose.presentation.ui.widget.EmptyContentView
 import org.jesen.dev.sunnyweather.pose.presentation.common.UiState
@@ -72,7 +74,7 @@ fun WeatherScreen(
                 isRefreshing = isRefreshing,
                 onRefresh = { isRefreshing = true },
                 onNavigateToPlace = onNavigateToPlace,
-                        onNavigateToSettings=onNavigateToSettings
+                onNavigateToSettings = onNavigateToSettings
             )
         }
     }
@@ -121,127 +123,144 @@ private fun WeatherSuccessContent(
     isRefreshing: Boolean,
     onRefresh: () -> Unit,
     onNavigateToPlace: () -> Unit,
-    onNavigateToSettings:()->Unit
+    onNavigateToSettings: () -> Unit
 ) {
-    val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
+    var isDrawerOpen by remember { mutableStateOf(false) }
+    val currentScreen by remember { mutableStateOf(Screen.Weather) }
     
-    Scaffold(
-        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        topBar = {
-            CenterAlignedTopAppBar(
-                title = {
-                    Text(
-                        text = placeName,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Medium,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                },
-                navigationIcon = {
-                    TooltipBox(
-                        positionProvider =
-                            TooltipDefaults.rememberTooltipPositionProvider(
-                                TooltipAnchorPosition.Above
-                            ),
-                        tooltip = { PlainTooltip { Text("Menu") } },
-                        state = rememberTooltipState(),
-                    ) {
-                        IconButton(onClick = onNavigateToSettings) {
-                            Icon(imageVector = Icons.Filled.Menu, contentDescription = "Menu")
-                        }
-                    }
-                },
-                actions = {
-                    TooltipBox(
-                        positionProvider =
-                            TooltipDefaults.rememberTooltipPositionProvider(
-                                TooltipAnchorPosition.Above
-                            ),
-                        tooltip = { PlainTooltip { Text("Search your city") } },
-                        state = rememberTooltipState(),
-                    ) {
-                        IconButton(onClick = onNavigateToPlace) {
-                            Icon(
-                                imageVector = Icons.Default.Search,
-                                contentDescription = "搜索城市",
-                                tint = MaterialTheme.colorScheme.onSurface
-                            )
-                        }
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color.Transparent,
-                    scrolledContainerColor = Color.Transparent,
-                    titleContentColor = MaterialTheme.colorScheme.onSurface,
-                    actionIconContentColor = MaterialTheme.colorScheme.onSurface
-                ),
-                modifier = Modifier.padding(top = 16.dp),
-                scrollBehavior = scrollBehavior
-            )
+    AppNavigation(
+        isDrawerOpen = isDrawerOpen,
+        onDrawerClose = { isDrawerOpen = false },
+        currentScreen = currentScreen,
+        onScreenChange = { screen ->
+            when (screen) {
+                Screen.Place -> onNavigateToPlace()
+                Screen.Settings -> onNavigateToSettings()
+                Screen.Weather -> {}
+            }
+            isDrawerOpen = false
         }
-    ) { innerPadding ->
-        PullToRefresh(
-            modifier = Modifier.fillMaxSize(),
-            isRefreshing = isRefreshing,
-            onRefresh = onRefresh
-        ) {
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(
-                    top = innerPadding.calculateTopPadding() + 16.dp,
-                    bottom = 24.dp
-                )
-            ) {
-                item {
-                    AnimatedVisibility(
-                        visible = true,
-                        enter = slideInVertically(
-                            initialOffsetY = { -60 },
-                            animationSpec = TweenSpec(
-                                durationMillis = 600,
-                                easing = FastOutSlowInEasing
-                            )
-                        ) + fadeIn(animationSpec = TweenSpec(500))
-                    ) {
-                        CurrentWeatherCard(
-                            weather = weather,
-                            placeName = placeName,
-                            onNavigateToPlace = onNavigateToPlace
+    ) {
+        val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
+
+        Scaffold(
+            modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+            topBar = {
+                CenterAlignedTopAppBar(
+                    title = {
+                        Text(
+                            text = placeName,
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Medium,
+                            color = MaterialTheme.colorScheme.onSurface
                         )
-                    }
-                    Spacer(modifier = Modifier.height(20.dp))
-                }
-                
-                item {
-                    AnimatedVisibility(
-                        visible = true,
-                        enter = slideInVertically(
-                            initialOffsetY = { 60 },
-                            animationSpec = tween(
-                                durationMillis = 600,
-                                easing = FastOutSlowInEasing,
-                                delayMillis = 150
+                    },
+                    navigationIcon = {
+                        TooltipBox(
+                            positionProvider =
+                                TooltipDefaults.rememberTooltipPositionProvider(
+                                    TooltipAnchorPosition.Above
+                                ),
+                            tooltip = { PlainTooltip { Text("Menu") } },
+                            state = rememberTooltipState(),
+                        ) {
+                            IconButton(onClick = { isDrawerOpen = !isDrawerOpen }) {
+                                Icon(imageVector = Icons.Filled.Menu, contentDescription = "Menu")
+                            }
+                        }
+                    },
+                    actions = {
+                        TooltipBox(
+                            positionProvider =
+                                TooltipDefaults.rememberTooltipPositionProvider(
+                                    TooltipAnchorPosition.Above
+                                ),
+                            tooltip = { PlainTooltip { Text("Search your city") } },
+                            state = rememberTooltipState(),
+                        ) {
+                            IconButton(onClick = onNavigateToPlace) {
+                                Icon(
+                                    imageVector = Icons.Default.Search,
+                                    contentDescription = "搜索城市",
+                                    tint = MaterialTheme.colorScheme.onSurface
+                                )
+                            }
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = Color.Transparent,
+                        scrolledContainerColor = Color.Transparent,
+                        titleContentColor = MaterialTheme.colorScheme.onSurface,
+                        actionIconContentColor = MaterialTheme.colorScheme.onSurface
+                    ),
+                    modifier = Modifier.padding(top = 16.dp),
+                    scrollBehavior = scrollBehavior
+                )
+            }
+        ) { innerPadding ->
+            PullToRefresh(
+                modifier = Modifier.fillMaxSize(),
+                isRefreshing = isRefreshing,
+                onRefresh = onRefresh
+            ) {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(
+                        top = innerPadding.calculateTopPadding() + 16.dp,
+                        bottom = 24.dp
+                    )
+                ) {
+                    item {
+                        AnimatedVisibility(
+                            visible = true,
+                            enter = slideInVertically(
+                                initialOffsetY = { -60 },
+                                animationSpec = TweenSpec(
+                                    durationMillis = 600,
+                                    easing = FastOutSlowInEasing
+                                )
+                            ) + fadeIn(animationSpec = TweenSpec(500))
+                        ) {
+                            CurrentWeatherCard(
+                                weather = weather,
+                                placeName = placeName,
+                                onNavigateToPlace = onNavigateToPlace
                             )
-                        ) + fadeIn(animationSpec = tween(500, delayMillis = 150))
-                    ) {
-                        ForecastSection(weather = weather)
+                        }
+                        Spacer(modifier = Modifier.height(20.dp))
                     }
-                    Spacer(modifier = Modifier.height(20.dp))
-                }
-                
-                item {
-                    AnimatedVisibility(
-                        visible = true,
-                        enter = slideInVertically(
-                            initialOffsetY = { 60 },
-                            animationSpec = tween(
-                                durationMillis = 600,
-                                easing = FastOutSlowInEasing,
-                                delayMillis = 300
-                            )
-                        ) + fadeIn(animationSpec = tween(500, delayMillis = 300))
-                    ) {
-                        LifeIndexSection(weather = weather)
+
+                    item {
+                        AnimatedVisibility(
+                            visible = true,
+                            enter = slideInVertically(
+                                initialOffsetY = { 60 },
+                                animationSpec = tween(
+                                    durationMillis = 600,
+                                    easing = FastOutSlowInEasing,
+                                    delayMillis = 150
+                                )
+                            ) + fadeIn(animationSpec = tween(500, delayMillis = 150))
+                        ) {
+                            ForecastSection(weather = weather)
+                        }
+                        Spacer(modifier = Modifier.height(20.dp))
+                    }
+
+                    item {
+                        AnimatedVisibility(
+                            visible = true,
+                            enter = slideInVertically(
+                                initialOffsetY = { 60 },
+                                animationSpec = tween(
+                                    durationMillis = 600,
+                                    easing = FastOutSlowInEasing,
+                                    delayMillis = 300
+                                )
+                            ) + fadeIn(animationSpec = tween(500, delayMillis = 300))
+                        ) {
+                            LifeIndexSection(weather = weather)
+                        }
                     }
                 }
             }

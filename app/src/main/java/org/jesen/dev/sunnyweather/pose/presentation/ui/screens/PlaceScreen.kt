@@ -13,7 +13,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.text.font.FontWeight
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.debounce
@@ -29,8 +28,7 @@ import org.jesen.dev.sunnyweather.pose.presentation.common.UiState
 @Composable
 fun PlaceScreen(
     viewModel: PlaceViewModel,
-    onPlaceSelected: (Place) -> Unit,
-    onNavigateToTestPage: () -> Unit = {}
+    onPlaceSelected: (Place) -> Unit
 ) {
     var searchQuery by remember { mutableStateOf("") }
     val placesState: State<UiState<List<Place>>> = viewModel.placesState.collectAsState()
@@ -56,8 +54,7 @@ fun PlaceScreen(
     Column(modifier = Modifier.fillMaxSize()) {
         SearchBar(
             query = searchQuery,
-            onQueryChange = { searchQuery = it },
-            onMenuClick = onNavigateToTestPage
+            onQueryChange = { searchQuery = it }
         )
         
         when (val state = placesState.value) {

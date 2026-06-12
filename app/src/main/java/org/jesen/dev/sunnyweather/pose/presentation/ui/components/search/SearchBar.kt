@@ -6,11 +6,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -25,8 +23,7 @@ import org.jesen.dev.sunnyweather.pose.R
 @Composable
 fun SearchBar(
     query: String,
-    onQueryChange: (String) -> Unit,
-    onMenuClick: () -> Unit = {}
+    onQueryChange: (String) -> Unit
 ) {
     val keyboardController = LocalSoftwareKeyboardController.current
 
@@ -34,18 +31,6 @@ fun SearchBar(
         value = query,
         onValueChange = onQueryChange,
         leadingIcon = {
-            IconButton(
-                onClick = onMenuClick,
-                modifier = Modifier.size(24.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Menu,
-                    contentDescription = "菜单",
-                    modifier = Modifier.size(24.dp)
-                )
-            }
-        },
-        trailingIcon = {
             Icon(
                 imageVector = Icons.Default.Search,
                 contentDescription = "搜索",

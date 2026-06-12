@@ -10,7 +10,6 @@ import org.jesen.dev.sunnyweather.pose.domain.model.Place
 import org.jesen.dev.sunnyweather.pose.di.AppModule
 import org.jesen.dev.sunnyweather.pose.presentation.ui.screens.PlaceScreen
 import org.jesen.dev.sunnyweather.pose.presentation.ui.screens.SettingsScreen
-import org.jesen.dev.sunnyweather.pose.presentation.ui.screens.TestPageScreen
 import org.jesen.dev.sunnyweather.pose.presentation.ui.screens.UnknownScreen
 import org.jesen.dev.sunnyweather.pose.presentation.ui.screens.WeatherScreen
 import org.jesen.dev.sunnyweather.pose.presentation.viewmodel.PlaceViewModel
@@ -28,7 +27,6 @@ fun AppNavigator(
 ) {
     val backStack = rememberNavBackStack(initialKey)
     
-    // 使用统一的 ViewModelFactory 创建 ViewModel
     val weatherViewModel: WeatherViewModel = viewModel(factory = AppModule.appViewModelFactory)
     val placeViewModel: PlaceViewModel = viewModel(factory = AppModule.appViewModelFactory)
     val settingsViewModel: SettingsViewModel = viewModel(factory = AppModule.appViewModelFactory)
@@ -46,7 +44,7 @@ fun AppNavigator(
                             lng = place.location.lng,
                             lat = place.location.lat,
                             onNavigateToPlace = { backStack.add(PlaceKey) },
-                            onNavigateToSettings = { backStack.add(TestPageKey) }
+                            onNavigateToSettings = { backStack.add(SettingsKey) }
                         )
                     } ?: UnknownScreen(
                         onOpenLocationSettings = onOpenLocationSettings,
@@ -61,10 +59,6 @@ fun AppNavigator(
                             onPlaceSelected(place)
                             backStack.clear()
                             backStack.add(WeatherKey)
-                        },
-                        onNavigateToTestPage = {
-                            backStack.add(TestPageKey)
-                            //backStack.add(DrawerExamplesKey)
                         }
                     )
                 }
@@ -87,17 +81,6 @@ fun AppNavigator(
                         onBack = { backStack.removeLastOrNull() },
                         onLanguageChanged = onLanguageChanged
                     )
-                }
-
-                is TestPageKey -> NavEntry(key) {
-                    TestPageScreen(
-                        onBack = { backStack.removeLastOrNull() }
-                    )
-                }
-
-                is DrawerExamplesKey -> NavEntry(key){
-                    //NavigationDrawerExamples()
-
                 }
 
                 else -> error("Unknown navigation key: $key")
