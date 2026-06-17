@@ -1,3 +1,16 @@
+/**
+ * 天气数据仓库类
+ * 
+ * 主要职责：
+ * - 作为数据层与领域层的中间层，封装数据获取逻辑
+ * - 协调网络请求和本地存储操作
+ * - 提供统一的数据访问接口给 UseCase 使用
+ * 
+ * 技术要点：
+ * - 组合 WeatherApiService 和 PlaceStore，实现数据来源的统一管理
+ * - fetchWeather 方法合并实时天气和7日预报数据，返回统一的 Weather 对象
+ * - 所有数据操作方法都是 suspend 函数或返回 Flow，支持协程
+ */
 package org.jesen.dev.sunnyweather.pose.data.repository
 
 import org.jesen.dev.sunnyweather.pose.data.network.ApiResult
@@ -51,6 +64,8 @@ class WeatherRepository(
     }
     
     fun getSavedPlace() = placeStore.getSavedPlace()
+    
+    fun getSavedPlaceList() = placeStore.getPlaceList()
     
     fun isPlaceSaved() = placeStore.isPlaceSaved()
     

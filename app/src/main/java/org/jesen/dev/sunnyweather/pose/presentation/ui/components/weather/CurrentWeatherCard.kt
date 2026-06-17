@@ -1,3 +1,16 @@
+/**
+ * 当前天气卡片组件
+ * 
+ * 主要职责：
+ * - 显示实时天气信息（温度、天气状况、空气质量）
+ * - 实现点击缩放和动画效果
+ * 
+ * 技术要点：
+ * - 使用 animateFloatAsState 实现温度文字和图标的缩放动画
+ * - 使用 animateDpAsState 实现卡片阴影高度变化
+ * - 根据 AQI 值动态设置空气质量颜色（绿/黄/橙/红/紫）
+ * - 点击城市名称可跳转到城市选择页面
+ */
 package org.jesen.dev.sunnyweather.pose.presentation.ui.components.weather
 
 import androidx.compose.animation.core.*

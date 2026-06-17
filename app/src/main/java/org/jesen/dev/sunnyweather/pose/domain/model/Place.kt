@@ -1,3 +1,15 @@
+/**
+ * 城市地点数据模型
+ * 
+ * 主要职责：
+ * - 定义城市信息的数据结构，包括名称、经纬度、地址等
+ * - 支持 JSON 序列化，用于网络请求和本地存储
+ * 
+ * 技术要点：
+ * - 使用 @Serializable 注解支持 Kotlinx 序列化
+ * - Location 独立定义，便于复用
+ * - PlaceResponse 封装 API 返回的城市列表响应
+ */
 package org.jesen.dev.sunnyweather.pose.domain.model
 
 import kotlinx.serialization.Serializable

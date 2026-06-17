@@ -1,3 +1,16 @@
+/**
+ * 天气 API 服务类
+ * 
+ * 主要职责：
+ * - 封装彩云天气 API 的所有网络请求
+ * - 根据配置决定返回真实数据或模拟数据
+ * 
+ * 技术要点：
+ * - 提供城市搜索、实时天气、7日预报三个核心接口
+ * - 通过 ApiConfig.USE_MOCK_DATA 控制数据来源
+ * - 使用 Ktor 客户端发送 HTTP 请求，自动处理 JSON 序列化
+ * - 所有方法返回 ApiResult，统一错误处理
+ */
 package org.jesen.dev.sunnyweather.pose.data.network
 
 import io.ktor.client.call.body

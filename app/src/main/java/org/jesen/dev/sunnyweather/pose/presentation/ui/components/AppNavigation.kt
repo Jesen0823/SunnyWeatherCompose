@@ -1,3 +1,17 @@
+/**
+ * 应用导航组件
+ * 
+ * 主要职责：
+ * - 提供侧边栏导航抽屉功能
+ * - 支持天气、城市选择、设置三个页面的切换
+ * - 提供两种导航模式（自动管理抽屉状态和外部控制抽屉状态）
+ * 
+ * 技术要点：
+ * - 使用 ModalNavigationDrawer 实现侧边栏
+ * - Screen 密封类定义三个导航目标（Weather、Place、Settings）
+ * - 两个重载函数分别支持自动管理和外部控制抽屉状态
+ * - 使用 rememberCoroutineScope 处理抽屉打开/关闭动画
+ */
 package org.jesen.dev.sunnyweather.pose.presentation.ui.components
 
 import androidx.compose.foundation.layout.Column

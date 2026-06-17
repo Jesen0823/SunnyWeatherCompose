@@ -1,3 +1,16 @@
+/**
+ * 天气状况枚举类
+ * 
+ * 主要职责：
+ * - 定义各种天气状况（晴、多云、阴、雨、雪等）
+ * - 映射天气图标和背景资源
+ * - 提供根据 skycon 字符串获取对应天气状况的方法
+ * 
+ * 技术要点：
+ * - 使用枚举类封装天气类型、描述、图标和背景资源
+ * - getSky() 方法通过 skycon 字符串匹配对应的天气枚举值
+ * - 每个枚举值包含天气描述、图标资源和背景资源
+ */
 package org.jesen.dev.sunnyweather.pose.domain.model
 
 import org.jesen.dev.sunnyweather.pose.R

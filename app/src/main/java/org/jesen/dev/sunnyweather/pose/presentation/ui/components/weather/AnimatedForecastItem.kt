@@ -1,3 +1,16 @@
+/**
+ * 动画天气预报项组件
+ * 
+ * 主要职责：
+ * - 显示单天的天气预报信息
+ * - 实现入场动画和点击缩放效果
+ * 
+ * 技术要点：
+ * - 使用 animateFloatAsState 实现点击缩放动画
+ * - 使用 Animatable 实现入场透明度动画
+ * - 根据索引延迟动画开始时间，实现瀑布流效果
+ * - 解析 ISO 格式日期为 MM-dd 格式
+ */
 package org.jesen.dev.sunnyweather.pose.presentation.ui.components.weather
 
 import androidx.compose.animation.core.*

@@ -1,3 +1,16 @@
+/**
+ * 动画背景组件
+ * 
+ * 主要职责：
+ * - 根据天气状况显示对应的动态背景
+ * - 实现背景透明度渐变动画效果
+ * 
+ * 技术要点：
+ * - 使用 rememberInfiniteTransition 创建无限循环动画
+ * - 通过 alphaState 实现透明度在 0.9-1.0 之间循环变化
+ * - 根据 Sky 枚举值选择对应的背景资源
+ * - 使用 Image 组件填充整个屏幕
+ */
 package org.jesen.dev.sunnyweather.pose.presentation.ui.components
 
 import androidx.compose.animation.core.*

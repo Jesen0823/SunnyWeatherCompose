@@ -1,3 +1,17 @@
+/**
+ * 天气 ViewModel
+ * 
+ * 主要职责：
+ * - 管理天气页面的状态和数据
+ * - 调用 UseCase 获取天气数据
+ * - 将 API 结果转换为 UI 状态
+ * 
+ * 技术要点：
+ * - 使用 StateFlow 管理天气数据状态（Loading/Success/Error）
+ * - 通过 viewModelScope 启动协程执行异步操作
+ * - 调用 FetchWeatherUseCase 获取实时天气和7日预报数据
+ * - 天气数据获取成功后更新 weatherState
+ */
 package org.jesen.dev.sunnyweather.pose.presentation.viewmodel
 
 import android.util.Log

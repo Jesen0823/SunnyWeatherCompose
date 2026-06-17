@@ -1,3 +1,18 @@
+/**
+ * 主题管理器
+ * 
+ * 主要职责：
+ * - 管理应用的主题模式（亮色、暗色、跟随系统）
+ * - 提供主题切换功能
+ * - 封装 Compose 主题配置
+ * 
+ * 技术要点：
+ * - 使用 StateFlow 管理当前主题状态
+ * - AppTheme 枚举定义三种主题模式（LIGHT、DARK、SYSTEM）
+ * - ThemeManager 提供 setTheme 和 isDarkTheme 方法
+ * - SunnyWeatherComposeTheme 根据主题模式配置 MaterialTheme
+ * - 支持动态颜色（Android 12+）
+ */
 package org.jesen.dev.sunnyweather.pose.ui.theme
 
 import android.app.Activity

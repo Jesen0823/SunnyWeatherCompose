@@ -1,3 +1,16 @@
+/**
+ * 城市列表组件
+ * 
+ * 主要职责：
+ * - 显示搜索结果中的城市列表
+ * - 支持点击选择城市
+ * 
+ * 技术要点：
+ * - 使用 LazyColumn 实现滚动列表
+ * - 通过 items 函数遍历城市列表
+ * - 使用 Surface 包装 ListItem，提供点击反馈
+ * - 显示城市名称和地址信息
+ */
 package org.jesen.dev.sunnyweather.pose.presentation.ui.components.search
 
 import androidx.compose.foundation.layout.fillMaxSize

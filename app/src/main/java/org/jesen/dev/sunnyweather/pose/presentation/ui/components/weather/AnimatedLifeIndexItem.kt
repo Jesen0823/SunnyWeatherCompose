@@ -1,3 +1,15 @@
+/**
+ * 动画生活指数项组件
+ * 
+ * 主要职责：
+ * - 显示单个生活指数信息（穿衣、感冒风险、紫外线、洗车指数）
+ * - 实现入场动画效果
+ * 
+ * 技术要点：
+ * - 使用 Animatable 实现透明度和水平位移动画
+ * - 根据索引延迟动画开始时间，实现依次入场效果
+ * - 使用 FastOutSlowInEasing 使动画更自然流畅
+ */
 package org.jesen.dev.sunnyweather.pose.presentation.ui.components.weather
 
 import androidx.compose.animation.core.*

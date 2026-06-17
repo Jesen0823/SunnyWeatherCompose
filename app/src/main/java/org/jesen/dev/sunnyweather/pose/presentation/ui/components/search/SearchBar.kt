@@ -1,3 +1,17 @@
+/**
+ * 搜索栏组件
+ * 
+ * 主要职责：
+ * - 提供城市搜索输入框
+ * - 支持键盘搜索操作
+ * - 实时响应搜索关键词变化
+ * 
+ * 技术要点：
+ * - 基于 Material3 OutlinedTextField 实现
+ * - 使用 Icons.Default.Search 作为前置图标
+ * - 配置 imeAction = ImeAction.Search 支持搜索按键
+ * - 通过 KeyboardActions 处理搜索按键点击，自动隐藏键盘
+ */
 package org.jesen.dev.sunnyweather.pose.presentation.ui.components.search
 
 import androidx.compose.foundation.layout.fillMaxWidth

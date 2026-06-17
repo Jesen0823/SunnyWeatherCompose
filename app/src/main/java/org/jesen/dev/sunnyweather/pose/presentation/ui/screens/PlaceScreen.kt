@@ -1,3 +1,17 @@
+/**
+ * 城市选择页面组件
+ * 
+ * 主要职责：
+ * - 提供城市搜索功能
+ * - 显示搜索结果列表
+ * - 处理加载状态和错误状态
+ * 
+ * 技术要点：
+ * - 使用 Channel 和 debounce(500ms) 实现搜索防抖
+ * - 根据 placesState 显示默认状态、加载状态、错误状态或搜索结果
+ * - 调用 SearchBar 和 PlaceList 组件
+ * - 使用 LaunchedEffect 监听搜索关键词变化
+ */
 package org.jesen.dev.sunnyweather.pose.presentation.ui.screens
 
 import androidx.compose.foundation.Image

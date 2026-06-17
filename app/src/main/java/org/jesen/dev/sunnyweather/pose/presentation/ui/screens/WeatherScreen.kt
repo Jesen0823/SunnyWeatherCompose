@@ -1,3 +1,18 @@
+/**
+ * 天气页面组件
+ * 
+ * 主要职责：
+ * - 显示天气信息页面，包括实时天气、7日预报和生活指数
+ * - 处理天气数据的加载状态
+ * - 支持下拉刷新和导航功能
+ * 
+ * 技术要点：
+ * - 根据 weatherState 显示 Loading、Error 或 Success 状态
+ * - 使用 AnimatedBackground 根据天气状况动态切换背景
+ * - 使用 PullToRefresh 实现下拉刷新功能
+ * - 使用 AnimatedVisibility 实现卡片入场动画
+ * - 通过 LaunchedEffect 监听经纬度变化，自动刷新天气数据
+ */
 package org.jesen.dev.sunnyweather.pose.presentation.ui.screens
 
 import androidx.compose.animation.AnimatedVisibility

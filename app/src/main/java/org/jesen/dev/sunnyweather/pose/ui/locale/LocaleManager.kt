@@ -1,3 +1,17 @@
+/**
+ * 语言管理器
+ * 
+ * 主要职责：
+ * - 管理应用的语言设置
+ * - 支持中文和英文切换
+ * - 获取当前语言设置
+ * 
+ * 技术要点：
+ * - 使用 Configuration.setLocale 设置应用语言
+ * - 兼容 Android N (API 24) 及以上版本的多语言支持
+ * - 提供 LANGUAGE_ENGLISH 和 LANGUAGE_CHINESE 常量
+ * - 通过 Context.resources.configuration 获取当前语言
+ */
 package org.jesen.dev.sunnyweather.pose.ui.locale
 
 import android.content.Context

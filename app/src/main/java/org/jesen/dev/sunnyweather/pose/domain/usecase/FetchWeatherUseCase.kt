@@ -1,25 +1,21 @@
+/**
+ * 获取天气用例
+ * 
+ * 主要职责：
+ * - 根据经纬度获取实时天气和7日预报数据
+ * - 合并实时天气和预报数据，返回统一的 Weather 对象
+ * 
+ * 技术要点：
+ * - 使用 operator fun invoke() 简化调用，可直接作为函数使用
+ * - 调用 WeatherRepository 的 fetchWeather() 方法获取数据
+ * - 返回 ApiResult<Weather>，统一处理成功/失败/加载状态
+ * - 是一个 suspend 函数，需要在协程中调用
+ */
 package org.jesen.dev.sunnyweather.pose.domain.usecase
 
 import org.jesen.dev.sunnyweather.pose.data.network.ApiResult
 import org.jesen.dev.sunnyweather.pose.data.repository.WeatherRepository
 import org.jesen.dev.sunnyweather.pose.domain.model.Weather
-
-/**
- * UseCase（用例） 是 Clean Architecture 中定义的一个核心层，位于 Domain Layer（领域层） ，它代表了 用户可以执行的一个独立业务操作 。
- * 
- * - 每个 UseCase 处理一个业务操作
- * - UseCase 应该是纯 Kotlin 类 （无 Android 依赖）
- * - 使用 operator fun invoke() 简化调用
- * - UseCase 可以组合其他 UseCase
- * 
- * UseCase 的精髓 ：
- * 1. 业务逻辑的封装容器
- * 2. 可测试的业务单元
- * 3. ViewModel 和 Repository 之间的桥梁
- * 4. 复杂业务的编排者
- * 
- * 随着业务增长，可以在 UseCase 中添加更多业务逻辑，如搜索、地点存储、地点读取等。
-*/
 class FetchWeatherUseCase(private val repository: WeatherRepository) {
     suspend operator fun invoke(lng: String, lat: String): ApiResult<Weather> {
         return repository.fetchWeather(lng, lat)

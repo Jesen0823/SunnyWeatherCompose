@@ -1,3 +1,17 @@
+/**
+ * 城市选择 ViewModel
+ * 
+ * 主要职责：
+ * - 管理城市搜索页面的状态和数据
+ * - 调用 UseCase 搜索城市、保存城市、清除城市
+ * - 维护保存的城市列表和当前城市状态
+ * 
+ * 技术要点：
+ * - 使用多个 StateFlow 管理不同状态（搜索结果、保存城市、城市列表等）
+ * - 通过 viewModelScope 启动协程执行异步操作
+ * - 初始化时自动加载保存的城市数据
+ * - 调用 SearchPlacesUseCase 搜索城市并处理结果
+ */
 package org.jesen.dev.sunnyweather.pose.presentation.viewmodel
 
 import android.util.Log
@@ -11,6 +25,7 @@ import org.jesen.dev.sunnyweather.pose.data.network.ApiResult
 import org.jesen.dev.sunnyweather.pose.domain.model.Place
 import org.jesen.dev.sunnyweather.pose.domain.usecase.ClearPlaceUseCase
 import org.jesen.dev.sunnyweather.pose.domain.usecase.GetIsPlaceSavedUseCase
+import org.jesen.dev.sunnyweather.pose.domain.usecase.GetSavedPlaceListUseCase
 import org.jesen.dev.sunnyweather.pose.domain.usecase.GetSavedPlaceUseCase
 import org.jesen.dev.sunnyweather.pose.domain.usecase.SavePlaceUseCase
 import org.jesen.dev.sunnyweather.pose.domain.usecase.SearchPlacesUseCase
@@ -21,7 +36,8 @@ class PlaceViewModel(
     private val savePlaceUseCase: SavePlaceUseCase,
     private val clearPlaceUseCase: ClearPlaceUseCase,
     private val getSavedPlaceUseCase: GetSavedPlaceUseCase,
-    private val getIsPlaceSavedUseCase: GetIsPlaceSavedUseCase
+    private val getIsPlaceSavedUseCase: GetIsPlaceSavedUseCase,
+    private val getSavedPlaceListUseCase: GetSavedPlaceListUseCase
 ) : ViewModel() {
     private val _placesState = MutableStateFlow<UiState<List<Place>>>(UiState.Loading)
     val placesState: StateFlow<UiState<List<Place>>> = _placesState.asStateFlow()
@@ -29,11 +45,15 @@ class PlaceViewModel(
     private val _savedPlace = MutableStateFlow<Place?>(null)
     val savedPlace: StateFlow<Place?> = _savedPlace.asStateFlow()
     
+    private val _savedPlaceList = MutableStateFlow<List<Place>>(emptyList())
+    val savedPlaceList: StateFlow<List<Place>> = _savedPlaceList.asStateFlow()
+    
     private val _isPlaceSaved = MutableStateFlow(false)
     val isPlaceSaved: StateFlow<Boolean> = _isPlaceSaved.asStateFlow()
     
     init {
         loadSavedPlace()
+        loadSavedPlaceList()
     }
     
     private fun loadSavedPlace() {
@@ -46,6 +66,14 @@ class PlaceViewModel(
         viewModelScope.launch {
             getIsPlaceSavedUseCase().collect { saved ->
                 _isPlaceSaved.value = saved
+            }
+        }
+    }
+    
+    private fun loadSavedPlaceList() {
+        viewModelScope.launch {
+            getSavedPlaceListUseCase().collect { places ->
+                _savedPlaceList.value = places
             }
         }
     }
@@ -77,7 +105,7 @@ class PlaceViewModel(
         }
     }
 
-    fun  clearPlace(){
+    fun clearPlace(){
         viewModelScope.launch {
             clearPlaceUseCase()
         }

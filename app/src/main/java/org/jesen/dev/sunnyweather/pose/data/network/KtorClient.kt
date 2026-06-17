@@ -1,3 +1,17 @@
+/**
+ * Ktor HTTP 客户端封装类
+ * 
+ * 主要职责：
+ * - 初始化和配置 Ktor HTTP 客户端
+ * - 提供统一的网络请求基础配置
+ * 
+ * 技术要点：
+ * - 使用 OkHttp 作为底层引擎，提供稳定的 HTTP 客户端实现
+ * - 配置 JSON 序列化/反序列化，支持忽略未知字段
+ * - 设置超时时间（请求30秒，连接10秒，socket30秒）
+ * - 启用日志记录，便于调试网络请求
+ * - 使用 lazy 延迟初始化，避免不必要的资源消耗
+ */
 package org.jesen.dev.sunnyweather.pose.data.network
 
 import io.ktor.client.HttpClient

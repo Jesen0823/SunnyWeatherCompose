@@ -1,3 +1,16 @@
+/**
+ * 设置页面组件
+ * 
+ * 主要职责：
+ * - 提供清除缓存、主题切换、语言切换功能
+ * - 显示应用版本信息
+ * 
+ * 技术要点：
+ * - 使用 LazyColumn 实现设置列表
+ * - 通过 DropdownMenu 实现主题和语言选择菜单
+ * - 使用 AppModule.themeManager 和 AppModule.localeManager 管理主题和语言
+ * - 缓存清除后触发 onCacheCleared 回调并重置状态
+ */
 package org.jesen.dev.sunnyweather.pose.presentation.ui.screens
 
 import android.content.Context

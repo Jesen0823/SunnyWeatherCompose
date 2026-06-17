@@ -1,3 +1,14 @@
+/**
+ * 导航路由常量定义类
+ * 
+ * 主要职责：
+ * - 定义应用中页面的路由路径常量
+ * - 便于统一管理和引用页面路由
+ * 
+ * 技术要点：
+ * - 使用 object 单例模式定义常量
+ * - 包含 PLACE_SCREEN、WEATHER_SCREEN、SPLASH_SCREEN 三个路由常量
+ */
 package org.jesen.dev.sunnyweather.pose.navigation
 
 object NavigationRoutes {

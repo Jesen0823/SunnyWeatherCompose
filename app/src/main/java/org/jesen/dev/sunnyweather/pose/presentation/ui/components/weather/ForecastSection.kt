@@ -1,3 +1,15 @@
+/**
+ * 天气预报区域组件
+ * 
+ * 主要职责：
+ * - 显示未来7天的天气预报
+ * - 封装天气预报卡片样式
+ * 
+ * 技术要点：
+ * - 使用 Surface 作为容器，设置圆角和阴影
+ * - 遍历 weather.daily.skycon 和 weather.daily.temperature 数据
+ * - 调用 AnimatedForecastItem 展示每一天的预报
+ */
 package org.jesen.dev.sunnyweather.pose.presentation.ui.components.weather
 
 import androidx.compose.foundation.layout.*

@@ -1,3 +1,15 @@
+/**
+ * 生活指数区域组件
+ * 
+ * 主要职责：
+ * - 显示四项生活指数（穿衣、感冒风险、紫外线、洗车指数）
+ * - 封装生活指数卡片样式
+ * 
+ * 技术要点：
+ * - 使用 Surface 作为容器，设置圆角和阴影
+ * - 调用 AnimatedLifeIndexItem 展示每项生活指数
+ * - 从 weather.daily.lifeIndex 获取数据
+ */
 package org.jesen.dev.sunnyweather.pose.presentation.ui.components.weather
 
 import androidx.compose.foundation.layout.*
