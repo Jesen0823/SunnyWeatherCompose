@@ -1,19 +1,3 @@
-/**
- * 天气 ViewModel
- * 
- * 主要职责：
- * - 管理天气页面的状态和数据
- * - 调用 UseCase 获取天气数据
- * - 将 API 结果转换为 UI 状态
- * - 在首次加载时保存城市信息（防止重复保存）
- * 
- * 技术要点：
- * - 使用 StateFlow 管理天气数据状态（Loading/Success/Error）
- * - 通过 viewModelScope 启动协程执行异步操作
- * - 调用 FetchWeatherUseCase 获取实时天气和7日预报数据
- * - 通过 saveWeatherPlace 参数控制是否保存城市，防止下拉刷新时重复保存
- * - 使用 GetIsPlaceSavedUseCase 判断城市是否已保存，避免重复操作
- */
 package org.jesen.dev.sunnyweather.pose.presentation.viewmodel
 
 import android.util.Log
@@ -31,6 +15,22 @@ import org.jesen.dev.sunnyweather.pose.domain.usecase.GetIsPlaceSavedUseCase
 import org.jesen.dev.sunnyweather.pose.domain.usecase.SavePlaceUseCase
 import org.jesen.dev.sunnyweather.pose.presentation.common.UiState
 
+/**
+ * 天气 ViewModel
+ *
+ * 主要职责：
+ * - 管理天气页面的状态和数据
+ * - 调用 UseCase 获取天气数据
+ * - 将 API 结果转换为 UI 状态
+ * - 在首次加载时保存城市信息（防止重复保存）
+ *
+ * 技术要点：
+ * - 使用 StateFlow 管理天气数据状态（Loading/Success/Error）
+ * - 通过 viewModelScope 启动协程执行异步操作
+ * - 调用 FetchWeatherUseCase 获取实时天气和7日预报数据
+ * - 通过 saveWeatherPlace 参数控制是否保存城市，防止下拉刷新时重复保存
+ * - 使用 GetIsPlaceSavedUseCase 判断城市是否已保存，避免重复操作
+ */
 class WeatherViewModel(
     private val fetchWeatherUseCase: FetchWeatherUseCase,
     private val savePlaceUseCase: SavePlaceUseCase,

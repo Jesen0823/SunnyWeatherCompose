@@ -1,17 +1,3 @@
-/**
- * 城市选择 ViewModel
- * 
- * 主要职责：
- * - 管理城市搜索页面的状态和数据
- * - 调用 UseCase 搜索城市、保存城市、清除城市
- * - 维护保存的城市列表和当前城市状态
- * 
- * 技术要点：
- * - 使用多个 StateFlow 管理不同状态（搜索结果、保存城市、城市列表等）
- * - 通过 viewModelScope 启动协程执行异步操作
- * - 初始化时自动加载保存的城市数据
- * - 调用 SearchPlacesUseCase 搜索城市并处理结果
- */
 package org.jesen.dev.sunnyweather.pose.presentation.viewmodel
 
 import android.util.Log
@@ -31,6 +17,20 @@ import org.jesen.dev.sunnyweather.pose.domain.usecase.SavePlaceUseCase
 import org.jesen.dev.sunnyweather.pose.domain.usecase.SearchPlacesUseCase
 import org.jesen.dev.sunnyweather.pose.presentation.common.UiState
 
+/**
+ * 城市选择 ViewModel
+ *
+ * 主要职责：
+ * - 管理城市搜索页面的状态和数据
+ * - 调用 UseCase 搜索城市、保存城市、清除城市
+ * - 维护保存的城市列表和当前城市状态
+ *
+ * 技术要点：
+ * - 使用多个 StateFlow 管理不同状态（搜索结果、保存城市、城市列表等）
+ * - 通过 viewModelScope 启动协程执行异步操作
+ * - 初始化时自动加载保存的城市数据
+ * - 调用 SearchPlacesUseCase 搜索城市并处理结果
+ */
 class PlaceViewModel(
     private val searchPlacesUseCase: SearchPlacesUseCase,
     private val savePlaceUseCase: SavePlaceUseCase,

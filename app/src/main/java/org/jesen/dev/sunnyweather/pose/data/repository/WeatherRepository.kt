@@ -68,6 +68,8 @@ class WeatherRepository(
     fun getSavedPlaceList() = placeStore.getPlaceList()
     
     fun isPlaceSaved() = placeStore.isPlaceSaved()
+
+    fun isSpecificPlaceSaved(placeName: String) = placeStore.isSpecificPlaceSaved(placeName)
     
     suspend fun clearPlace() {
         placeStore.clearPlace()

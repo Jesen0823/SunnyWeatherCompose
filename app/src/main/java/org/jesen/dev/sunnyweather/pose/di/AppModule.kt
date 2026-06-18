@@ -1,22 +1,7 @@
-/**
- * 应用依赖注入模块
- * 
- * 主要职责：
- * - 管理应用级别的单例依赖
- * - 提供 Repository、UseCase、ViewModelFactory 等核心组件
- * - 处理权限请求的全局协调
- * 
- * 技术要点：
- * - 使用 object 单例模式确保全局唯一实例
- * - 使用 lazy 延迟初始化，避免不必要的资源消耗
- * - 管理 ActivityResultLauncher 的注册和权限结果回调
- * - 提供 ThemeManager 和 LocaleManager 支持主题和多语言切换
- */
 package org.jesen.dev.sunnyweather.pose.di
 
 import android.app.Application
 import android.content.Context
-import android.util.Log
 import androidx.activity.result.ActivityResultLauncher
 import org.jesen.dev.sunnyweather.pose.data.network.WeatherApiService
 import org.jesen.dev.sunnyweather.pose.data.repository.WeatherRepository
@@ -26,6 +11,22 @@ import org.jesen.dev.sunnyweather.pose.ui.locale.LocaleManager
 import org.jesen.dev.sunnyweather.pose.ui.theme.ThemeManager
 import org.jesen.dev.sunnyweather.pose.utils.PermissionConstants
 
+/**
+ * 应用依赖注入模块
+ *
+ * 主要职责：
+ * - 管理应用级别的单例依赖
+ * - 提供 Application 上下文和权限管理
+ * - 创建并缓存 UseCase、Repository、Store 等实例
+ * - 提供 ViewModel 工厂
+ *
+ * 技术要点：
+ * - 使用 object 单例模式
+ * - 使用 Application 上下文避免内存泄漏
+ * - 使用 lazy 延迟初始化，避免提前创建不必要的实例
+ * - 管理权限请求的回调机制
+ * - 所有依赖通过属性提供，便于测试和替换
+ */
 object AppModule {
     private val TAG = "AppModule"
     
@@ -34,7 +35,6 @@ object AppModule {
     private var permissionCallback: ((Boolean) -> Unit)? = null
 
     fun init(application: Application) {
-        Log.d(TAG, "init() called with application: ${application.packageName}")
         AppModule.application = application
     }
 
@@ -42,21 +42,15 @@ object AppModule {
         get() = application.applicationContext
 
     fun registerPermissionLauncher(launcher: ActivityResultLauncher<String>) {
-        Log.d(TAG, "registerPermissionLauncher() called")
         permissionLauncher = launcher
-        Log.d(TAG, "permissionLauncher registered: ${launcher != null}")
     }
 
     fun requestLocationPermission(callback: (Boolean) -> Unit) {
-        Log.d(TAG, "requestLocationPermission() called")
-        Log.d(TAG, "permissionLauncher is null: ${permissionLauncher == null}")
         permissionCallback = callback
         permissionLauncher?.launch(PermissionConstants.getLocationPermission())
-        Log.d(TAG, "launch() called, permission: ${PermissionConstants.getLocationPermission()}")
     }
 
     fun onPermissionResult(isGranted: Boolean) {
-        Log.d(TAG, "onPermissionResult() called, isGranted: $isGranted")
         permissionCallback?.invoke(isGranted)
         permissionCallback = null
     }
@@ -93,6 +87,10 @@ object AppModule {
         GetIsPlaceSavedUseCase(weatherRepository)
     }
 
+    val isSpecificPlaceSavedUseCase: IsSpecificPlaceSavedUseCase by lazy {
+        IsSpecificPlaceSavedUseCase(weatherRepository)
+    }
+
     val getSavedPlaceListUseCase: GetSavedPlaceListUseCase by lazy {
         GetSavedPlaceListUseCase(weatherRepository)
     }
@@ -108,6 +106,7 @@ object AppModule {
             savePlaceUseCase,
             getSavedPlaceUseCase,
             getIsPlaceSavedUseCase,
+            isSpecificPlaceSavedUseCase,
             getSavedPlaceListUseCase,
             clearPlaceUseCase
         )

@@ -1,18 +1,3 @@
-/**
- * 权限管理 ViewModel
- * 
- * 主要职责：
- * - 管理定位权限的请求和状态
- * - 获取当前设备位置信息
- * - 处理权限请求结果和定位结果
- * 
- * 技术要点：
- * - 使用多个 StateFlow 管理不同状态（权限状态、定位状态、错误信息等）
- * - 通过 viewModelScope 启动协程执行异步操作
- * - 使用 PermissionHelper 检查和请求定位权限
- * - 使用 LocationHelper 获取当前位置坐标
- * - 定位成功后自动保存位置信息并更新 locationResult
- */
 package org.jesen.dev.sunnyweather.pose.presentation.viewmodel
 
 import android.util.Log
@@ -33,6 +18,21 @@ import org.jesen.dev.sunnyweather.pose.utils.PermissionHelper
 import org.jesen.dev.sunnyweather.pose.utils.PermissionStatus
 import kotlin.time.Duration.Companion.milliseconds
 
+/**
+ * 权限管理 ViewModel
+ *
+ * 主要职责：
+ * - 管理定位权限的请求和状态
+ * - 获取当前设备位置信息
+ * - 处理权限请求结果和定位结果
+ *
+ * 技术要点：
+ * - 使用多个 StateFlow 管理不同状态（权限状态、定位状态、错误信息等）
+ * - 通过 viewModelScope 启动协程执行异步操作
+ * - 使用 PermissionHelper 检查和请求定位权限
+ * - 使用 LocationHelper 获取当前位置坐标
+ * - 定位成功后自动保存位置信息并更新 locationResult
+ */
 class PermissionViewModel(
     private val savePlaceUseCase: SavePlaceUseCase
 ) : ViewModel() {

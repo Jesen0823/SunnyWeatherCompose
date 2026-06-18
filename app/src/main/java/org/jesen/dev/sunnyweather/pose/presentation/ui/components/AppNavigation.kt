@@ -1,17 +1,3 @@
-/**
- * 应用导航组件
- * 
- * 主要职责：
- * - 提供侧边栏导航抽屉功能
- * - 支持天气、城市选择、设置三个页面的切换
- * - 提供两种导航模式（自动管理抽屉状态和外部控制抽屉状态）
- * 
- * 技术要点：
- * - 使用 ModalNavigationDrawer 实现侧边栏
- * - Screen 密封类定义三个导航目标（Weather、Place、Settings）
- * - 两个重载函数分别支持自动管理和外部控制抽屉状态
- * - 使用 rememberCoroutineScope 处理抽屉打开/关闭动画
- */
 package org.jesen.dev.sunnyweather.pose.presentation.ui.components
 
 import androidx.compose.foundation.layout.Column
@@ -34,12 +20,34 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 
+/**
+ * 应用导航组件
+ *
+ * 主要职责：
+ * - 提供侧边栏导航抽屉功能
+ * - 支持天气、城市选择、设置三个页面的切换
+ * - 提供两种导航模式（自动管理抽屉状态和外部控制抽屉状态）
+ *
+ * 技术要点：
+ * - 使用 ModalNavigationDrawer 实现侧边栏
+ * - Screen 密封类定义三个导航目标（Weather、Place、Settings）
+ * - 两个重载函数分别支持自动管理和外部控制抽屉状态
+ * - 使用 rememberCoroutineScope 处理抽屉打开/关闭动画
+ */
 sealed class Screen(val route: String, val label: String) {
     object Weather : Screen("weather", "天气")
     object Place : Screen("place", "城市选择")
     object Settings : Screen("settings", "设置")
 }
 
+/**
+ * 自动管理抽屉状态的导航组件
+ *
+ * 主要职责：
+ * - 自动管理抽屉的打开和关闭状态
+ * - 提供侧边栏导航功能
+ * - 支持三个页面的切换
+ */
 @Composable
 fun AppNavigation(
     currentScreen: Screen,
@@ -114,6 +122,15 @@ fun AppNavigation(
     )
 }
 
+/**
+ * 外部控制抽屉状态的导航组件
+ *
+ * 主要职责：
+ * - 接受外部传入的抽屉状态（isDrawerOpen）
+ * - 根据外部状态控制抽屉的打开和关闭
+ * - 提供侧边栏导航功能
+ * - 支持三个页面的切换
+ */
 @Composable
 fun AppNavigation(
     isDrawerOpen: Boolean,

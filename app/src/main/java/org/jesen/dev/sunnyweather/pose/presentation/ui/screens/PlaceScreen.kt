@@ -1,17 +1,3 @@
-/**
- * 城市选择页面组件
- * 
- * 主要职责：
- * - 提供城市搜索功能
- * - 显示搜索结果列表
- * - 处理加载状态和错误状态
- * 
- * 技术要点：
- * - 使用 Channel 和 debounce(500ms) 实现搜索防抖
- * - 根据 placesState 显示默认状态、加载状态、错误状态或搜索结果
- * - 调用 SearchBar 和 PlaceList 组件
- * - 使用 LaunchedEffect 监听搜索关键词变化
- */
 package org.jesen.dev.sunnyweather.pose.presentation.ui.screens
 
 import androidx.compose.foundation.Image
@@ -38,6 +24,20 @@ import org.jesen.dev.sunnyweather.pose.presentation.ui.components.search.SearchB
 import org.jesen.dev.sunnyweather.pose.presentation.viewmodel.PlaceViewModel
 import org.jesen.dev.sunnyweather.pose.presentation.common.UiState
 
+/**
+ * 城市选择页面组件
+ *
+ * 主要职责：
+ * - 提供城市搜索功能
+ * - 显示搜索结果列表
+ * - 处理加载状态和错误状态
+ *
+ * 技术要点：
+ * - 使用 Channel 和 debounce(500ms) 实现搜索防抖
+ * - 根据 placesState 显示默认状态、加载状态、错误状态或搜索结果
+ * - 调用 SearchBar 和 PlaceList 组件
+ * - 使用 LaunchedEffect 监听搜索关键词变化
+ */
 @OptIn(kotlinx.coroutines.FlowPreview::class)
 @Composable
 fun PlaceScreen(
@@ -86,6 +86,13 @@ fun PlaceScreen(
     }
 }
 
+/**
+ * 默认状态组件
+ *
+ * 主要职责：
+ * - 显示搜索图标和提示文字
+ * - 当用户未输入搜索关键词时显示
+ */
 @Composable
 private fun DefaultState() {
     Column(
@@ -106,6 +113,13 @@ private fun DefaultState() {
     }
 }
 
+/**
+ * 加载状态组件
+ *
+ * 主要职责：
+ * - 显示加载动画和提示文字
+ * - 当搜索请求正在进行时显示
+ */
 @Composable
 private fun LoadingState() {
     Column(
@@ -122,6 +136,13 @@ private fun LoadingState() {
     }
 }
 
+/**
+ * 错误状态组件
+ *
+ * 主要职责：
+ * - 显示错误标题和错误信息
+ * - 当搜索请求失败时显示
+ */
 @Composable
 private fun ErrorState(message: String) {
     Column(
