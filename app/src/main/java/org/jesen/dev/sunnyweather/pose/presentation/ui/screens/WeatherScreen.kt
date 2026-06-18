@@ -120,7 +120,7 @@ fun WeatherScreen(
             )
             is UiState.Success -> WeatherSuccessContent(
                 weather = state.data,
-                place.name = place.name,
+                placeName = place.name,
                 isRefreshing = isRefreshing,
                 onRefresh = { isRefreshing = true },
                 onNavigateToPlace = onNavigateToPlace,
@@ -169,7 +169,7 @@ private fun WeatherLoadingState() {
 @Composable
 private fun WeatherSuccessContent(
     weather: Weather,
-    place.name: String,
+    placeName: String,
     isRefreshing: Boolean,
     onRefresh: () -> Unit,
     onNavigateToPlace: () -> Unit,
@@ -199,7 +199,7 @@ private fun WeatherSuccessContent(
                 CenterAlignedTopAppBar(
                     title = {
                         Text(
-                            text = place.name,
+                            text = placeName,
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Medium,
                             color = MaterialTheme.colorScheme.onSurface
@@ -273,7 +273,7 @@ private fun WeatherSuccessContent(
                         ) {
                             CurrentWeatherCard(
                                 weather = weather,
-                                place.name = place.name,
+                                placeName = placeName,
                                 onNavigateToPlace = onNavigateToPlace
                             )
                         }
