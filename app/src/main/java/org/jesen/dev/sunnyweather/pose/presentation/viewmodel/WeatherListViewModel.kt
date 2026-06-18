@@ -1,7 +1,7 @@
 package org.jesen.dev.sunnyweather.pose.presentation.viewmodel
 
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewmodelScope
+import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -46,7 +46,7 @@ class WeatherListViewModel(
         }
 
         viewModelScope.launch {
-            _weatherStates.value = _weatherStates.value + (place.name to UiState.Loading)
+            _weatherStates.value += (place.name to UiState.Loading)
             
             val result = fetchWeatherUseCase(place.location.lng, place.location.lat)
             
