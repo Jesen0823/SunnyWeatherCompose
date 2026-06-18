@@ -14,6 +14,7 @@
  */
 package org.jesen.dev.sunnyweather.pose.di
 
+import android.app.Application
 import android.content.Context
 import android.util.Log
 import androidx.activity.result.ActivityResultLauncher
@@ -28,14 +29,17 @@ import org.jesen.dev.sunnyweather.pose.utils.PermissionConstants
 object AppModule {
     private val TAG = "AppModule"
     
-    lateinit var context: Context
+    lateinit var application: Application
     private var permissionLauncher: ActivityResultLauncher<String>? = null
     private var permissionCallback: ((Boolean) -> Unit)? = null
 
-    fun init(context: Context) {
-        Log.d(TAG, "init() called with context: ${context.packageName}")
-        AppModule.context = context
+    fun init(application: Application) {
+        Log.d(TAG, "init() called with application: ${application.packageName}")
+        AppModule.application = application
     }
+
+    val context: Context
+        get() = application.applicationContext
 
     fun registerPermissionLauncher(launcher: ActivityResultLauncher<String>) {
         Log.d(TAG, "registerPermissionLauncher() called")

@@ -43,8 +43,8 @@ class AppViewModelFactory(
                     getIsPlaceSavedUseCase,
                     getSavedPlaceListUseCase
                 ) as T
-            modelClass.isAssignableFrom(WeatherViewModel::class.java) ->
-                WeatherViewModel(fetchWeatherUseCase) as T
+            modelClass.isAssignableFrom(WeatherViewModel::class.java) ->        
+                WeatherViewModel(fetchWeatherUseCase, savePlaceUseCase, getIsPlaceSavedUseCase) as T
             modelClass.isAssignableFrom(SettingsViewModel::class.java) ->
                 SettingsViewModel(clearPlaceUseCase) as T
             modelClass.isAssignableFrom(PermissionViewModel::class.java) ->

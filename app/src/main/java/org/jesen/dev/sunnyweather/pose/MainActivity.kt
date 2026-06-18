@@ -3,12 +3,11 @@
  * 
  * 主要职责：
  * - 作为 Android 应用的入口 Activity
- * - 初始化依赖注入模块
  * - 注册权限请求回调
  * - 设置 Compose 内容
  * 
  * 技术要点：
- * - 调用 AppModule.init() 初始化应用依赖
+ * - 依赖注入模块由 SunnyWeatherApplication 初始化
  * - 注册 ActivityResultLauncher 处理定位权限请求结果
  * - 通过 setContent 设置 SunnyWeatherComposeTheme 和 SunnyWeatherApp
  * - 启用 edge-to-edge 全屏模式
@@ -35,9 +34,6 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         Log.d(TAG, "onCreate() called")
         enableEdgeToEdge()
-        
-        Log.d(TAG, "Initializing AppModule")
-        AppModule.init(applicationContext)
         
         Log.d(TAG, "Registering permission launcher")
         val permissionLauncher = registerForActivityResult(

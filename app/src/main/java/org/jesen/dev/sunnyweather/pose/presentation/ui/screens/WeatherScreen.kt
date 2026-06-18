@@ -66,6 +66,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import org.jesen.dev.sunnyweather.pose.domain.model.Place
 import org.jesen.dev.sunnyweather.pose.domain.model.Sky
 import org.jesen.dev.sunnyweather.pose.domain.model.Weather
 import org.jesen.dev.sunnyweather.pose.presentation.common.UiState
@@ -83,9 +84,7 @@ import org.jesen.dev.sunnyweather.pose.presentation.viewmodel.WeatherViewModel
 @Composable
 fun WeatherScreen(
     viewModel: WeatherViewModel,
-    placeName: String,
-    lng: String,
-    lat: String,
+    place: Place,
     onNavigateToPlace: () -> Unit,
     onNavigateToSettings: () -> Unit = {}
 ) {
@@ -93,13 +92,13 @@ fun WeatherScreen(
     
     var isRefreshing by remember { mutableStateOf(false) }
     
-    LaunchedEffect(lng, lat) {
-        viewModel.fetchWeather(lng, lat)
+    LaunchedEffect(place.location.lng, place.location.lat) {
+        viewModel.fetchWeather(place.location.lng, place.location.lat, place, saveWeatherPlace = true)
     }
     
     LaunchedEffect(isRefreshing) {
         if (isRefreshing) {
-            viewModel.fetchWeather(lng, lat)
+            viewModel.fetchWeather(place.location.lng, place.location.lat)
             isRefreshing = false
         }
     }
@@ -121,7 +120,7 @@ fun WeatherScreen(
             )
             is UiState.Success -> WeatherSuccessContent(
                 weather = state.data,
-                placeName = placeName,
+                place.name = place.name,
                 isRefreshing = isRefreshing,
                 onRefresh = { isRefreshing = true },
                 onNavigateToPlace = onNavigateToPlace,
@@ -170,7 +169,7 @@ private fun WeatherLoadingState() {
 @Composable
 private fun WeatherSuccessContent(
     weather: Weather,
-    placeName: String,
+    place.name: String,
     isRefreshing: Boolean,
     onRefresh: () -> Unit,
     onNavigateToPlace: () -> Unit,
@@ -200,7 +199,7 @@ private fun WeatherSuccessContent(
                 CenterAlignedTopAppBar(
                     title = {
                         Text(
-                            text = placeName,
+                            text = place.name,
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Medium,
                             color = MaterialTheme.colorScheme.onSurface
@@ -274,7 +273,7 @@ private fun WeatherSuccessContent(
                         ) {
                             CurrentWeatherCard(
                                 weather = weather,
-                                placeName = placeName,
+                                place.name = place.name,
                                 onNavigateToPlace = onNavigateToPlace
                             )
                         }

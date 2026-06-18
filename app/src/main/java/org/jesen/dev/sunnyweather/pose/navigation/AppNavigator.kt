@@ -58,10 +58,8 @@ fun AppNavigator(
                     if (place != null) {
                         WeatherScreen(
                             viewModel = weatherViewModel,
-                            placeName = place.name,
-                            lng = place.location.lng,
-                            lat = place.location.lat,
-                            onNavigateToPlace = { backStack.add(PlaceKey) },
+                            place = place,
+                            onNavigateToPlace = { backStack.add(PlaceKey) },    
                             onNavigateToSettings = { backStack.add(SettingsKey) }
                         )
                     }
