@@ -13,3 +13,9 @@
 .externalNativeBuild
 .cxx
 local.properties
+
+# 签名文件 - 绝对不要提交到版本控制
+*.keystore
+*.jks
+*.pkcs12
+*.p12

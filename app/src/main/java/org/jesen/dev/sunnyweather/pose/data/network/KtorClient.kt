@@ -4,6 +4,7 @@
  * 主要职责：
  * - 初始化和配置 Ktor HTTP 客户端
  * - 提供统一的网络请求基础配置
+ * - 支持多个 Base URL（彩云天气、高德地图）
  * 
  * 技术要点：
  * - 使用 OkHttp 作为底层引擎，提供稳定的 HTTP 客户端实现
@@ -11,6 +12,7 @@
  * - 设置超时时间（请求30秒，连接10秒，socket30秒）
  * - 启用日志记录，便于调试网络请求
  * - 使用 lazy 延迟初始化，避免不必要的资源消耗
+ * - 使用 EnvironmentConfig 获取 Base URL 配置
  */
 package org.jesen.dev.sunnyweather.pose.data.network
 
@@ -26,17 +28,16 @@ import kotlinx.serialization.json.Json
 import java.util.concurrent.TimeUnit
 
 object KtorClient {
-    private const val BASE_URL = "https://api.caiyunapp.com/"
-    private const val TOKEN = "cM8HddCKF2Ns1Ccm"
-    
+    private const val DEFAULT_BASE_URL = "https://api.caiyunapp.com/"
+
     val instance: HttpClient by lazy {
         HttpClient(OkHttp) {
             expectSuccess = true
-            
+
             defaultRequest {
-                url(BASE_URL)
+                url(EnvironmentConfig.getCaiyunBaseUrl().ifEmpty { DEFAULT_BASE_URL })
             }
-            
+
             install(ContentNegotiation) {
                 json(Json {
                     prettyPrint = true
@@ -46,17 +47,17 @@ object KtorClient {
                     coerceInputValues = true
                 })
             }
-            
+
             install(HttpTimeout) {
                 requestTimeoutMillis = 30_000
                 connectTimeoutMillis = 10_000
                 socketTimeoutMillis = 30_000
             }
-            
+
             install(Logging) {
                 level = LogLevel.ALL
             }
-            
+
             engine {
                 config {
                     connectTimeout(30, TimeUnit.SECONDS)
@@ -66,6 +67,6 @@ object KtorClient {
             }
         }
     }
-    
-    fun getBaseUrl(): String = BASE_URL
+
+    fun getBaseUrl(): String = EnvironmentConfig.getCaiyunBaseUrl().ifEmpty { DEFAULT_BASE_URL }
 }

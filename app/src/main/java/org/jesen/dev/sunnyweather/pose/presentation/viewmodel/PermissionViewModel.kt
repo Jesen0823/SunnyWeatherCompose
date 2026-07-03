@@ -161,8 +161,8 @@ class PermissionViewModel(
                             ),
                             address = "当前定位地址"
                         )
-                        _locationResult.value = place
                         saveCurrentLocation(place)
+                        _locationResult.value = place
                         Log.d(TAG, "Location result updated, navigating to weather screen")
                     }
                     is LocationHelper.LocationStatus.Error -> {
@@ -186,12 +186,10 @@ class PermissionViewModel(
         }
     }
     
-    fun saveCurrentLocation(place: Place) {
+    suspend fun saveCurrentLocation(place: Place) {
         Log.d(TAG, "saveCurrentLocation() called: ${place.name}")
-        viewModelScope.launch {
-            savePlaceUseCase(place)
-            Log.d(TAG, "saveCurrentLocation() - place saved successfully")
-        }
+        savePlaceUseCase(place)
+        Log.d(TAG, "saveCurrentLocation() - place saved successfully")
     }
     
     fun clearLocationResult() {

@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import org.jesen.dev.sunnyweather.pose.data.network.ApiResult
 import org.jesen.dev.sunnyweather.pose.domain.model.Place
@@ -102,6 +103,10 @@ class PlaceViewModel(
     fun savePlace(place: Place) {
         viewModelScope.launch {
             savePlaceUseCase(place)
+            val updatedList = getSavedPlaceListUseCase().first()
+            _savedPlaceList.value = updatedList
+            _isPlaceSaved.value = updatedList.isNotEmpty()
+            Log.d("PlaceViewModel", "savePlace() - updated savedPlaceList: ${updatedList.size} places")
         }
     }
 

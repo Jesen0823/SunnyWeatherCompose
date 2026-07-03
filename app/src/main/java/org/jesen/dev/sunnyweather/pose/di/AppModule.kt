@@ -1,16 +1,3 @@
-package org.jesen.dev.sunnyweather.pose.di
-
-import android.app.Application
-import android.content.Context
-import androidx.activity.result.ActivityResultLauncher
-import org.jesen.dev.sunnyweather.pose.data.network.WeatherApiService
-import org.jesen.dev.sunnyweather.pose.data.repository.WeatherRepository
-import org.jesen.dev.sunnyweather.pose.data.store.PlaceStore
-import org.jesen.dev.sunnyweather.pose.domain.usecase.*
-import org.jesen.dev.sunnyweather.pose.ui.locale.LocaleManager
-import org.jesen.dev.sunnyweather.pose.ui.theme.ThemeManager
-import org.jesen.dev.sunnyweather.pose.utils.PermissionConstants
-
 /**
  * 应用依赖注入模块
  *
@@ -19,6 +6,7 @@ import org.jesen.dev.sunnyweather.pose.utils.PermissionConstants
  * - 提供 Application 上下文和权限管理
  * - 创建并缓存 UseCase、Repository、Store 等实例
  * - 提供 ViewModel 工厂
+ * - 初始化环境配置
  *
  * 技术要点：
  * - 使用 object 单例模式
@@ -26,16 +14,33 @@ import org.jesen.dev.sunnyweather.pose.utils.PermissionConstants
  * - 使用 lazy 延迟初始化，避免提前创建不必要的实例
  * - 管理权限请求的回调机制
  * - 所有依赖通过属性提供，便于测试和替换
+ * - 依赖倒置：使用接口而不是具体实现
  */
+package org.jesen.dev.sunnyweather.pose.di
+
+import android.app.Application
+import android.content.Context
+import androidx.activity.result.ActivityResultLauncher
+import org.jesen.dev.sunnyweather.pose.data.network.EnvironmentConfig
+import org.jesen.dev.sunnyweather.pose.data.network.WeatherApiService
+import org.jesen.dev.sunnyweather.pose.data.repository.WeatherRepositoryImpl
+import org.jesen.dev.sunnyweather.pose.data.store.PlaceStore
+import org.jesen.dev.sunnyweather.pose.domain.repository.WeatherRepository
+import org.jesen.dev.sunnyweather.pose.domain.usecase.*
+import org.jesen.dev.sunnyweather.pose.ui.locale.LocaleManager
+import org.jesen.dev.sunnyweather.pose.ui.theme.ThemeManager
+import org.jesen.dev.sunnyweather.pose.utils.PermissionConstants
+
 object AppModule {
     private val TAG = "AppModule"
-    
+
     lateinit var application: Application
     private var permissionLauncher: ActivityResultLauncher<String>? = null
     private var permissionCallback: ((Boolean) -> Unit)? = null
 
     fun init(application: Application) {
         AppModule.application = application
+        EnvironmentConfig.init(application)
     }
 
     val context: Context
@@ -64,7 +69,7 @@ object AppModule {
     }
 
     val weatherRepository: WeatherRepository by lazy {
-        WeatherRepository(weatherApiService, placeStore)
+        WeatherRepositoryImpl(weatherApiService, placeStore)
     }
 
     val searchPlacesUseCase: SearchPlacesUseCase by lazy {

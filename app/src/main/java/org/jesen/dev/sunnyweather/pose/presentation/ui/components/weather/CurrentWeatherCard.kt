@@ -4,12 +4,14 @@
  * 主要职责：
  * - 显示实时天气信息（温度、天气状况、空气质量）
  * - 实现点击缩放和动画效果
+ * - 通过 LocalProvider 获取天气和城市数据
  * 
  * 技术要点：
  * - 使用 animateFloatAsState 实现温度文字和图标的缩放动画
  * - 使用 animateDpAsState 实现卡片阴影高度变化
  * - 根据 AQI 值动态设置空气质量颜色（绿/黄/橙/红/紫）
  * - 点击城市名称可跳转到城市选择页面
+ * - 使用 LaunchedEffect 管理动画生命周期（启动动画）
  */
 package org.jesen.dev.sunnyweather.pose.presentation.ui.components.weather
 
@@ -21,6 +23,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -36,14 +39,16 @@ import androidx.compose.ui.graphics.Color.Companion.Green
 import androidx.compose.ui.graphics.Color.Companion.Yellow
 import androidx.compose.ui.graphics.Color.Companion.Red
 import org.jesen.dev.sunnyweather.pose.domain.model.Sky
-import org.jesen.dev.sunnyweather.pose.domain.model.Weather
+import org.jesen.dev.sunnyweather.pose.presentation.ui.components.requireLocalPlace
+import org.jesen.dev.sunnyweather.pose.presentation.ui.components.requireLocalWeather
 
 @Composable
 fun CurrentWeatherCard(
-    weather: Weather,
-    placeName: String,
     onNavigateToPlace: () -> Unit
 ) {
+    val weather = requireLocalWeather()
+    val place = requireLocalPlace()
+    
     val sky = Sky.getSky(weather.realtime.skycon)
     val realtime = weather.realtime
     
@@ -59,6 +64,46 @@ fun CurrentWeatherCard(
         animationSpec = TweenSpec(150),
         label = "card-elevation"
     )
+    
+    val tempScale = remember { Animatable(0f) }
+    val iconScale = remember { Animatable(0.5f) }
+
+    /**
+     * LaunchedEffect - 启动入场动画（管理动画生命周期）
+     * 
+     * 性能优化原理 - 动画生命周期管理：
+     * - Animatable 是 Compose 的动画状态对象，需要在协程中执行 animateTo
+     * - LaunchedEffect 提供了与组件生命周期绑定的协程作用域
+     * - 当组件进入组合时，LaunchedEffect 启动协程，执行动画
+     * - 当组件退出组合时，LaunchedEffect 自动取消协程，停止动画
+     * - 这避免了组件销毁后动画仍然运行的内存泄漏问题
+     * 
+     * LaunchedEffect 的 key 说明：
+     * - key = Unit 表示只在组件首次进入组合时执行一次
+     * - 如果 key 是其他值（如 weather），则当 key 变化时会重启协程
+     * - 对于入场动画，使用 Unit 确保只播放一次
+     * 
+     * 对比示例：
+     * // 未优化：没有正确管理动画生命周期
+     * // 组件销毁后动画可能继续运行
+     * 
+     * // 优化后：使用 LaunchedEffect 管理动画
+     * val animatable = remember { Animatable(0f) }
+     * LaunchedEffect(Unit) {
+     *     animatable.animateTo(1f)
+     * }
+     * 
+     * 场景说明：
+     * - 当组件进入组合时，启动温度和图标的缩放动画
+     * - animateTo 是 suspend 函数，必须在协程中调用（LaunchedEffect 提供协程作用域）
+     * - 当组件退出组合时，LaunchedEffect 中的协程会自动取消，停止动画
+     */
+    LaunchedEffect(Unit) {
+        // 启动温度文字的缩放动画（从0到1，800ms）
+        tempScale.animateTo(1f, tween(800, easing = FastOutSlowInEasing))
+        // 启动天气图标的缩放动画（从0.5到1，600ms）
+        iconScale.animateTo(1f, tween(600, easing = FastOutSlowInEasing))
+    }
     
     Surface(
         modifier = Modifier
@@ -79,7 +124,7 @@ fun CurrentWeatherCard(
                 interactionSource = interactionSource
             ) {
                 Text(
-                    text = placeName,
+                    text = place.name,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = Color.Black.copy(alpha = 0.8f)
@@ -90,11 +135,6 @@ fun CurrentWeatherCard(
             Row(
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                val tempScale = remember { Animatable(0f) }
-                androidx.compose.runtime.LaunchedEffect(Unit) {
-                    tempScale.animateTo(1f, tween(800, easing = FastOutSlowInEasing))
-                }
-                
                 Text(
                     text = "${realtime.temperature.toInt()}",
                     fontSize = 72.sp,
@@ -109,10 +149,6 @@ fun CurrentWeatherCard(
                 )
                 Spacer(modifier = Modifier.width(20.dp))
                 
-                val iconScale = remember { Animatable(0.5f) }
-                androidx.compose.runtime.LaunchedEffect(Unit) {
-                    iconScale.animateTo(1f, tween(600, easing = FastOutSlowInEasing))
-                }
                 Image(
                     painter = painterResource(id = sky.icon),
                     contentDescription = sky.info,

@@ -1,4 +1,5 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import java.util.Properties
 
 plugins {
     alias(libs.plugins.android.application)
@@ -10,6 +11,36 @@ plugins {
 android {
     namespace = "org.jesen.dev.sunnyweather.pose"
     compileSdk = 37
+
+    signingConfigs {
+        val keystoreProperties = Properties().apply {
+            val localPropertiesFile = rootProject.file("local.properties")
+            if (localPropertiesFile.exists()) {
+                load(localPropertiesFile.inputStream())
+            }
+        }
+        
+        create("release") {
+            val keystoreFile = keystoreProperties.getProperty("keystore.file")
+            val projectAlias = "sunnyweather"
+            if (keystoreFile?.isNotEmpty() == true) {
+                storeFile = file(keystoreFile)
+                storePassword = keystoreProperties.getProperty("keystore.password") ?: ""
+                keyAlias = keystoreProperties.getProperty("keystore.$projectAlias.alias") ?: ""
+                keyPassword = keystoreProperties.getProperty("keystore.$projectAlias.keyPassword") ?: ""
+            }
+        }
+        
+        named("debug") {
+            val debugKeystoreFile = keystoreProperties.getProperty("keystore.debug.file")
+            if (debugKeystoreFile?.isNotEmpty() == true) {
+                storeFile = file(debugKeystoreFile)
+                storePassword = keystoreProperties.getProperty("keystore.debug.password") ?: ""
+                keyAlias = keystoreProperties.getProperty("keystore.debug.alias") ?: ""
+                keyPassword = keystoreProperties.getProperty("keystore.debug.keyPassword") ?: ""
+            }
+        }
+    }
 
     defaultConfig {
         applicationId = "org.jesen.dev.sunnyweather.pose"
@@ -23,11 +54,16 @@ android {
 
     buildTypes {
         release {
+            signingConfig = signingConfigs.getByName("release")
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+        }
+        
+        debug {
+            signingConfig = signingConfigs.getByName("debug")
         }
     }
     compileOptions {

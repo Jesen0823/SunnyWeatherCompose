@@ -12,11 +12,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.text.font.FontWeight
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.delay
 import org.jesen.dev.sunnyweather.pose.R
 import org.jesen.dev.sunnyweather.pose.domain.model.Place
 import org.jesen.dev.sunnyweather.pose.presentation.ui.components.search.PlaceList
@@ -33,12 +29,12 @@ import org.jesen.dev.sunnyweather.pose.presentation.common.UiState
  * - 处理加载状态和错误状态
  *
  * 技术要点：
- * - 使用 Channel 和 debounce(500ms) 实现搜索防抖
+ * - 使用 rememberCoroutineScope 和 delay 实现搜索防抖（500ms）
+ * - 使用单个 LaunchedEffect 处理搜索逻辑，避免多个 LaunchedEffect 嵌套
+ * - 使用 derivedStateOf 计算显示状态
  * - 根据 placesState 显示默认状态、加载状态、错误状态或搜索结果
  * - 调用 SearchBar 和 PlaceList 组件
- * - 使用 LaunchedEffect 监听搜索关键词变化
  */
-@OptIn(kotlinx.coroutines.FlowPreview::class)
 @Composable
 fun PlaceScreen(
     viewModel: PlaceViewModel,
@@ -47,24 +43,65 @@ fun PlaceScreen(
     var searchQuery by remember { mutableStateOf("") }
     val placesState: State<UiState<List<Place>>> = viewModel.placesState.collectAsState()
     
-    val searchChannel = remember { Channel<String>(Channel.CONFLATED) }
-    val searchFlow: Flow<String> = remember { 
-        @OptIn(kotlinx.coroutines.FlowPreview::class)
-        searchChannel.receiveAsFlow().debounce(500) 
-    }
-    
-    LaunchedEffect(searchQuery) {
-        searchChannel.trySend(searchQuery)
-    }
-    
-    LaunchedEffect(Unit) {
-        searchFlow.collect { query ->
-            if (query.isNotEmpty()) {
-                viewModel.searchPlaces(query)
-            }
+    /**
+     * 使用 derivedStateOf 计算搜索显示状态
+     * 
+     * 场景说明：
+     * - 是否显示加载状态取决于 placesState 和 searchQuery
+     * - derivedStateOf 缓存计算结果，避免每次重组都重新计算
+     */
+    val showLoading by remember(placesState.value, searchQuery) {
+        derivedStateOf {
+            placesState.value is UiState.Loading && searchQuery.isNotEmpty()
         }
     }
-    
+
+    /**
+     * 使用 LaunchedEffect 处理搜索逻辑（实现搜索防抖）
+     * 
+     * 性能优化原理 - 搜索防抖：
+     * - 用户输入过程中，每次按键都会触发 searchQuery 变化
+     * - 如果每次变化都发起网络请求，会造成大量不必要的请求
+     * - 防抖策略：等待用户停止输入一段时间（500ms）后再发起请求
+     * - 使用 delay(500) 实现等待，如果等待期间 searchQuery 变化，协程会被取消
+     * 
+     * LaunchedEffect 生命周期：
+     * - 当 searchQuery 变化时，旧的 LaunchedEffect 协程会被取消
+     * - 新的 LaunchedEffect 会启动新协程，重新开始等待
+     * - 这确保了只有用户停止输入 500ms 后，才会发起真正的搜索请求
+     * 
+     * 对比示例：
+     * // 未优化：每次输入都发起请求
+     * TextField(value = query, onValueChange = {
+     *     query = it
+     *     viewModel.searchPlaces(it)
+     * })
+     * 
+     * // 优化后：防抖搜索
+     * var searchQuery by remember { mutableStateOf("") }
+     * LaunchedEffect(searchQuery) {
+     *     if (searchQuery.isNotEmpty()) {
+     *         delay(500)
+     *         viewModel.searchPlaces(searchQuery)
+     *     }
+     * }
+     * 
+     * 场景说明：
+     * - 当 searchQuery 变化时，启动协程进行防抖搜索
+     * - 使用 delay(500) 实现防抖，避免用户输入过程中频繁发起网络请求
+     * - 如果在防抖期间 searchQuery 再次变化，之前的协程会被取消
+     * - 只在 searchQuery 不为空时发起搜索请求
+     */
+    LaunchedEffect(searchQuery) {
+        if (searchQuery.isNotEmpty()) {
+            // 防抖延迟 500ms：等待用户停止输入后再发起请求
+            // 如果用户继续输入，searchQuery 会再次变化，此协程会被取消
+            delay(500)
+            // 发起搜索请求
+            viewModel.searchPlaces(searchQuery)
+        }
+    }
+
     Column(modifier = Modifier.fillMaxSize()) {
         SearchBar(
             query = searchQuery,
@@ -72,7 +109,7 @@ fun PlaceScreen(
         )
         
         when (val state = placesState.value) {
-            is UiState.Loading -> if (searchQuery.isNotEmpty()) {
+            is UiState.Loading -> if (showLoading) {
                 LoadingState()
             } else {
                 DefaultState()
