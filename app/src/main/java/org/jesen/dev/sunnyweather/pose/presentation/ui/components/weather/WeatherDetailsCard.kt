@@ -35,6 +35,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import org.jesen.dev.sunnyweather.pose.presentation.ui.components.requireLocalWeather
+import org.jesen.dev.sunnyweather.pose.presentation.ui.components.widget.WeatherMainInfoCard
 
 @Composable
 fun WeatherDetailsCard() {
@@ -170,40 +171,17 @@ fun WeatherDetailsCard() {
                                         easing = FastOutSlowInEasing,
                                         delay = index * 50
                                     )
-                                ) + fadeIn(animationSpec = TweenSpec(300))
+                                ) + fadeIn(animationSpec = TweenSpec(300)),
+                                modifier = Modifier.weight(1f)
                             ) {
-                                Surface(
-                                    modifier = Modifier
-                                        .weight(1f)
-                                        .clip(RoundedCornerShape(16.dp)),
-                                    color = item.bgColor,
-                                    shadowElevation = 0.dp
-                                ) {
-                                    Column(
-                                        modifier = Modifier.padding(16.dp),
-                                        horizontalAlignment = Alignment.CenterHorizontally
-                                    ) {
-                                        Icon(
-                                            imageVector = item.icon,
-                                            contentDescription = item.label,
-                                            tint = item.tint,
-                                            modifier = Modifier.size(28.dp)
-                                        )
-                                        Spacer(modifier = Modifier.height(8.dp))
-                                        Text(
-                                            text = item.value,
-                                            style = MaterialTheme.typography.titleSmall,
-                                            fontWeight = FontWeight.Bold,
-                                            color = Color.Black.copy(alpha = 0.8f)
-                                        )
-                                        Spacer(modifier = Modifier.height(4.dp))
-                                        Text(
-                                            text = item.label,
-                                            style = MaterialTheme.typography.labelSmall,
-                                            color = Color.Black.copy(alpha = 0.5f)
-                                        )
-                                    }
-                                }
+                                WeatherMainInfoCard(
+                                    icon = item.icon,
+                                    label = item.label,
+                                    value = item.value,
+                                    tint = item.tint,
+                                    bgColor = item.bgColor,
+                                    modifier = Modifier.fillMaxWidth()
+                                )
                             }
                         }
                     }

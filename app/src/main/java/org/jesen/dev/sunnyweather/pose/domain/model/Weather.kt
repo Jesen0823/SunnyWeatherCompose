@@ -384,13 +384,13 @@ data class HourlySkyconItem(
 /**
  * 小时级风速数据项（彩云天气API v2.6格式）
  * 
- * 与温度等数据不同，风速数据包含speed和direction字段
+ * API返回的speed和direction都是数值类型，不是对象
  */
 @Serializable
 data class HourlyWindItem(
     val datetime: String,
-    val speed: Wind,
-    val direction: Wind
+    val speed: Float,
+    val direction: Float
 )
 
 /**

@@ -11,7 +11,7 @@
  * - 使用CompositionLocal获取天气数据（requireLocalWeather）
  * - 使用Column+Row(chunked(2))实现2列网格布局展示所有污染物
  * - 根据AQI等级设置不同的颜色和背景
- * - 使用LinearProgressIndicator展示AQI进度条
+ * - 使用自定义AqiProgressBar展示AQI进度条
  * - 使用AnimatedVisibility实现入场动画
  */
 package org.jesen.dev.sunnyweather.pose.presentation.ui.components.weather
@@ -34,6 +34,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import org.jesen.dev.sunnyweather.pose.presentation.ui.components.requireLocalWeather
+import org.jesen.dev.sunnyweather.pose.presentation.ui.components.widget.AirQualityInfoCard
 
 @Composable
 fun AirQualityCard() {
@@ -59,7 +60,6 @@ fun AirQualityCard() {
 
     val (aqiLevel, aqiColor, bgColor) = getAqiInfo(airQuality.aqi.chn)
     val aqiValue = airQuality.aqi.chn.toInt()
-    val aqiProgress = (aqiValue.coerceIn(0, 500) / 500f).coerceIn(0f, 1f)
 
     val airQualityItems = listOf(
         AirQualityItem(
@@ -214,39 +214,16 @@ fun AirQualityCard() {
                                         easing = FastOutSlowInEasing,
                                         delay = (index + 2) * 50
                                     )
-                                ) + fadeIn(animationSpec = TweenSpec(300))
+                                ) + fadeIn(animationSpec = TweenSpec(300)),
+                                modifier = Modifier.weight(1f)
                             ) {
-                                Surface(
-                                    modifier = Modifier
-                                        .weight(1f)
-                                        .clip(RoundedCornerShape(12.dp)),
-                                    color = Color.White.copy(alpha = 0.8f),
-                                    shadowElevation = 2.dp
-                                ) {
-                                    Column(
-                                        modifier = Modifier.padding(12.dp),
-                                        horizontalAlignment = Alignment.CenterHorizontally
-                                    ) {
-                                        Text(
-                                            text = item.label,
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = Color.Black.copy(alpha = 0.5f)
-                                        )
-                                        Spacer(modifier = Modifier.height(4.dp))
-                                        Text(
-                                            text = "${item.value}${item.unit}",
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            fontWeight = FontWeight.Medium,
-                                            color = Color.Black.copy(alpha = 0.8f)
-                                        )
-                                        Spacer(modifier = Modifier.height(4.dp))
-                                        Text(
-                                            text = item.description,
-                                            style = MaterialTheme.typography.labelSmall,
-                                            color = Color.Black.copy(alpha = 0.4f)
-                                        )
-                                    }
-                                }
+                                AirQualityInfoCard(
+                                    label = item.label,
+                                    value = item.value,
+                                    unit = item.unit,
+                                    description = item.description,
+                                    modifier = Modifier.fillMaxWidth()
+                                )
                             }
                         }
                     }

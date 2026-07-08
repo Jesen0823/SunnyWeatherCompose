@@ -80,8 +80,8 @@ object MockWeatherService {
                     precipitation = List(24) { HourlyPrecipitationItem(datetime = "2026-07-07T${it.toString().padStart(2, '0')}:00+08:00", value = 0f, probability = 0f) },
                     wind = List(24) { HourlyWindItem(
                         datetime = "2026-07-07T${it.toString().padStart(2, '0')}:00+08:00",
-                        speed = Wind(speed = 3f + it * 0.1f, direction = 180f),
-                        direction = Wind(speed = 180f, direction = 0f)
+                        speed = 3f + it * 0.1f,
+                        direction = 180f
                     )}
                 )
             )
