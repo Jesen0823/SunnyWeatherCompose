@@ -40,9 +40,6 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import org.jesen.dev.sunnyweather.pose.domain.model.HourlyPrecipitationItem
-import org.jesen.dev.sunnyweather.pose.domain.model.HourlySkyconItem
-import org.jesen.dev.sunnyweather.pose.domain.model.HourlyTemperatureItem
 import org.jesen.dev.sunnyweather.pose.domain.model.Sky
 import org.jesen.dev.sunnyweather.pose.presentation.ui.components.requireLocalWeather
 

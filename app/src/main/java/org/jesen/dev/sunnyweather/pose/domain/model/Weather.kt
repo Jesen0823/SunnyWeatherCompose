@@ -15,7 +15,6 @@
 package org.jesen.dev.sunnyweather.pose.domain.model
 
 import kotlinx.serialization.Serializable
-import java.util.Date
 
 /**
  * AQI（空气质量指数）
@@ -165,7 +164,7 @@ data class Realtime(
 @Serializable
 data class RealtimeResponse(
     val status: String,
-    val result: RealtimeResponse.RealtimeResult
+    val result: RealtimeResult
 ) {
     /**
      * 实时天气结果
@@ -341,7 +340,7 @@ data class Daily(
 @Serializable
 data class DailyResponse(
     val status: String,
-    val result: DailyResponse.DailyResult
+    val result: DailyResult
 ) {
     /**
      * 每日预报结果
@@ -439,7 +438,7 @@ data class Hourly(
 @Serializable
 data class HourlyResponse(
     val status: String,
-    val result: HourlyResponse.HourlyResult
+    val result: HourlyResult
 ) {
     @Serializable
     data class HourlyResult(
