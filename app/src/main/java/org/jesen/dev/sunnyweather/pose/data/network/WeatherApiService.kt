@@ -24,6 +24,7 @@ import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.request.parameter
 import org.jesen.dev.sunnyweather.pose.domain.model.DailyResponse
+import org.jesen.dev.sunnyweather.pose.domain.model.HourlyResponse
 import org.jesen.dev.sunnyweather.pose.domain.model.PlaceResponse
 import org.jesen.dev.sunnyweather.pose.domain.model.RealtimeResponse
 
@@ -63,6 +64,32 @@ class WeatherApiService {
 
             val rawBody = response.body<String>()
             Log.d("WeatherApiService", "getDailyWeather raw response: $rawBody")
+
+            response.body()
+        }
+    }
+
+    /**
+     * 获取小时级预报数据（对应彩云 API /hourly 接口）
+     * 
+     * 获取未来24小时的逐小时预报，包括温度、降水、风速等
+     * 更新频率：近时效5-15分钟，其余1小时级
+     * 
+     * @param lng 经度
+     * @param lat 纬度
+     * @return 小时级预报响应数据
+     */
+    suspend fun getHourlyWeather(lng: String, lat: String): ApiResult<HourlyResponse> {
+        if (ApiConfig.USE_MOCK_DATA) {
+            return ApiResult.Success(MockWeatherService.getMockHourlyWeather())
+        }
+
+        return safeApiCall {
+            val path = "v2.6/${EnvironmentConfig.getAppKey()}/$lng,$lat/hourly"
+            val response = executeSignedRequest(path)
+
+            val rawBody = response.body<String>()
+            Log.d("WeatherApiService", "getHourlyWeather raw response: $rawBody")
 
             response.body()
         }

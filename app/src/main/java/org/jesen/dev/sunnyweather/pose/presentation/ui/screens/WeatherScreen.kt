@@ -62,6 +62,10 @@ import org.jesen.dev.sunnyweather.pose.presentation.ui.components.PullToRefresh
 import org.jesen.dev.sunnyweather.pose.presentation.ui.components.weather.CurrentWeatherCard
 import org.jesen.dev.sunnyweather.pose.presentation.ui.components.weather.ForecastSection
 import org.jesen.dev.sunnyweather.pose.presentation.ui.components.weather.LifeIndexSection
+import org.jesen.dev.sunnyweather.pose.presentation.ui.components.weather.WeatherDetailsCard
+import org.jesen.dev.sunnyweather.pose.presentation.ui.components.weather.SunriseSunsetCard
+import org.jesen.dev.sunnyweather.pose.presentation.ui.components.weather.AirQualityCard
+import org.jesen.dev.sunnyweather.pose.presentation.ui.components.weather.HourlyForecastSection
 import org.jesen.dev.sunnyweather.pose.presentation.ui.widget.EmptyContentView
 
 /**
@@ -375,11 +379,79 @@ private fun WeatherSuccessContent(
                             enter = slideInVertically(
                                 initialOffsetY = { 60 },
                                 animationSpec = tween(
-                                    durationMillis = 600,
+                                    durationMillis = 500,
                                     easing = FastOutSlowInEasing,
-                                    delayMillis = 150
+                                    delayMillis = 100
                                 )
-                            ) + fadeIn(animationSpec = tween(500, delayMillis = 150))
+                            ) + fadeIn(animationSpec = tween(400, delayMillis = 100))
+                        ) {
+                            SunriseSunsetCard()
+                        }
+                        Spacer(modifier = Modifier.height(20.dp))
+                    }
+
+                    item {
+                        AnimatedVisibility(
+                            visible = true,
+                            enter = slideInVertically(
+                                initialOffsetY = { 60 },
+                                animationSpec = tween(
+                                    durationMillis = 500,
+                                    easing = FastOutSlowInEasing,
+                                    delayMillis = 200
+                                )
+                            ) + fadeIn(animationSpec = tween(400, delayMillis = 200))
+                        ) {
+                            WeatherDetailsCard()
+                        }
+                        Spacer(modifier = Modifier.height(20.dp))
+                    }
+
+                    item {
+                        AnimatedVisibility(
+                            visible = true,
+                            enter = slideInVertically(
+                                initialOffsetY = { 60 },
+                                animationSpec = tween(
+                                    durationMillis = 500,
+                                    easing = FastOutSlowInEasing,
+                                    delayMillis = 300
+                                )
+                            ) + fadeIn(animationSpec = tween(400, delayMillis = 300))
+                        ) {
+                            AirQualityCard()
+                        }
+                        Spacer(modifier = Modifier.height(20.dp))
+                    }
+
+                    item {
+                        AnimatedVisibility(
+                            visible = true,
+                            enter = slideInVertically(
+                                initialOffsetY = { 60 },
+                                animationSpec = tween(
+                                    durationMillis = 500,
+                                    easing = FastOutSlowInEasing,
+                                    delayMillis = 400
+                                )
+                            ) + fadeIn(animationSpec = tween(400, delayMillis = 400))
+                        ) {
+                            HourlyForecastSection()
+                        }
+                        Spacer(modifier = Modifier.height(20.dp))
+                    }
+
+                    item {
+                        AnimatedVisibility(
+                            visible = true,
+                            enter = slideInVertically(
+                                initialOffsetY = { 60 },
+                                animationSpec = tween(
+                                    durationMillis = 500,
+                                    easing = FastOutSlowInEasing,
+                                    delayMillis = 500
+                                )
+                            ) + fadeIn(animationSpec = tween(400, delayMillis = 500))
                         ) {
                             ForecastSection()
                         }
@@ -392,11 +464,11 @@ private fun WeatherSuccessContent(
                             enter = slideInVertically(
                                 initialOffsetY = { 60 },
                                 animationSpec = tween(
-                                    durationMillis = 600,
+                                    durationMillis = 500,
                                     easing = FastOutSlowInEasing,
-                                    delayMillis = 300
+                                    delayMillis = 600
                                 )
-                            ) + fadeIn(animationSpec = tween(500, delayMillis = 300))
+                            ) + fadeIn(animationSpec = tween(400, delayMillis = 600))
                         ) {
                             LifeIndexSection()
                         }

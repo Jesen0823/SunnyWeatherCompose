@@ -253,6 +253,40 @@ data class DailyWindItem(
 )
 
 /**
+ * 日出时间数据
+ * 
+ * @param time 日出时间（格式：HH:mm，当地时区）
+ */
+@Serializable
+data class Sunrise(
+    val time: String
+)
+
+/**
+ * 日落时间数据
+ * 
+ * @param time 日落时间（格式：HH:mm，当地时区）
+ */
+@Serializable
+data class Sunset(
+    val time: String
+)
+
+/**
+ * 天文数据（日出日落）
+ * 
+ * @param date 日期
+ * @param sunrise 日出时间
+ * @param sunset 日落时间
+ */
+@Serializable
+data class Astro(
+    val date: String,
+    val sunrise: Sunrise,
+    val sunset: Sunset
+)
+
+/**
  * 每日预报数据
  * 
  * @param temperature 全天地表2米气温（最高/最低）
@@ -273,6 +307,7 @@ data class DailyWindItem(
  * @param dswrf 向下短波辐射通量（最大/最小/平均，W/M2）
  * @param skycon08h20h 白天（08-20时）主要天气现象
  * @param skycon20h32h 夜晚（20-次日08时）主要天气现象
+ * @param astro 日出日落时间数据
  */
 @Serializable
 data class Daily(
@@ -293,7 +328,8 @@ data class Daily(
     val visibility: List<PrecipitationProbability>? = null,
     val dswrf: List<PrecipitationProbability>? = null,
     @kotlinx.serialization.SerialName("skycon_08h_20h") val skycon08h20h: List<Skycon>? = null,
-    @kotlinx.serialization.SerialName("skycon_20h_32h") val skycon20h32h: List<Skycon>? = null
+    @kotlinx.serialization.SerialName("skycon_20h_32h") val skycon20h32h: List<Skycon>? = null,
+    val astro: List<Astro>? = null
 )
 
 /**
@@ -319,12 +355,107 @@ data class DailyResponse(
 }
 
 /**
+ * 小时级降水数据项
+ */
+@Serializable
+data class HourlyPrecipitationItem(
+    val datetime: String,
+    val value: Float,
+    val probability: Float? = null
+)
+
+/**
+ * 小时级温度数据项
+ */
+@Serializable
+data class HourlyTemperatureItem(
+    val datetime: String,
+    val value: Float
+)
+
+/**
+ * 小时级天气现象数据项
+ */
+@Serializable
+data class HourlySkyconItem(
+    val datetime: String,
+    val value: String
+)
+
+/**
+ * 小时级风速数据项（彩云天气API v2.6格式）
+ * 
+ * 与温度等数据不同，风速数据包含speed和direction字段
+ */
+@Serializable
+data class HourlyWindItem(
+    val datetime: String,
+    val speed: Wind,
+    val direction: Wind
+)
+
+/**
+ * 小时级空气质量数据
+ */
+@Serializable
+data class HourlyAirQuality(
+    val aqi: HourlyAQI? = null,
+    val pm25: Float? = null
+)
+
+/**
+ * 小时级AQI数据
+ */
+@Serializable
+data class HourlyAQI(
+    val chn: Float? = null,
+    val usa: Float? = null
+)
+
+/**
+ * 小时级预报数据（彩云天气API v2.6格式）
+ * 
+ * API返回的是分开的数组，每个数组元素包含datetime字段
+ */
+@Serializable
+data class Hourly(
+    val precipitation: List<HourlyPrecipitationItem>? = null,
+    val temperature: List<HourlyTemperatureItem>? = null,
+    val skycon: List<HourlySkyconItem>? = null,
+    val humidity: List<HourlyTemperatureItem>? = null,
+    val wind: List<HourlyWindItem>? = null,
+    val cloudrate: List<HourlyTemperatureItem>? = null,
+    val pressure: List<HourlyTemperatureItem>? = null,
+    val visibility: List<HourlyTemperatureItem>? = null,
+    val dswrf: List<HourlyTemperatureItem>? = null,
+    @kotlinx.serialization.SerialName("air_quality") 
+    val airQuality: HourlyAirQuality? = null,
+    val description: String? = null
+)
+
+/**
+ * 小时级预报响应
+ */
+@Serializable
+data class HourlyResponse(
+    val status: String,
+    val result: HourlyResponse.HourlyResult
+) {
+    @Serializable
+    data class HourlyResult(
+        val hourly: Hourly
+    )
+}
+
+/**
  * 天气数据聚合模型
  * 
  * @param realtime 实时天气数据
  * @param daily 每日预报数据
+ * @param hourly 小时级预报数据（可选）
  */
 data class Weather(
     val realtime: Realtime,
-    val daily: Daily
+    val daily: Daily,
+    val hourly: Hourly? = null
 )

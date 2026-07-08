@@ -20,6 +20,7 @@ import org.jesen.dev.sunnyweather.pose.data.network.ApiResult
 import org.jesen.dev.sunnyweather.pose.data.network.WeatherApiService
 import org.jesen.dev.sunnyweather.pose.data.store.PlaceStore
 import org.jesen.dev.sunnyweather.pose.domain.model.DailyResponse
+import org.jesen.dev.sunnyweather.pose.domain.model.HourlyResponse
 import org.jesen.dev.sunnyweather.pose.domain.model.Place
 import org.jesen.dev.sunnyweather.pose.domain.model.PlaceResponse
 import org.jesen.dev.sunnyweather.pose.domain.model.RealtimeResponse
@@ -45,13 +46,17 @@ class WeatherRepositoryImpl(
         return apiService.getDailyWeather(lng, lat)
     }
 
+    override suspend fun getHourlyWeather(lng: String, lat: String): ApiResult<HourlyResponse> {
+        return apiService.getHourlyWeather(lng, lat)
+    }
+
     /**
      * 获取天气数据（带内存缓存）
      * 
      * 性能优化流程：
      * 1. 生成缓存键（格式："经度,纬度"）
      * 2. 检查内存缓存，命中则直接返回缓存数据（无需网络请求）
-     * 3. 未命中则发起网络请求获取实时天气和7日预报
+     * 3. 未命中则发起网络请求获取实时天气、7日预报和小时级预报
      * 4. 请求成功后将数据合并为 Weather 对象并存入缓存
      * 5. 返回 Weather 对象
      * 
@@ -83,12 +88,20 @@ class WeatherRepositoryImpl(
             is ApiResult.Success -> {
                 when (val dailyResult = apiService.getDailyWeather(lng, lat)) {
                     is ApiResult.Success -> {
-                        // 第三步：合并实时天气和7日预报为 Weather 对象
+                        // 第三步：获取小时级预报数据
+                        val hourlyResult = apiService.getHourlyWeather(lng, lat)
+                        
+                        // 第四步：合并实时天气、7日预报和小时级预报为 Weather 对象
                         val weather = Weather(
                             realtime = realtimeResult.data.result.realtime,
-                            daily = dailyResult.data.result.daily
+                            daily = dailyResult.data.result.daily,
+                            hourly = if (hourlyResult is ApiResult.Success) {
+                                hourlyResult.data.result.hourly
+                            } else {
+                                null
+                            }
                         )
-                        // 第四步：存入缓存，供后续请求使用
+                        // 第五步：存入缓存，供后续请求使用
                         weatherCache.put(cacheKey, weather)
                         ApiResult.Success(weather)
                     }
