@@ -1,14 +1,13 @@
 package org.jesen.dev.sunnyweather.pose.presentation.ui.components
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -17,13 +16,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import org.jesen.dev.sunnyweather.pose.domain.model.Place
 import org.jesen.dev.sunnyweather.pose.domain.model.Weather
 import org.jesen.dev.sunnyweather.pose.presentation.common.UiState
+import org.jesen.dev.sunnyweather.pose.presentation.ui.components.widget.PagerIndicator
 import org.jesen.dev.sunnyweather.pose.presentation.ui.screens.WeatherScreen
 
 /**
@@ -84,49 +83,21 @@ fun WeatherViewPager(
         }
 
         if (places.size > 1) {
-            WeatherPagerIndicator(
-                currentPage = currentPage,
-                places = places,
+            Box(
                 modifier = Modifier
-                    .align(Alignment.TopCenter)
-                    .padding(top = 100.dp)
-            )
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth()
+                    .background(Color.White.copy(alpha = 0.5f)),
+                contentAlignment = Alignment.Center
+            ) {
+                PagerIndicator(
+                    currentPage = currentPage,
+                    places = places,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
+                )
+            }
         }
     }
 }
 
-/**
- * 页面指示器组件
- *
- * 主要职责：
- * - 显示当前城市名称和总页数（如：上海 1/3）
- * - 使用半透明背景和圆角样式，提高可视性
- * - 支持空列表和越界保护
- */
-@Composable
-fun WeatherPagerIndicator(
-    currentPage: Int,
-    places: List<Place>,
-    modifier: Modifier = Modifier
-) {
-    if (places.isEmpty() || currentPage >= places.size) {
-        return
-    }
-    
-    Surface(
-        modifier = modifier
-            .wrapContentSize(),
-        shape = MaterialTheme.shapes.medium,
-        color = Color.Black.copy(alpha = 0.4f),
-        tonalElevation = 4.dp
-    ) {
-        Text(
-            text = "${places[currentPage].name} ${currentPage + 1}/${places.size}",
-            style = MaterialTheme.typography.bodyMedium,
-            fontWeight = FontWeight.Medium,
-            color = Color.White,
-            fontSize = 14.sp,
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-        )
-    }
-}
+
