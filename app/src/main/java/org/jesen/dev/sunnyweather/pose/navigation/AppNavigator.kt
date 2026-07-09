@@ -47,6 +47,7 @@ import org.jesen.dev.sunnyweather.pose.presentation.viewmodel.WeatherListViewMod
 fun AppNavigator(
     initialKey: NavKey,
     places: List<Place>,
+    isAutoLocating: Boolean = false,
     onPlaceSelected: (Place) -> Unit,
     onClearPlace: () -> Unit,
     onLanguageChanged: () -> Unit = {}
@@ -121,6 +122,12 @@ fun AppNavigator(
                     val locationResult by permissionViewModel.locationResult.collectAsState()
                     val locationError by permissionViewModel.locationError.collectAsState()
 
+                    androidx.compose.runtime.LaunchedEffect(isAutoLocating) {
+                        if (isAutoLocating) {
+                            permissionViewModel.getLocation()
+                        }
+                    }
+
                     androidx.compose.runtime.LaunchedEffect(locationResult) {
                         locationResult?.let { place ->
                             onPlaceSelected(place)
@@ -140,7 +147,8 @@ fun AppNavigator(
                         onSelectCity = { backStack.add(PlaceKey) },
                         onRequestPermission = { permissionViewModel.requestPermission() },
                         onDismissDialog = { permissionViewModel.dismissDialog() },
-                        onGetLocation = { permissionViewModel.getLocation() }
+                        onGetLocation = { permissionViewModel.getLocation() },
+                        isAutoLocating = isAutoLocating
                     )
                 }
 

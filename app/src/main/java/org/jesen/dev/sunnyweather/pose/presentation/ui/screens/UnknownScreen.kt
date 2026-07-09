@@ -47,11 +47,13 @@ fun UnknownScreen(
     onSelectCity: () -> Unit,
     onRequestPermission: () -> Unit,
     onDismissDialog: () -> Unit,
-    onGetLocation: () -> Unit = {}
+    onGetLocation: () -> Unit = {},
+    isAutoLocating: Boolean = false
 ) {
     Log.d("UnknownScreen", "Composing, permissionStatus: $permissionStatus")
     Log.d("UnknownScreen", "showPermissionDialog: $showPermissionDialog")
     Log.d("UnknownScreen", "isGettingLocation: $isGettingLocation")
+    Log.d("UnknownScreen", "isAutoLocating: $isAutoLocating")
     
     Column(
         modifier = Modifier.fillMaxSize(),

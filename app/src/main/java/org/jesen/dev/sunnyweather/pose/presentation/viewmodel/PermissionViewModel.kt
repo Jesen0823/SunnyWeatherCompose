@@ -67,11 +67,6 @@ class PermissionViewModel(
         LocationHelper(AppModule.context)
     }
     
-    init {
-        Log.d(TAG, "PermissionViewModel init called")
-        checkPermissionStatus()
-    }
-    
     fun checkPermissionStatus() {
         Log.d(TAG, "checkPermissionStatus() called")
         viewModelScope.launch {
@@ -81,22 +76,10 @@ class PermissionViewModel(
             Log.d(TAG, "checkPermissionStatus() - permission status: $status")
             _permissionStatus.value = status
             
-            when (status) {
-                PermissionStatus.Denied -> {
-                    Log.d(TAG, "Permission is Denied, showing dialog")
-                    _showPermissionDialog.value = true
-                    Log.d(TAG, "showPermissionDialog set to: ${_showPermissionDialog.value}")
-                }
-                PermissionStatus.Granted -> {
-                    Log.d(TAG, "Permission is Granted, getting location")
-                    getLocation()
-                }
-                PermissionStatus.PermanentlyDenied -> {
-                    Log.d(TAG, "Permission is PermanentlyDenied")
-                }
-                else -> {
-                    Log.d(TAG, "Permission status is unknown: $status")
-                }
+            if (status == PermissionStatus.Denied) {
+                Log.d(TAG, "Permission is Denied, showing dialog")
+                _showPermissionDialog.value = true
+                Log.d(TAG, "showPermissionDialog set to: ${_showPermissionDialog.value}")
             }
             
             _isCheckingPermission.value = false
