@@ -26,3 +26,6 @@ data object UnknownKey : NavKey
 
 @Serializable
 data object SettingsKey : NavKey
+
+@Serializable
+data object PlaceManagerKey : NavKey

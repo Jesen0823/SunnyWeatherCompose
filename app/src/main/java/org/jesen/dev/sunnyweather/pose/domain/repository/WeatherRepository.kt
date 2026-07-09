@@ -123,4 +123,5 @@ interface WeatherRepository {
     fun isPlaceSaved(): Flow<Boolean>
     fun isSpecificPlaceSaved(placeName: String): Flow<Boolean>
     suspend fun clearPlace()
+    suspend fun savePlaceList(places: List<Place>)
 }

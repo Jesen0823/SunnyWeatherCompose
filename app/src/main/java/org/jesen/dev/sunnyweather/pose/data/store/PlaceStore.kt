@@ -75,4 +75,10 @@ class PlaceStore(context: Context) {
             list.any { it.name == placeName }
         }
     }
+
+    suspend fun savePlaceList(places: List<Place>) {
+        dataStore.edit { preferences ->
+            preferences[PLACE_LIST_KEY] = json.encodeToString(places)
+        }
+    }
 }

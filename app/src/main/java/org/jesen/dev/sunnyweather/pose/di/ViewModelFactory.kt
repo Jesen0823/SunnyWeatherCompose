@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import org.jesen.dev.sunnyweather.pose.domain.usecase.*
 import org.jesen.dev.sunnyweather.pose.presentation.viewmodel.PermissionViewModel
+import org.jesen.dev.sunnyweather.pose.presentation.viewmodel.PlaceManagerViewModel
 import org.jesen.dev.sunnyweather.pose.presentation.viewmodel.PlaceViewModel
 import org.jesen.dev.sunnyweather.pose.presentation.viewmodel.SettingsViewModel
 import org.jesen.dev.sunnyweather.pose.presentation.viewmodel.WeatherListViewModel
@@ -31,6 +32,7 @@ class AppViewModelFactory(
     private val getIsPlaceSavedUseCase: GetIsPlaceSavedUseCase,
     private val isSpecificPlaceSavedUseCase: IsSpecificPlaceSavedUseCase,
     private val getSavedPlaceListUseCase: GetSavedPlaceListUseCase,
+    private val savePlaceListUseCase: SavePlaceListUseCase,
     private val clearPlaceUseCase: ClearPlaceUseCase
 ) : ViewModelProvider.Factory {
 
@@ -54,6 +56,8 @@ class AppViewModelFactory(
                 SettingsViewModel(clearPlaceUseCase) as T
             modelClass.isAssignableFrom(PermissionViewModel::class.java) ->
                 PermissionViewModel(savePlaceUseCase) as T
+            modelClass.isAssignableFrom(PlaceManagerViewModel::class.java) ->
+                PlaceManagerViewModel(getSavedPlaceListUseCase, savePlaceListUseCase) as T
             else -> throw IllegalArgumentException("Unknown ViewModel class: $modelClass")
         }
     }

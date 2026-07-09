@@ -139,6 +139,10 @@ class WeatherRepositoryImpl(
         weatherCache.clear()
     }
 
+    override suspend fun savePlaceList(places: List<Place>) {
+        placeStore.savePlaceList(places)
+    }
+
     fun invalidateCache(lng: String, lat: String) {
         weatherCache.remove("$lng,$lat")
     }

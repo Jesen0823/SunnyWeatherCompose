@@ -16,10 +16,12 @@ import org.jesen.dev.sunnyweather.pose.domain.model.Place
 import org.jesen.dev.sunnyweather.pose.presentation.ui.components.AppNavigation
 import org.jesen.dev.sunnyweather.pose.presentation.ui.components.Screen
 import org.jesen.dev.sunnyweather.pose.presentation.ui.components.WeatherViewPager
+import org.jesen.dev.sunnyweather.pose.presentation.ui.screens.PlaceManagerScreen
 import org.jesen.dev.sunnyweather.pose.presentation.ui.screens.PlaceScreen
 import org.jesen.dev.sunnyweather.pose.presentation.ui.screens.SettingsScreen
 import org.jesen.dev.sunnyweather.pose.presentation.ui.screens.UnknownScreen
 import org.jesen.dev.sunnyweather.pose.presentation.viewmodel.PermissionViewModel
+import org.jesen.dev.sunnyweather.pose.presentation.viewmodel.PlaceManagerViewModel
 import org.jesen.dev.sunnyweather.pose.presentation.viewmodel.PlaceViewModel
 import org.jesen.dev.sunnyweather.pose.presentation.viewmodel.SettingsViewModel
 import org.jesen.dev.sunnyweather.pose.presentation.viewmodel.WeatherListViewModel
@@ -72,6 +74,7 @@ fun AppNavigator(
                         onScreenChange = { screen ->
                             when (screen) {
                                 Screen.Place -> backStack.add(PlaceKey)
+                                Screen.PlaceManager -> backStack.add(PlaceManagerKey)
                                 Screen.Settings -> backStack.add(SettingsKey)
                                 Screen.Weather -> {}
                             }
@@ -138,6 +141,16 @@ fun AppNavigator(
                         onRequestPermission = { permissionViewModel.requestPermission() },
                         onDismissDialog = { permissionViewModel.dismissDialog() },
                         onGetLocation = { permissionViewModel.getLocation() }
+                    )
+                }
+
+                is PlaceManagerKey -> NavEntry(key) {
+                    val placeManagerViewModel: PlaceManagerViewModel = viewModel(
+                        factory = AppModule.appViewModelFactory
+                    )
+                    PlaceManagerScreen(
+                        viewModel = placeManagerViewModel,
+                        onBack = { backStack.removeLastOrNull() }
                     )
                 }
 

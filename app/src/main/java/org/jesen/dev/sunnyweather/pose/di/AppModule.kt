@@ -100,6 +100,10 @@ object AppModule {
         GetSavedPlaceListUseCase(weatherRepository)
     }
 
+    val savePlaceListUseCase: SavePlaceListUseCase by lazy {
+        SavePlaceListUseCase(weatherRepository)
+    }
+
     val clearPlaceUseCase: ClearPlaceUseCase by lazy {
         ClearPlaceUseCase(weatherRepository)
     }
@@ -113,6 +117,7 @@ object AppModule {
             getIsPlaceSavedUseCase,
             isSpecificPlaceSavedUseCase,
             getSavedPlaceListUseCase,
+            savePlaceListUseCase,
             clearPlaceUseCase
         )
     }

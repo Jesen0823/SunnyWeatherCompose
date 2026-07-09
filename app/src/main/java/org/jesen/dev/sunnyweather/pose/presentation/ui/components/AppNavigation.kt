@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.BusinessCenter
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.Settings
@@ -36,7 +37,8 @@ import kotlinx.coroutines.launch
  */
 sealed class Screen(val route: String, val label: String) {
     object Weather : Screen("weather", "天气")
-    object Place : Screen("place", "城市选择")
+    object Place : Screen("place", "地址搜索")
+    object PlaceManager : Screen("placeManager", "地址管理")
     object Settings : Screen("settings", "设置")
 }
 
@@ -97,6 +99,16 @@ fun AppNavigation(
                         selected = currentScreen == Screen.Place,
                         onClick = {
                             onScreenChange(Screen.Place)
+                            scope.launch { drawerState.close() }
+                        },
+                        modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+                    )
+                    NavigationDrawerItem(
+                        icon = { Icon(Icons.Default.BusinessCenter, contentDescription = null) },
+                        label = { Text(Screen.PlaceManager.label) },
+                        selected = currentScreen == Screen.PlaceManager,
+                        onClick = {
+                            onScreenChange(Screen.PlaceManager)
                             scope.launch { drawerState.close() }
                         },
                         modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
@@ -190,6 +202,16 @@ fun AppNavigation(
                         selected = currentScreen == Screen.Place,
                         onClick = {
                             onScreenChange(Screen.Place)
+                            onDrawerClose()
+                        },
+                        modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+                    )
+                    NavigationDrawerItem(
+                        icon = { Icon(Icons.Default.BusinessCenter, contentDescription = null) },
+                        label = { Text(Screen.PlaceManager.label) },
+                        selected = currentScreen == Screen.PlaceManager,
+                        onClick = {
+                            onScreenChange(Screen.PlaceManager)
                             onDrawerClose()
                         },
                         modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
