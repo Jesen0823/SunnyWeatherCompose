@@ -57,6 +57,8 @@ class PermissionViewModel(
     private val _locationError = MutableStateFlow<String?>(null)
     val locationError: StateFlow<String?> = _locationError.asStateFlow()
     
+    private var isRequestingPermission = false
+    
     private val permissionHelper by lazy {
         Log.d(TAG, "Creating PermissionHelper")
         PermissionHelper(AppModule.context, PermissionConstants.getLocationPermission())
@@ -86,10 +88,25 @@ class PermissionViewModel(
         }
     }
     
+    fun refreshPermissionStatus() {
+        Log.d(TAG, "refreshPermissionStatus() called")
+        viewModelScope.launch {
+            val status = permissionHelper.getStatus()
+            Log.d(TAG, "refreshPermissionStatus() - actual permission status: $status")
+            _permissionStatus.value = status
+        }
+    }
+    
     fun requestPermission() {
-        Log.d(TAG, "requestPermission() called")
+        Log.d(TAG, "requestPermission() called, isRequestingPermission: $isRequestingPermission")
+        if (isRequestingPermission) {
+            Log.d(TAG, "requestPermission() - already requesting, skipping")
+            return
+        }
+        isRequestingPermission = true
         AppModule.requestLocationPermission { granted ->
             Log.d(TAG, "requestPermission() - callback received, granted: $granted")
+            isRequestingPermission = false
             onPermissionResult(granted)
         }
     }

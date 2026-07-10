@@ -32,6 +32,9 @@ import org.jesen.dev.sunnyweather.pose.presentation.common.UiState
  * - 初始化时自动加载保存的城市数据
  * - 调用 SearchPlacesUseCase 搜索城市并处理结果
  */
+
+private const val TAG = "PlaceViewModel"
+
 class PlaceViewModel(
     private val searchPlacesUseCase: SearchPlacesUseCase,
     private val savePlaceUseCase: SavePlaceUseCase,
@@ -52,29 +55,51 @@ class PlaceViewModel(
     private val _isPlaceSaved = MutableStateFlow(false)
     val isPlaceSaved: StateFlow<Boolean> = _isPlaceSaved.asStateFlow()
     
+    private val _isInitialLoading = MutableStateFlow(true)
+    val isInitialLoading: StateFlow<Boolean> = _isInitialLoading.asStateFlow()
+    
     init {
+        Log.d(TAG, "========== PlaceViewModel initialized ==========")
         loadSavedPlace()
         loadSavedPlaceList()
     }
     
     private fun loadSavedPlace() {
+        Log.d(TAG, "loadSavedPlace() called - starting to load saved place")
+        
         viewModelScope.launch {
+            Log.d(TAG, "Launching coroutine for getSavedPlaceUseCase")
             getSavedPlaceUseCase().collect { place ->
+                Log.d(TAG, "getSavedPlaceUseCase emitted: ${place?.name ?: "null"}")
                 _savedPlace.value = place
             }
         }
         
         viewModelScope.launch {
+            Log.d(TAG, "Launching coroutine for getIsPlaceSavedUseCase")
             getIsPlaceSavedUseCase().collect { saved ->
+                Log.d(TAG, "getIsPlaceSavedUseCase emitted: $saved")
                 _isPlaceSaved.value = saved
             }
         }
     }
     
     private fun loadSavedPlaceList() {
+        Log.d(TAG, "loadSavedPlaceList() called - starting to load saved place list")
+        
         viewModelScope.launch {
+            Log.d(TAG, "Launching coroutine for getSavedPlaceListUseCase")
             getSavedPlaceListUseCase().collect { places ->
+                Log.d(TAG, "getSavedPlaceListUseCase emitted: ${places.size} places")
+                if (places.isNotEmpty()) {
+                    val placeNames = places.joinToString(", ") { it.name }
+                    Log.d(TAG, "Saved places: [$placeNames]")
+                }
                 _savedPlaceList.value = places
+                if (_isInitialLoading.value) {
+                    _isInitialLoading.value = false
+                    Log.d(TAG, "isInitialLoading set to false - initial data loading complete")
+                }
             }
         }
     }
@@ -83,7 +108,7 @@ class PlaceViewModel(
         viewModelScope.launch {
             _placesState.value = UiState.Loading
             val result = searchPlacesUseCase(query)
-            Log.d("PlaceViewModel", "searchPlaces result: $result")
+            Log.d(TAG, "searchPlaces result: $result")
             when (result) {
                 is ApiResult.Success -> {
                     if (result.data.status == "ok") {
@@ -101,18 +126,35 @@ class PlaceViewModel(
     }
     
     fun savePlace(place: Place) {
+        Log.d(TAG, "savePlace() called with place: ${place.name}")
+        val currentList = _savedPlaceList.value.toMutableList()
+        if (!currentList.any { it.name == place.name }) {
+            currentList.add(place)
+        } else {
+            val index = currentList.indexOfFirst { it.name == place.name }
+            currentList[index] = place
+        }
+        _savedPlaceList.value = currentList
+        _savedPlace.value = place
+        _isPlaceSaved.value = true
+        Log.d(TAG, "savePlace() - local state updated immediately: ${currentList.size} places")
+        
         viewModelScope.launch {
             savePlaceUseCase(place)
             val updatedList = getSavedPlaceListUseCase().first()
-            _savedPlaceList.value = updatedList
-            _isPlaceSaved.value = updatedList.isNotEmpty()
-            Log.d("PlaceViewModel", "savePlace() - updated savedPlaceList: ${updatedList.size} places")
+            if (updatedList.isNotEmpty()) {
+                _savedPlaceList.value = updatedList
+                _savedPlace.value = updatedList.first()
+            }
+            Log.d(TAG, "savePlace() completed - database sync finished: ${updatedList.size} places")
         }
     }
 
     fun clearPlace(){
+        Log.d(TAG, "clearPlace() called")
         viewModelScope.launch {
             clearPlaceUseCase()
+            Log.d(TAG, "clearPlace() completed")
         }
     }
 }

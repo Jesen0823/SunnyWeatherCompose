@@ -31,6 +31,7 @@ sealed class PermissionStatus {
     object Granted : PermissionStatus()
     object Denied : PermissionStatus()
     object PermanentlyDenied : PermissionStatus()
+    object FirstTimeRequest : PermissionStatus()
     object Requesting : PermissionStatus()
     object Unknown : PermissionStatus()
 }
@@ -66,11 +67,29 @@ class PermissionHelper(
                     Log.d(TAG, "Status: Denied")
                     PermissionStatus.Denied
                 } else {
-                    Log.d(TAG, "Status: PermanentlyDenied")
-                    PermissionStatus.PermanentlyDenied
+                    val hasRequestedBefore = hasRequestedPermissionBefore()
+                    Log.d(TAG, "hasRequestedBefore: $hasRequestedBefore")
+                    if (hasRequestedBefore) {
+                        Log.d(TAG, "Status: PermanentlyDenied")
+                        PermissionStatus.PermanentlyDenied
+                    } else {
+                        Log.d(TAG, "Status: FirstTimeRequest")
+                        PermissionStatus.FirstTimeRequest
+                    }
                 }
             }
         }
+    }
+
+    private fun hasRequestedPermissionBefore(): Boolean {
+        val prefs = context.getSharedPreferences("permission_prefs", Context.MODE_PRIVATE)
+        return prefs.getBoolean("has_requested_$permission", false)
+    }
+
+    private fun markPermissionRequested() {
+        val prefs = context.getSharedPreferences("permission_prefs", Context.MODE_PRIVATE)
+        prefs.edit().putBoolean("has_requested_$permission", true).apply()
+        Log.d(TAG, "Permission request marked: $permission")
     }
 
     fun updateStatus() {
@@ -119,6 +138,7 @@ class PermissionHelper(
 
     fun requestPermission() {
         Log.d(TAG, "requestPermission() called")
+        markPermissionRequested()
         requestLauncher?.launch(permission)
     }
 
