@@ -7,6 +7,7 @@
  * - 提供手动选择城市的入口
  * 
  * 技术要点：
+ * - 使用 Scaffold 处理系统内边距，确保内容不被状态栏遮挡
  * - 根据 permissionStatus 显示不同的按钮状态和操作
  * - 显示定位加载动画和错误提示
  * - 根据权限状态（Granted/Denied/PermanentlyDenied）执行不同的操作
@@ -20,10 +21,12 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -55,11 +58,12 @@ fun UnknownScreen(
     Log.d("UnknownScreen", "isGettingLocation: $isGettingLocation")
     Log.d("UnknownScreen", "isAutoLocating: $isAutoLocating")
     
-    Column(
-        modifier = Modifier.fillMaxSize(),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
+    Scaffold { paddingValues ->
+        Column(
+            modifier = Modifier.fillMaxSize().padding(paddingValues),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
         if (isGettingLocation) {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -147,6 +151,7 @@ fun UnknownScreen(
             ) {
                 Text(text = stringResource(id = R.string.unknown_select_city))
             }
+        }
         }
     }
     

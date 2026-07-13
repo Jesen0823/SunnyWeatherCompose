@@ -2,9 +2,17 @@ package org.jesen.dev.sunnyweather.pose.presentation.ui.screens
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.NavigateBefore
+import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -27,18 +35,23 @@ import org.jesen.dev.sunnyweather.pose.presentation.common.UiState
  * - 提供城市搜索功能
  * - 显示搜索结果列表
  * - 处理加载状态和错误状态
+ * - 提供返回按钮，支持退出到上一级页面
  *
  * 技术要点：
+ * - 使用 Scaffold + TopAppBar 提供标准的页面结构，包含返回按钮
+ * - 正确消费 contentPadding 处理系统内边距
  * - 使用 rememberCoroutineScope 和 delay 实现搜索防抖（500ms）
  * - 使用单个 LaunchedEffect 处理搜索逻辑，避免多个 LaunchedEffect 嵌套
  * - 使用 derivedStateOf 计算显示状态
  * - 根据 placesState 显示默认状态、加载状态、错误状态或搜索结果
  * - 调用 SearchBar 和 PlaceList 组件
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PlaceScreen(
     viewModel: PlaceViewModel,
-    onPlaceSelected: (Place) -> Unit
+    onPlaceSelected: (Place) -> Unit,
+    onBack: () -> Unit = {}
 ) {
     var searchQuery by remember { mutableStateOf("") }
     val placesState: State<UiState<List<Place>>> = viewModel.placesState.collectAsState()
@@ -102,23 +115,47 @@ fun PlaceScreen(
         }
     }
 
-    Column(modifier = Modifier.fillMaxSize()) {
-        SearchBar(
-            query = searchQuery,
-            onQueryChange = { searchQuery = it }
-        )
-        
-        when (val state = placesState.value) {
-            is UiState.Loading -> if (showLoading) {
-                LoadingState()
-            } else {
-                DefaultState()
-            }
-            is UiState.Error -> ErrorState(state.message)
-            is UiState.Success -> PlaceList(
-                places = state.data,
-                onPlaceSelected = onPlaceSelected
+    Scaffold(
+        topBar = {
+            CenterAlignedTopAppBar(
+                title = {
+                    Text(
+                        text = stringResource(id = R.string.search_title),
+                        style = MaterialTheme.typography.titleLarge
+                    )
+                },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.NavigateBefore,
+                            contentDescription = "返回"
+                        )
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceContainer
+                )
             )
+        }
+    ) { paddingValues ->
+        Column(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
+            SearchBar(
+                query = searchQuery,
+                onQueryChange = { searchQuery = it }
+            )
+            
+            when (val state = placesState.value) {
+                is UiState.Loading -> if (showLoading) {
+                    LoadingState()
+                } else {
+                    DefaultState()
+                }
+                is UiState.Error -> ErrorState(state.message)
+                is UiState.Success -> PlaceList(
+                    places = state.data,
+                    onPlaceSelected = onPlaceSelected
+                )
+            }
         }
     }
 }

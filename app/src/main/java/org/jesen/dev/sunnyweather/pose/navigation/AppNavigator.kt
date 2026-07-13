@@ -152,6 +152,10 @@ fun AppNavigator(
                             onPlaceSelected(place)
                             backStack.clear()
                             backStack.add(WeatherKey)
+                        },
+                        onBack = {
+                            Log.d(TAG, "PlaceScreen back pressed")
+                            backStack.removeLastOrNull()
                         }
                     )
                 }

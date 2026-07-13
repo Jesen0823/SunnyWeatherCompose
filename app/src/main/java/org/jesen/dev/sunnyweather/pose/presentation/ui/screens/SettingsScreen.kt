@@ -6,7 +6,8 @@
  * - 显示应用版本信息
  * 
  * 技术要点：
- * - 使用 LazyColumn 实现设置列表
+ * - 使用 Scaffold 提供标准的页面结构（TopAppBar）
+ * - 使用 LazyColumn 实现设置列表，并正确消费 contentPadding 避免内容被顶栏遮挡
  * - 通过 DropdownMenu 实现主题和语言选择菜单
  * - 使用 AppModule.themeManager 和 AppModule.localeManager 管理主题和语言
  * - 缓存清除后触发 onCacheCleared 回调并重置状态
@@ -16,18 +17,25 @@ package org.jesen.dev.sunnyweather.pose.presentation.ui.screens
 import android.content.Context
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.NavigateBefore
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Palette
+import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -39,6 +47,7 @@ import org.jesen.dev.sunnyweather.pose.presentation.viewmodel.SettingsViewModel
 import org.jesen.dev.sunnyweather.pose.ui.locale.LocaleManager
 import org.jesen.dev.sunnyweather.pose.ui.theme.AppTheme
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
     viewModel: SettingsViewModel,
@@ -58,7 +67,33 @@ fun SettingsScreen(
         viewModel.resetCacheCleared()
     }
     
-    LazyColumn(modifier = Modifier.fillMaxSize()) {
+    Scaffold(
+        topBar = {
+            CenterAlignedTopAppBar(
+                title = {
+                    Text(
+                        text = stringResource(id = R.string.settings_title),
+                        style = MaterialTheme.typography.titleLarge
+                    )
+                },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.NavigateBefore,
+                            contentDescription = "返回"
+                        )
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceContainer
+                )
+            )
+        }
+    ) { paddingValues ->
+        LazyColumn(
+            modifier = Modifier.fillMaxSize().padding(paddingValues),
+            contentPadding = PaddingValues(vertical = 8.dp)
+        ) {
         item {
             Surface(
                 modifier = Modifier
@@ -199,6 +234,7 @@ fun SettingsScreen(
                 },
                 modifier = Modifier.padding(horizontal = 16.dp)
             )
+        }
         }
     }
 }

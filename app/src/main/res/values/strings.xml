@@ -11,6 +11,7 @@
     <string name="get_weather_faild">无法成功获取天气信息</string>
     <string name="weather_loading">加载中...</string>
     <string name="weather_error">获取天气失败</string>
+    <string name="search_title">搜索城市</string>
     <string name="search_hint">搜索城市</string>
     <string name="search_default">搜索你想查询天气的城市</string>
     <string name="search_loading">搜索中...</string>
@@ -38,4 +39,5 @@
     <string name="permission_dialog_message">为了自动提供您所在地的天气，您需要授权位置访问权限</string>
     <string name="permission_dialog_grant">好的</string>
     <string name="permission_dialog_deny">拒绝</string>
+    <string name="settings_title">设置</string>
 </resources>

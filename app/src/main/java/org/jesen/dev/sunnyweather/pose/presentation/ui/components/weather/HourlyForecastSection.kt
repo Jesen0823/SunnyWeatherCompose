@@ -30,6 +30,7 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -56,14 +57,16 @@ fun HourlyForecastSection() {
     val tempList = hourly.temperature ?: emptyList()
     val precipList = hourly.precipitation ?: emptyList()
 
-    val hourlyItems = skyconList.mapIndexed { index, skyconItem ->
-        HourlyForecastItem(
-            index = index,
-            datetime = skyconItem.datetime,
-            skycon = skyconItem.value,
-            temperature = tempList.getOrNull(index)?.value ?: 0f,
-            precipitationProbability = precipList.getOrNull(index)?.probability ?: 0f
-        )
+    val hourlyItems = remember(skyconList, tempList, precipList) {
+        skyconList.mapIndexed { index, skyconItem ->
+            HourlyForecastItem(
+                index = index,
+                datetime = skyconItem.datetime,
+                skycon = skyconItem.value,
+                temperature = tempList.getOrNull(index)?.value ?: 0f,
+                precipitationProbability = precipList.getOrNull(index)?.probability ?: 0f
+            )
+        }
     }
 
     Surface(
@@ -107,7 +110,7 @@ fun HourlyForecastSection() {
                     horizontalArrangement = Arrangement.spacedBy(16.dp),
                     contentPadding = PaddingValues(end = 16.dp)
                 ) {
-                    itemsIndexed(hourlyItems.take(24)) { index, item ->
+                    itemsIndexed(hourlyItems.take(24), key = { _, item -> item.datetime }) { index, item ->
                         HourlyForecastItemWithAnimation(item = item, index = index)
                     }
                 }

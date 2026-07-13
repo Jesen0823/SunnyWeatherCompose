@@ -7,6 +7,7 @@
  * 
  * 技术要点：
  * - 使用 @Serializable 注解支持 Kotlinx 序列化
+ * - 使用 @Immutable 注解标记不可变数据类，帮助 Compose 优化重组判断
  * - Realtime 包含实时天气数据（天气状况、温度、空气质量）
  * - Daily 包含7日预报数据（温度、天气状况、生活指数）
  * - Weather 作为聚合模型，合并实时天气和7日预报数据
@@ -14,6 +15,7 @@
  */
 package org.jesen.dev.sunnyweather.pose.domain.model
 
+import androidx.compose.runtime.Immutable
 import kotlinx.serialization.Serializable
 
 /**
@@ -22,6 +24,7 @@ import kotlinx.serialization.Serializable
  * @param chn 中国国标 AQI 值
  * @param usa 美国标准 AQI 值（可选）
  */
+@Immutable
 @Serializable
 data class AQI(
     val chn: Float,
@@ -39,6 +42,7 @@ data class AQI(
  * @param co 一氧化碳浓度(mg/m3)
  * @param aqi AQI指数（中国/美国标准）
  */
+@Immutable
 @Serializable
 data class AirQuality(
     val pm25: Float? = null,
@@ -56,6 +60,7 @@ data class AirQuality(
  * @param speed 风速(m/s)
  * @param direction 风向(度，0-360)
  */
+@Immutable
 @Serializable
 data class Wind(
     val speed: Float,
@@ -68,6 +73,7 @@ data class Wind(
  * @param local 本地降水数据
  * @param nearest 最近降水数据
  */
+@Immutable
 @Serializable
 data class Precipitation(
     @kotlinx.serialization.SerialName("local") val local: PrecipitationLocal,
@@ -81,6 +87,7 @@ data class Precipitation(
  * @param datasource 数据源（如雷达）
  * @param intensity 降水强度(mm/h)
  */
+@Immutable
 @Serializable
 data class PrecipitationLocal(
     val status: String,
@@ -95,6 +102,7 @@ data class PrecipitationLocal(
  * @param distance 最近降水距离(km)
  * @param intensity 降水强度(mm/h)
  */
+@Immutable
 @Serializable
 data class PrecipitationNearest(
     val status: String,
@@ -108,6 +116,7 @@ data class PrecipitationNearest(
  * @param index 指数等级（1-5）
  * @param desc 指数描述（自然语言）
  */
+@Immutable
 @Serializable
 data class LifeIndexItem(
     val index: Int,
@@ -119,6 +128,7 @@ data class LifeIndexItem(
  * 
  * @param desc 指数描述（自然语言）
  */
+@Immutable
 @Serializable
 data class LifeDescription(
     val desc: String
@@ -139,6 +149,7 @@ data class LifeDescription(
  * @param precipitation 降水数据
  * @param airQuality 空气质量数据
  */
+@Immutable
 @Serializable
 data class Realtime(
     val skycon: String,
@@ -161,6 +172,7 @@ data class Realtime(
  * @param status 返回状态（ok/failed）
  * @param result 结果数据
  */
+@Immutable
 @Serializable
 data class RealtimeResponse(
     val status: String,
@@ -171,6 +183,7 @@ data class RealtimeResponse(
      * 
      * @param realtime 实时天气数据
      */
+    @Immutable
     @Serializable
     data class RealtimeResult(
         val realtime: Realtime
@@ -183,6 +196,7 @@ data class RealtimeResponse(
  * @param max 最高温度(°C)
  * @param min 最低温度(°C)
  */
+@Immutable
 @Serializable
 data class Temperature(
     val max: Float,
@@ -195,6 +209,7 @@ data class Temperature(
  * @param value 天气现象代码（如 CLEAR_DAY, PARTLY_CLOUDY_DAY 等）
  * @param date 日期
  */
+@Immutable
 @Serializable
 data class Skycon(
     val value: String,
@@ -210,6 +225,7 @@ data class Skycon(
  * @param dressing 穿衣指数
  * @param comfort 舒适度指数（可选）
  */
+@Immutable
 @Serializable
 data class LifeIndex(
     val coldRisk: List<LifeDescription>,
@@ -227,6 +243,7 @@ data class LifeIndex(
  * @param avg 平均降水量(mm)
  * @param probability 降水概率(%)
  */
+@Immutable
 @Serializable
 data class PrecipitationProbability(
     val max: Float,
@@ -243,6 +260,7 @@ data class PrecipitationProbability(
  * @param min 最小风速
  * @param avg 平均风速
  */
+@Immutable
 @Serializable
 data class DailyWindItem(
     val date: String,
@@ -256,6 +274,7 @@ data class DailyWindItem(
  * 
  * @param time 日出时间（格式：HH:mm，当地时区）
  */
+@Immutable
 @Serializable
 data class Sunrise(
     val time: String
@@ -266,6 +285,7 @@ data class Sunrise(
  * 
  * @param time 日落时间（格式：HH:mm，当地时区）
  */
+@Immutable
 @Serializable
 data class Sunset(
     val time: String
@@ -278,6 +298,7 @@ data class Sunset(
  * @param sunrise 日出时间
  * @param sunset 日落时间
  */
+@Immutable
 @Serializable
 data class Astro(
     val date: String,
@@ -308,6 +329,7 @@ data class Astro(
  * @param skycon20h32h 夜晚（20-次日08时）主要天气现象
  * @param astro 日出日落时间数据
  */
+@Immutable
 @Serializable
 data class Daily(
     val temperature: List<Temperature>,
@@ -337,6 +359,7 @@ data class Daily(
  * @param status 返回状态（ok/failed）
  * @param result 结果数据
  */
+@Immutable
 @Serializable
 data class DailyResponse(
     val status: String,
@@ -347,6 +370,7 @@ data class DailyResponse(
      * 
      * @param daily 每日预报数据
      */
+    @Immutable
     @Serializable
     data class DailyResult(
         val daily: Daily
@@ -356,6 +380,7 @@ data class DailyResponse(
 /**
  * 小时级降水数据项
  */
+@Immutable
 @Serializable
 data class HourlyPrecipitationItem(
     val datetime: String,
@@ -366,6 +391,7 @@ data class HourlyPrecipitationItem(
 /**
  * 小时级温度数据项
  */
+@Immutable
 @Serializable
 data class HourlyTemperatureItem(
     val datetime: String,
@@ -375,6 +401,7 @@ data class HourlyTemperatureItem(
 /**
  * 小时级天气现象数据项
  */
+@Immutable
 @Serializable
 data class HourlySkyconItem(
     val datetime: String,
@@ -386,6 +413,7 @@ data class HourlySkyconItem(
  * 
  * API返回的speed和direction都是数值类型，不是对象
  */
+@Immutable
 @Serializable
 data class HourlyWindItem(
     val datetime: String,
@@ -396,6 +424,7 @@ data class HourlyWindItem(
 /**
  * 小时级空气质量数据
  */
+@Immutable
 @Serializable
 data class HourlyAirQuality(
     val aqi: HourlyAQI? = null,
@@ -405,6 +434,7 @@ data class HourlyAirQuality(
 /**
  * 小时级AQI数据
  */
+@Immutable
 @Serializable
 data class HourlyAQI(
     val chn: Float? = null,
@@ -416,6 +446,7 @@ data class HourlyAQI(
  * 
  * API返回的是分开的数组，每个数组元素包含datetime字段
  */
+@Immutable
 @Serializable
 data class Hourly(
     val precipitation: List<HourlyPrecipitationItem>? = null,
@@ -435,11 +466,13 @@ data class Hourly(
 /**
  * 小时级预报响应
  */
+@Immutable
 @Serializable
 data class HourlyResponse(
     val status: String,
     val result: HourlyResult
 ) {
+    @Immutable
     @Serializable
     data class HourlyResult(
         val hourly: Hourly
@@ -453,6 +486,7 @@ data class HourlyResponse(
  * @param daily 每日预报数据
  * @param hourly 小时级预报数据（可选）
  */
+@Immutable
 data class Weather(
     val realtime: Realtime,
     val daily: Daily,

@@ -32,7 +32,7 @@ fun PlaceList(
     onPlaceSelected: (Place) -> Unit
 ) {
     LazyColumn(modifier = Modifier.fillMaxSize()) {
-        items(places) { place ->
+        items(places, key = { place -> place.name }) { place ->
             Surface(
                 modifier = Modifier
                     .fillMaxSize()

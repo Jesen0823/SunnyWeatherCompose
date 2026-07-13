@@ -281,6 +281,12 @@ private fun WeatherSuccessContent(
 ) {
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
 
+    val alpha by remember {
+        derivedStateOf {
+            (1f - scrollBehavior.state.collapsedFraction).coerceIn(0.1f, 1f)
+        }
+    }
+
     /**
      * 使用 WeatherAndPlaceProvider 共享天气和城市数据
      * 
@@ -335,12 +341,12 @@ private fun WeatherSuccessContent(
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.primary,
-                        scrolledContainerColor = MaterialTheme.colorScheme.primary,
-                        titleContentColor = MaterialTheme.colorScheme.onSurface,
-                        actionIconContentColor = MaterialTheme.colorScheme.onSurface
+                        containerColor = MaterialTheme.colorScheme.primary.copy(alpha = alpha),
+                        scrolledContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = alpha),
+                        titleContentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = alpha),
+                        actionIconContentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = alpha),
+                        navigationIconContentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = alpha)
                     ),
-                    modifier = Modifier.padding(top = 16.dp),
                     scrollBehavior = scrollBehavior
                 )
             }
@@ -353,8 +359,8 @@ private fun WeatherSuccessContent(
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
                     contentPadding = PaddingValues(
-                        top = innerPadding.calculateTopPadding() + 16.dp,
-                        bottom = 24.dp
+                        top = innerPadding.calculateTopPadding(),
+                        bottom = innerPadding.calculateBottomPadding() + 24.dp
                     )
                 ) {
                     item {

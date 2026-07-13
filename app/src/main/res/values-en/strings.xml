@@ -36,4 +36,5 @@
     <string name="permission_dialog_title">权限获取</string>
     <string name="permission_dialog_message">为了自动提供您所在地的天气，您需要授权位置访问权限</string>
     <string name="permission_dialog_deny">拒绝</string>
+    <string name="settings_title">设置</string>
 </resources>
