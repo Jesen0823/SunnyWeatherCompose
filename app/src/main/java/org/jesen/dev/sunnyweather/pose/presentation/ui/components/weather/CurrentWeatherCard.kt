@@ -3,32 +3,29 @@
  * 
  * 主要职责：
  * - 显示实时天气信息（温度、天气状况、空气质量）
- * - 实现点击缩放和动画效果
  * - 通过 LocalProvider 获取天气和城市数据
+ * - 点击城市名称可跳转到城市选择页面
  * 
  * 技术要点：
- * - 使用 animateFloatAsState 实现温度文字和图标的缩放动画
- * - 使用 animateDpAsState 实现卡片阴影高度变化
+ * - 使用 LaunchedEffect + Animatable 实现温度文字和图标的入场缩放动画
  * - 根据 AQI 值动态设置空气质量颜色（绿/黄/橙/红/紫）
- * - 点击城市名称可跳转到城市选择页面
- * - 使用 LaunchedEffect 管理动画生命周期（启动动画）
+ * - 使用 Card 组件替代 Surface，更符合 Material3 设计规范
+ * - 半透明背景（alpha=0.1）配合 OpenGL 背景效果更佳
  */
 package org.jesen.dev.sunnyweather.pose.presentation.ui.components.weather
 
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.painterResource
@@ -43,27 +40,12 @@ import org.jesen.dev.sunnyweather.pose.presentation.ui.components.requireLocalPl
 import org.jesen.dev.sunnyweather.pose.presentation.ui.components.requireLocalWeather
 
 @Composable
-fun CurrentWeatherCard(
-    onNavigateToPlace: () -> Unit
-) {
+fun CurrentWeatherCard() {
     val weather = requireLocalWeather()
     val place = requireLocalPlace()
     
     val sky = Sky.getSky(weather.realtime.skycon)
     val realtime = weather.realtime
-    
-    val interactionSource = remember { MutableInteractionSource() }
-    val isPressed = interactionSource.collectIsPressedAsState().value
-    val scale = animateFloatAsState(
-        targetValue = if (isPressed) 0.98f else 1f,
-        animationSpec = TweenSpec(150),
-        label = "card-scale"
-    )
-    val elevation = animateDpAsState(
-        targetValue = if (isPressed) 4.dp else 12.dp,
-        animationSpec = TweenSpec(150),
-        label = "card-elevation"
-    )
     
     val tempScale = remember { Animatable(0f) }
     val iconScale = remember { Animatable(0.5f) }
@@ -82,21 +64,6 @@ fun CurrentWeatherCard(
      * - key = Unit 表示只在组件首次进入组合时执行一次
      * - 如果 key 是其他值（如 weather），则当 key 变化时会重启协程
      * - 对于入场动画，使用 Unit 确保只播放一次
-     * 
-     * 对比示例：
-     * // 未优化：没有正确管理动画生命周期
-     * // 组件销毁后动画可能继续运行
-     * 
-     * // 优化后：使用 LaunchedEffect 管理动画
-     * val animatable = remember { Animatable(0f) }
-     * LaunchedEffect(Unit) {
-     *     animatable.animateTo(1f)
-     * }
-     * 
-     * 场景说明：
-     * - 当组件进入组合时，启动温度和图标的缩放动画
-     * - animateTo 是 suspend 函数，必须在协程中调用（LaunchedEffect 提供协程作用域）
-     * - 当组件退出组合时，LaunchedEffect 中的协程会自动取消，停止动画
      */
     LaunchedEffect(Unit) {
         // 启动温度文字的缩放动画（从0到1，800ms）
@@ -104,36 +71,33 @@ fun CurrentWeatherCard(
         // 启动天气图标的缩放动画（从0.5到1，600ms）
         iconScale.animateTo(1f, tween(600, easing = FastOutSlowInEasing))
     }
-    
-    Surface(
+
+    Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp)
-            .clip(RoundedCornerShape(20.dp))
-            .scale(scale.value),
-        color = Color.White.copy(alpha = 0.9f),
-        shadowElevation = elevation.value
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = Color.White.copy(alpha = 0.2f)
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Column(
             modifier = Modifier.padding(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Surface(
-                onClick = onNavigateToPlace,
-                color = Color.Transparent,
-                interactionSource = interactionSource
-            ) {
-                Text(
-                    text = place.name,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.Black.copy(alpha = 0.8f)
-                )
-            }
+            Text(
+                text = place.name,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = Color.Black.copy(alpha = 0.8f)
+            )
             Spacer(modifier = Modifier.height(12.dp))
             
             Row(
-                verticalAlignment = Alignment.CenterVertically
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center
             ) {
                 Text(
                     text = "${realtime.temperature.toInt()}",

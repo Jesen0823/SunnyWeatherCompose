@@ -143,9 +143,9 @@ fun WeatherDetailsCard() {
                     color = Color.Black.copy(alpha = 0.8f)
                 )
                 Icon(
-                    imageVector = Icons.Filled.Info,
+                    imageVector = Icons.Filled.Cyclone,
                     contentDescription = "详情",
-                    tint = Color.Black.copy(alpha = 0.4f),
+                    tint = Color.Blue.copy(alpha = 0.6f),
                     modifier = Modifier.size(20.dp)
                 )
             }
