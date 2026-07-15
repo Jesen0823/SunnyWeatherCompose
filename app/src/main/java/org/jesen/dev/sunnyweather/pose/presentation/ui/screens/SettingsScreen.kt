@@ -53,7 +53,8 @@ fun SettingsScreen(
     viewModel: SettingsViewModel,
     onCacheCleared: () -> Unit = {},
     onBack: () -> Unit = {},
-    onLanguageChanged: () -> Unit = {}
+    onLanguageChanged: () -> Unit = {},
+    onNavigateToAboutUs: () -> Unit = {}
 ) {
     val cacheCleared = viewModel.cacheCleared.collectAsState()
     val currentTheme by AppModule.themeManager.currentTheme.collectAsState()
@@ -210,6 +211,14 @@ fun SettingsScreen(
         }
         
         item {
+            Surface(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 16.dp, vertical = 4.dp),
+                onClick = {
+                    onNavigateToAboutUs()
+                }
+            ) {
             ListItem(
                 headlineContent = {
                     Text(
@@ -217,8 +226,9 @@ fun SettingsScreen(
                         style = MaterialTheme.typography.bodyLarge
                     )
                 },
-                modifier = Modifier.padding(horizontal = 16.dp)
-            )
+                modifier = Modifier.padding(horizontal = 16.dp),
+
+            )}
         }
         
         item {

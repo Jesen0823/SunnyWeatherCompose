@@ -7,12 +7,11 @@
  * 
  * 技术要点：
  * - 使用 object 单例模式定义常量
- * - 包含 PLACE_SCREEN、WEATHER_SCREEN、SPLASH_SCREEN 三个路由常量
+ * - 包含 PLACE_SCREEN、WEATHER_SCREEN 两个路由常量
  */
 package org.jesen.dev.sunnyweather.pose.navigation
 
 object NavigationRoutes {
     const val PLACE_SCREEN = "place_screen"
     const val WEATHER_SCREEN = "weather_screen"
-    const val SPLASH_SCREEN = "splash_screen"
 }

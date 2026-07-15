@@ -23,7 +23,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Scaffold
 import androidx.compose.ui.Modifier
-import com.jesen.dev.gllib.NativeLib
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import org.jesen.dev.sunnyweather.pose.di.AppModule
 import org.jesen.dev.sunnyweather.pose.presentation.ui.SunnyWeatherApp
 import org.jesen.dev.sunnyweather.pose.ui.theme.SunnyWeatherComposeTheme
@@ -32,12 +32,11 @@ class MainActivity : ComponentActivity() {
     private val TAG = "MainActivity"
     
     override fun onCreate(savedInstanceState: Bundle?) {
+        installSplashScreen()
+
         super.onCreate(savedInstanceState)
         Log.d(TAG, "onCreate() called")
         enableEdgeToEdge()
-        val nativeLib = NativeLib()
-        val ret = nativeLib.stringFromJNI()
-        Log.d(TAG, "ret $ret")
         Log.d(TAG, "Registering permission launcher")
         val permissionLauncher = registerForActivityResult(
             ActivityResultContracts.RequestPermission()

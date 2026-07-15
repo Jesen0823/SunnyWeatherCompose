@@ -28,6 +28,7 @@ import org.jesen.dev.sunnyweather.pose.presentation.ui.components.Screen
 import org.jesen.dev.sunnyweather.pose.presentation.ui.components.WeatherViewPager
 import org.jesen.dev.sunnyweather.pose.presentation.ui.screens.PlaceManagerScreen
 import org.jesen.dev.sunnyweather.pose.presentation.ui.screens.PlaceScreen
+import org.jesen.dev.sunnyweather.pose.presentation.ui.screens.AboutUsScreen
 import org.jesen.dev.sunnyweather.pose.presentation.ui.screens.SettingsScreen
 import org.jesen.dev.sunnyweather.pose.presentation.ui.screens.UnknownScreen
 import org.jesen.dev.sunnyweather.pose.presentation.viewmodel.PermissionViewModel
@@ -226,7 +227,14 @@ fun AppNavigator(
                             backStack.add(UnknownKey)
                         },
                         onBack = { backStack.removeLastOrNull() },
-                        onLanguageChanged = onLanguageChanged
+                        onLanguageChanged = onLanguageChanged,
+                        onNavigateToAboutUs = { backStack.add(AboutUsKey) }
+                    )
+                }
+
+                is AboutUsKey -> NavEntry(key) {
+                    AboutUsScreen(
+                        onBack = { backStack.removeLastOrNull() }
                     )
                 }
 

@@ -29,3 +29,6 @@ data object SettingsKey : NavKey
 
 @Serializable
 data object PlaceManagerKey : NavKey
+
+@Serializable
+data object AboutUsKey : NavKey
