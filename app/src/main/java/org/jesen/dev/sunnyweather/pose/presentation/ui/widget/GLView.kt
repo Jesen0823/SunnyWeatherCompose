@@ -30,7 +30,6 @@ fun GLView(
     renderMode: Int = GLSurfaceView.RENDERMODE_CONTINUOUSLY,
     textureLoader: (suspend (Context) -> BitmapRgbaData?)? = null
 ) {
-    val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val coroutineScope = rememberCoroutineScope()
 
