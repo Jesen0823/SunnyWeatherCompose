@@ -1,8 +1,8 @@
 #include <gtc/matrix_transform.hpp>
-#include "CloudSample.h"
+#include "CloudRenderer.h"
 #include "../util/GLUtils.h"
 
-CloudSample::CloudSample() {
+CloudRenderer::CloudRenderer() {
 
     m_SamplerLoc = GL_NONE;
     m_MVPMatLoc = GL_NONE;
@@ -17,11 +17,11 @@ CloudSample::CloudSample() {
     m_ScaleY = 1.0f;
 }
 
-CloudSample::~CloudSample() {
+CloudRenderer::~CloudRenderer() {
     NativeImageUtil::FreeNativeImage(&m_RenderImage);
 }
 
-void CloudSample::Init() {
+void CloudRenderer::Init() {
     if (m_ProgramObj)
         return;
 
@@ -145,7 +145,7 @@ void CloudSample::Init() {
         m_SizeLoc = glGetUniformLocation(m_ProgramObj, "u_screenSize");
         m_TimeLoc = glGetUniformLocation(m_ProgramObj, "u_time");
     } else {
-        LOGCATE("CloudSample::Init create program fail");
+        LOGCATE("CloudRenderer::Init create program fail");
     }
 
     GLfloat verticesCoords[] = {
@@ -185,8 +185,8 @@ void CloudSample::Init() {
 
 }
 
-void CloudSample::LoadImage(NativeImage *pImage) {
-    LOGCATE("CloudSample::LoadImage pImage = %p", pImage->ppPlane[0]);
+void CloudRenderer::LoadImage(NativeImage *pImage) {
+    LOGCATE("CloudRenderer::LoadImage pImage = %p", pImage->ppPlane[0]);
     if (pImage) {
         m_RenderImage.width = pImage->width;
         m_RenderImage.height = pImage->height;
@@ -195,8 +195,8 @@ void CloudSample::LoadImage(NativeImage *pImage) {
     }
 }
 
-void CloudSample::Draw(int screenW, int screenH) {
-    LOGCATE("CloudSample::Draw()");
+void CloudRenderer::Draw(int screenW, int screenH) {
+    LOGCATE("CloudRenderer::Draw()");
 
     if (m_ProgramObj == GL_NONE || m_RenderImage.ppPlane[0] == nullptr) return;
 
@@ -217,14 +217,14 @@ void CloudSample::Draw(int screenW, int screenH) {
 
     glUniformMatrix4fv(m_MVPMatLoc, 1, GL_FALSE, &m_MVPMatrix[0][0]);
     float time = sFrameIndex * 0.04f;
-    LOGCATE("CloudSample::Draw() time=%f", time);
+    LOGCATE("CloudRenderer::Draw() time=%f", time);
     glUniform1f(m_TimeLoc, time);
     glUniform2f(m_SizeLoc, screenW, screenH);
 
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, (const void *) 0);
 }
 
-void CloudSample::Destroy() {
+void CloudRenderer::Destroy() {
     if (m_ProgramObj) {
         glDeleteProgram(m_ProgramObj);
         glDeleteBuffers(3, m_VboIds);
@@ -233,8 +233,8 @@ void CloudSample::Destroy() {
     }
 }
 
-void CloudSample::UpdateMVPMatrix(glm::mat4 &mvpMatrix, int angleX, int angleY, float ratio) {
-    LOGCATE("CloudSample::UpdateMVPMatrix angleX = %d, angleY = %d, ratio = %f", angleX, angleY,
+void CloudRenderer::UpdateMVPMatrix(glm::mat4 &mvpMatrix, int angleX, int angleY, float ratio) {
+    LOGCATE("CloudRenderer::UpdateMVPMatrix angleX = %d, angleY = %d, ratio = %f", angleX, angleY,
             ratio);
     angleX = angleX % 360;
     angleY = angleY % 360;
@@ -259,8 +259,8 @@ void CloudSample::UpdateMVPMatrix(glm::mat4 &mvpMatrix, int angleX, int angleY, 
     mvpMatrix = Projection * View * Model;
 }
 
-void CloudSample::UpdateTransformMatrix(float rotateX, float rotateY, float scaleX, float scaleY) {
-    GLSampleBase::UpdateTransformMatrix(rotateX, rotateY, scaleX, scaleY);
+void CloudRenderer::UpdateTransformMatrix(float rotateX, float rotateY, float scaleX, float scaleY) {
+    GLRendererBase::UpdateTransformMatrix(rotateX, rotateY, scaleX, scaleY);
     m_AngleX = static_cast<int>(rotateX);
     m_AngleY = static_cast<int>(rotateY);
     m_ScaleX = scaleX;

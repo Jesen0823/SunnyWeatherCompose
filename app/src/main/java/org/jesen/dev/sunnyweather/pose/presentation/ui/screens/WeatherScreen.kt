@@ -383,7 +383,7 @@ private fun WeatherSuccessContent(
         ) { innerPadding ->
             Box(modifier = Modifier.fillMaxSize()) {
                 GLView(
-                    sampleType = Constants.SAMPLE_TYPE_KEY_CLOUD,
+                    rendererType = Constants.RENDERER_TYPE_KEY_CLOUD,
                     textureResId = com.jesen.dev.gllib.R.drawable.noise,
                     modifier = Modifier.fillMaxWidth()
                 )

@@ -25,7 +25,7 @@ class MineGLRender : GLSurfaceView.Renderer {
     }
 
     fun setParamsInt(paramType: Int, value0: Int, value1: Int) {
-        if (paramType == Constants.SAMPLE_TYPE) {
+        if (paramType == Constants.RENDERER_TYPE) {
             mSampleType = value0
         }
         nativeRender.native_SetParamsInt(paramType, value0, value1)

@@ -1,8 +1,8 @@
 #include <gtc/matrix_transform.hpp>
-#include "BeatingHeartSample.h"
+#include "BeatingHeartRenderer.h"
 #include "../util/GLUtils.h"
 
-BeatingHeartSample::BeatingHeartSample() {
+BeatingHeartRenderer::BeatingHeartRenderer() {
     m_SamplerLoc = GL_NONE;
     m_MVPMatLoc = GL_NONE;
 
@@ -16,11 +16,11 @@ BeatingHeartSample::BeatingHeartSample() {
     m_ScaleY = 1.0f;
 }
 
-BeatingHeartSample::~BeatingHeartSample() {
+BeatingHeartRenderer::~BeatingHeartRenderer() {
     NativeImageUtil::FreeNativeImage(&m_RenderImage);
 }
 
-void BeatingHeartSample::Init() {
+void BeatingHeartRenderer::Init() {
     if (m_ProgramObj)
         return;
 
@@ -75,7 +75,7 @@ void BeatingHeartSample::Init() {
         m_SizeLoc = glGetUniformLocation(m_ProgramObj, "u_screenSize");
         m_TimeLoc = glGetUniformLocation(m_ProgramObj, "u_time");
     } else {
-        LOGCATE("BeatingHeartSample::Init create program fail");
+        LOGCATE("BeatingHeartRenderer::Init create program fail");
     }
 
     GLfloat verticesCoords[] = {
@@ -114,8 +114,8 @@ void BeatingHeartSample::Init() {
     glBindVertexArray(GL_NONE);
 }
 
-void BeatingHeartSample::LoadImage(NativeImage *pImage) {
-    LOGCATE("BeatingHeartSample::LoadImage pImage = %p", pImage->ppPlane[0]);
+void BeatingHeartRenderer::LoadImage(NativeImage *pImage) {
+    LOGCATE("BeatingHeartRenderer::LoadImage pImage = %p", pImage->ppPlane[0]);
     if (pImage) {
         m_RenderImage.width = pImage->width;
         m_RenderImage.height = pImage->height;
@@ -124,8 +124,8 @@ void BeatingHeartSample::LoadImage(NativeImage *pImage) {
     }
 }
 
-void BeatingHeartSample::Draw(int screenW, int screenH) {
-    LOGCATE("BeatingHeartSample::Draw()");
+void BeatingHeartRenderer::Draw(int screenW, int screenH) {
+    LOGCATE("BeatingHeartRenderer::Draw()");
 
     if (m_ProgramObj == GL_NONE) return;
 
@@ -137,14 +137,14 @@ void BeatingHeartSample::Draw(int screenW, int screenH) {
 
     glUniformMatrix4fv(m_MVPMatLoc, 1, GL_FALSE, &m_MVPMatrix[0][0]);
     float time = static_cast<float>(fmod(GetSysCurrentTime(), 2000) / 2000);
-    LOGCATE("BeatingHeartSample::Draw() time=%f", time);
+    LOGCATE("BeatingHeartRenderer::Draw() time=%f", time);
     glUniform1f(m_TimeLoc, time);
     glUniform2f(m_SizeLoc, screenW, screenH);
 
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, (const void *) 0);
 }
 
-void BeatingHeartSample::Destroy() {
+void BeatingHeartRenderer::Destroy() {
     if (m_ProgramObj) {
         glDeleteProgram(m_ProgramObj);
         glDeleteBuffers(3, m_VboIds);
@@ -153,9 +153,9 @@ void BeatingHeartSample::Destroy() {
     }
 }
 
-void BeatingHeartSample::UpdateTransformMatrix(float rotateX, float rotateY, float scaleX,
+void BeatingHeartRenderer::UpdateTransformMatrix(float rotateX, float rotateY, float scaleX,
                                                float scaleY) {
-    GLSampleBase::UpdateTransformMatrix(rotateX, rotateY, scaleX, scaleY);
+    GLRendererBase::UpdateTransformMatrix(rotateX, rotateY, scaleX, scaleY);
     m_AngleX = static_cast<int>(rotateX);
     m_AngleY = static_cast<int>(rotateY);
     m_ScaleX = scaleX;
@@ -163,8 +163,8 @@ void BeatingHeartSample::UpdateTransformMatrix(float rotateX, float rotateY, flo
 }
 
 void
-BeatingHeartSample::UpdateMVPMatrix(glm::mat4 &mvpMatrix, int angleX, int angleY, float ratio) {
-    LOGCATE("BeatingHeartSample::UpdateMVPMatrix angleX = %d, angleY = %d, ratio = %f", angleX,
+BeatingHeartRenderer::UpdateMVPMatrix(glm::mat4 &mvpMatrix, int angleX, int angleY, float ratio) {
+    LOGCATE("BeatingHeartRenderer::UpdateMVPMatrix angleX = %d, angleY = %d, ratio = %f", angleX,
             angleY, ratio);
     angleX = angleX % 360;
     angleY = angleY % 360;

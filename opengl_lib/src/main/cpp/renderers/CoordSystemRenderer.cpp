@@ -1,8 +1,8 @@
-#include "CoordSystemSample.h"
+#include "CoordSystemRenderer.h"
 #include "../util/GLUtils.h"
 #include <gtc/matrix_transform.hpp>
 
-CoordSystemSample::CoordSystemSample() {
+CoordSystemRenderer::CoordSystemRenderer() {
     m_SamplerLoc = GL_NONE;
     m_MVPMatLoc = GL_NONE;
 
@@ -15,11 +15,11 @@ CoordSystemSample::CoordSystemSample() {
     m_ScaleY = 1.0f;
 }
 
-CoordSystemSample::~CoordSystemSample() {
+CoordSystemRenderer::~CoordSystemRenderer() {
     NativeImageUtil::FreeNativeImage(&m_RenderImage);
 }
 
-void CoordSystemSample::Init() {
+void CoordSystemRenderer::Init() {
     if (m_ProgramObj) return;
 
     glGenTextures(1, &m_TextureId);
@@ -56,7 +56,7 @@ void CoordSystemSample::Init() {
         m_SamplerLoc = glGetUniformLocation(m_ProgramObj, "s_TextureMap");
         m_MVPMatLoc = glGetUniformLocation(m_ProgramObj, "u_MVPMatrix");
     } else {
-        LOGCATE("CoordSystemSample::Init create program fail");
+        LOGCATE("CoordSystemRenderer::Init create program fail");
     }
     GLfloat verticesCoords[] = {
             -1.0f, 1.0f, 0.0f,
@@ -109,8 +109,8 @@ void CoordSystemSample::Init() {
     glBindTexture(GL_TEXTURE_2D, GL_NONE);
 }
 
-void CoordSystemSample::LoadImage(NativeImage *pImage) {
-    LOGCATE("CoordSystemSample::LoadImage pImage = %p", pImage->ppPlane[0]);
+void CoordSystemRenderer::LoadImage(NativeImage *pImage) {
+    LOGCATE("CoordSystemRenderer::LoadImage pImage = %p", pImage->ppPlane[0]);
     if (pImage) {
         m_RenderImage.width = pImage->width;
         m_RenderImage.height = pImage->height;
@@ -119,8 +119,8 @@ void CoordSystemSample::LoadImage(NativeImage *pImage) {
     }
 }
 
-void CoordSystemSample::Draw(int screenW, int screenH) {
-    LOGCATE("CoordSystemSample::Draw()");
+void CoordSystemRenderer::Draw(int screenW, int screenH) {
+    LOGCATE("CoordSystemRenderer::Draw()");
 
     if (m_ProgramObj == GL_NONE || m_TextureId == GL_NONE) return;
 
@@ -146,7 +146,7 @@ void CoordSystemSample::Draw(int screenW, int screenH) {
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, (const void *) 0);
 }
 
-void CoordSystemSample::Destroy() {
+void CoordSystemRenderer::Destroy() {
     if (m_ProgramObj) {
         glDeleteProgram(m_ProgramObj);
         glDeleteBuffers(3, m_VBOIds);
@@ -155,8 +155,8 @@ void CoordSystemSample::Destroy() {
     }
 }
 
-void CoordSystemSample::UpdateMVPMatrix(glm::mat4 &mvpMatrix, int angleX, int angleY, float ratio) {
-    LOGCATE("CoordSystemSample::UpdateMVPMatrix angleX = %d, angleY = %d, ratio = %f", angleX,
+void CoordSystemRenderer::UpdateMVPMatrix(glm::mat4 &mvpMatrix, int angleX, int angleY, float ratio) {
+    LOGCATE("CoordSystemRenderer::UpdateMVPMatrix angleX = %d, angleY = %d, ratio = %f", angleX,
             angleY, ratio);
     angleX = angleX % 360;
     angleY = angleY % 360;
@@ -182,8 +182,8 @@ void CoordSystemSample::UpdateMVPMatrix(glm::mat4 &mvpMatrix, int angleX, int an
 }
 
 void
-CoordSystemSample::UpdateTransformMatrix(float rotateX, float rotateY, float scaleX, float scaleY) {
-    GLSampleBase::UpdateTransformMatrix(rotateX, rotateY, scaleX, scaleY);
+CoordSystemRenderer::UpdateTransformMatrix(float rotateX, float rotateY, float scaleX, float scaleY) {
+    GLRendererBase::UpdateTransformMatrix(rotateX, rotateY, scaleX, scaleY);
     m_AngleX = static_cast<int>(rotateX);
     m_AngleY = static_cast<int>(rotateY);
     m_ScaleX = scaleX;

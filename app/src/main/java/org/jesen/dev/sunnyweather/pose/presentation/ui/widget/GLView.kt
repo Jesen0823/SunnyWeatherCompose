@@ -24,7 +24,7 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun GLView(
-    sampleType: Int,
+    rendererType: Int,
     modifier: Modifier = Modifier,
     textureResId: Int? = null,
     renderMode: Int = GLSurfaceView.RENDERMODE_CONTINUOUSLY,
@@ -56,7 +56,7 @@ fun GLView(
                 }
 
                 view.queueEvent {
-                    glRender.setParamsInt(Constants.SAMPLE_TYPE, sampleType, 0)
+                    glRender.setParamsInt(Constants.RENDERER_TYPE, rendererType, 0)
 
                     rgbaData?.let { data ->
                         glRender.setImageData(

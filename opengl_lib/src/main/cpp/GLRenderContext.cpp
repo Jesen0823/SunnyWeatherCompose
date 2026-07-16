@@ -4,15 +4,15 @@
 GLRenderContext *GLRenderContext::m_pInstance = nullptr;
 
 GLRenderContext::GLRenderContext() {
-    m_pSample = nullptr;
-    m_SampleType = SAMPLE_TYPE_KEY_TRIANGLE;
+    m_pRenderer = nullptr;
+    m_RendererType = RENDERER_TYPE_KEY_BEZIER_CURVE;
     m_ScreenWidth = 0;
     m_ScreenHeight = 0;
 }
 
 GLRenderContext::~GLRenderContext() {
     NativeImageUtil::FreeNativeImage(&m_RenderImage);
-    UnLoadSample();
+    UnLoadRenderer();
 }
 
 GLRenderContext *GLRenderContext::GetInstance() {
@@ -29,40 +29,40 @@ void GLRenderContext::DestroyInstance() {
     }
 }
 
-void GLRenderContext::LoadSample(int type) {
-    LOGCATE("GLRenderContext::LoadSample type = %d", type);
-    UnLoadSample();
+void GLRenderContext::LoadRenderer(int type) {
+    LOGCATE("GLRenderContext::LoadRenderer type = %d", type);
+    UnLoadRenderer();
 
-    m_SampleType = type;
+    m_RendererType = type;
 
     switch (type) {
-        case SAMPLE_TYPE_KEY_BEATING_HEART:
-            m_pSample = new BeatingHeartSample();
+        case RENDERER_TYPE_KEY_BEATING_HEART:
+            m_pRenderer = new BeatingHeartRenderer();
             break;
-        case SAMPLE_TYPE_KEY_BEZIER_CURVE:
-            m_pSample = new BezierCurveSample();
+        case RENDERER_TYPE_KEY_BEZIER_CURVE:
+            m_pRenderer = new BezierCurveRenderer();
             break;
-        case SAMPLE_TYPE_KEY_CLOUD:
-            m_pSample = new CloudSample();
+        case RENDERER_TYPE_KEY_CLOUD:
+            m_pRenderer = new CloudRenderer();
             break;
         default:
-            LOGCATE("GLRenderContext::LoadSample unknown type = %d", type);
+            LOGCATE("GLRenderContext::LoadRenderer unknown type = %d", type);
             break;
     }
 
-    if (m_pSample) {
+    if (m_pRenderer) {
         if (m_RenderImage.ppPlane[0]) {
-            m_pSample->LoadImage(&m_RenderImage);
+            m_pRenderer->LoadImage(&m_RenderImage);
         }
-        m_pSample->Init();
+        m_pRenderer->Init();
     }
 }
 
-void GLRenderContext::UnLoadSample() {
-    if (m_pSample) {
-        m_pSample->Destroy();
-        delete m_pSample;
-        m_pSample = nullptr;
+void GLRenderContext::UnLoadRenderer() {
+    if (m_pRenderer) {
+        m_pRenderer->Destroy();
+        delete m_pRenderer;
+        m_pRenderer = nullptr;
     }
 }
 
@@ -77,8 +77,8 @@ void GLRenderContext::SetImageData(int format, int width, int height, uint8_t *p
     NativeImageUtil::AllocNativeImage(&m_RenderImage);
     memcpy(m_RenderImage.ppPlane[0], pData, width * height * 4);
 
-    if (m_pSample) {
-        m_pSample->LoadImage(&m_RenderImage);
+    if (m_pRenderer) {
+        m_pRenderer->LoadImage(&m_RenderImage);
     }
 }
 
@@ -86,12 +86,12 @@ void GLRenderContext::SetParamsInt(int paramType, int value0, int value1) {
     LOGCATE("GLRenderContext::SetParamsInt paramType = %d, value0 = %d, value1 = %d", paramType, value0, value1);
 
     switch (paramType) {
-        case SAMPLE_TYPE:
-            LoadSample(value0);
+        case RENDERER_TYPE:
+            LoadRenderer(value0);
             break;
         default:
-            if (m_pSample) {
-                m_pSample->SetParamsInt(paramType, value0, value1);
+            if (m_pRenderer) {
+                m_pRenderer->SetParamsInt(paramType, value0, value1);
             }
             break;
     }
@@ -100,8 +100,8 @@ void GLRenderContext::SetParamsInt(int paramType, int value0, int value1) {
 void GLRenderContext::UpdateTransformMatrix(float rotateX, float rotateY, float scaleX, float scaleY) {
     LOGCATE("GLRenderContext::UpdateTransformMatrix rotateX = %f, rotateY = %f, scaleX = %f, scaleY = %f",
             rotateX, rotateY, scaleX, scaleY);
-    if (m_pSample) {
-        m_pSample->UpdateTransformMatrix(rotateX, rotateY, scaleX, scaleY);
+    if (m_pRenderer) {
+        m_pRenderer->UpdateTransformMatrix(rotateX, rotateY, scaleX, scaleY);
     }
 }
 
@@ -109,8 +109,8 @@ void GLRenderContext::OnSurfaceCreated() {
     LOGCATE("GLRenderContext::OnSurfaceCreated");
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
-    if (m_pSample == nullptr) {
-        LoadSample(m_SampleType);
+    if (m_pRenderer == nullptr) {
+        LoadRenderer(m_RendererType);
     }
 }
 
@@ -121,8 +121,8 @@ void GLRenderContext::OnSurfaceChanged(int width, int height) {
 
     glViewport(0, 0, width, height);
 
-    if (m_pSample) {
-        m_pSample->Init();
+    if (m_pRenderer) {
+        m_pRenderer->Init();
     }
 }
 
@@ -130,7 +130,7 @@ void GLRenderContext::OnDrawFrame() {
     LOGCATE("GLRenderContext::OnDrawFrame");
     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
-    if (m_pSample) {
-        m_pSample->Draw(m_ScreenWidth, m_ScreenHeight);
+    if (m_pRenderer) {
+        m_pRenderer->Draw(m_ScreenWidth, m_ScreenHeight);
     }
 }

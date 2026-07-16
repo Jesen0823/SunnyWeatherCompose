@@ -4,7 +4,7 @@ project("gllib")
 
 include_directories(
         util
-        sample
+        renderers
         glm
 )
 
@@ -19,7 +19,7 @@ find_library(
 file(GLOB src_files
         ${CMAKE_SOURCE_DIR}/*.cpp
         ${CMAKE_SOURCE_DIR}/util/*.cpp
-        ${CMAKE_SOURCE_DIR}/sample/*.cpp)
+        ${CMAKE_SOURCE_DIR}/renderers/*.cpp)
 
 add_library(${CMAKE_PROJECT_NAME} SHARED
         ${src_files})

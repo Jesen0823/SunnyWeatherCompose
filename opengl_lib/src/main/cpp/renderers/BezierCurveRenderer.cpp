@@ -1,11 +1,11 @@
 #include <gtc/matrix_transform.hpp>
-#include "BezierCurveSample.h"
+#include "BezierCurveRenderer.h"
 #include "../util/GLUtils.h"
 
 #define POINTS_NUM                  256
 #define POINTS_PRE_TRIANGLES         3
 
-BezierCurveSample::BezierCurveSample() {
+BezierCurveRenderer::BezierCurveRenderer() {
     m_SamplerLoc = GL_NONE;
     m_MVPMatLoc = GL_NONE;
 
@@ -18,23 +18,23 @@ BezierCurveSample::BezierCurveSample() {
     m_ScaleX = 1.0f;
     m_ScaleY = 1.0f;
 
-    m_pCoordSystemSample = new CoordSystemSample();
+    m_pCoordSystemRenderer = new CoordSystemRenderer();
     m_FrameIndex = 0;
 }
 
-BezierCurveSample::~BezierCurveSample() {
+BezierCurveRenderer::~BezierCurveRenderer() {
     NativeImageUtil::FreeNativeImage(&m_RenderImage);
-    if (m_pCoordSystemSample != nullptr) {
-        delete m_pCoordSystemSample;
-        m_pCoordSystemSample = nullptr;
+    if (m_pCoordSystemRenderer != nullptr) {
+        delete m_pCoordSystemRenderer;
+        m_pCoordSystemRenderer = nullptr;
     }
 }
 
-void BezierCurveSample::Init() {
+void BezierCurveRenderer::Init() {
     if (m_ProgramObj) return;
 
-    if (m_pCoordSystemSample != nullptr) {
-        m_pCoordSystemSample->Init();
+    if (m_pCoordSystemRenderer != nullptr) {
+        m_pCoordSystemRenderer->Init();
     }
 
     char vShaderStr[] =
@@ -91,7 +91,7 @@ void BezierCurveSample::Init() {
     m_ProgramObj = GLUtils::CreateProgram(vShaderStr, fShaderStr,
                                           m_VertexShader, m_FragmentShader);
     if (!m_ProgramObj) {
-        LOGCATE("BezierCurveSample::Init create program fail");
+        LOGCATE("BezierCurveRenderer::Init create program fail");
     }
     int tDataSize = POINTS_NUM * POINTS_PRE_TRIANGLES;
     float *p_tData = new float[tDataSize];
@@ -122,17 +122,17 @@ void BezierCurveSample::Init() {
     glBindVertexArray(GL_NONE);
 }
 
-void BezierCurveSample::LoadImage(NativeImage *pImage) {
-    LOGCATE("BezierCurveSample::LoadImage pImage = %p", pImage->ppPlane[0]);
-    if (m_pCoordSystemSample != nullptr) {
-        m_pCoordSystemSample->LoadImage(pImage);
+void BezierCurveRenderer::LoadImage(NativeImage *pImage) {
+    LOGCATE("BezierCurveRenderer::LoadImage pImage = %p", pImage->ppPlane[0]);
+    if (m_pCoordSystemRenderer != nullptr) {
+        m_pCoordSystemRenderer->LoadImage(pImage);
     }
 }
 
-void BezierCurveSample::Draw(int screenW, int screenH) {
-    LOGCATE("BezierCurveSample::Draw()");
+void BezierCurveRenderer::Draw(int screenW, int screenH) {
+    LOGCATE("BezierCurveRenderer::Draw()");
 
-    if (m_pCoordSystemSample != nullptr) {
+    if (m_pCoordSystemRenderer != nullptr) {
     }
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glClearColor(0.1, 0.1, 0.1, 0.1);
@@ -238,33 +238,33 @@ void BezierCurveSample::Draw(int screenW, int screenH) {
     glDisable(GL_BLEND);
 }
 
-void BezierCurveSample::Destroy() {
+void BezierCurveRenderer::Destroy() {
     if (m_ProgramObj) {
         glDeleteProgram(m_ProgramObj);
         glDeleteBuffers(1, &m_VboId);
         glDeleteVertexArrays(1, &m_VaoId);
     }
 
-    if (m_pCoordSystemSample != nullptr) {
-        m_pCoordSystemSample->Destroy();
+    if (m_pCoordSystemRenderer != nullptr) {
+        m_pCoordSystemRenderer->Destroy();
     }
 }
 
 void
-BezierCurveSample::UpdateTransformMatrix(float rotateX, float rotateY, float scaleX, float scaleY) {
-    GLSampleBase::UpdateTransformMatrix(rotateX, rotateY, scaleX, scaleY);
+BezierCurveRenderer::UpdateTransformMatrix(float rotateX, float rotateY, float scaleX, float scaleY) {
+    GLRendererBase::UpdateTransformMatrix(rotateX, rotateY, scaleX, scaleY);
     m_AngleX = static_cast<int>(rotateX);
     m_AngleY = static_cast<int>(rotateY);
     m_ScaleX = scaleX;
     m_ScaleY = scaleY;
 
-    if (m_pCoordSystemSample != nullptr) {
-        m_pCoordSystemSample->UpdateTransformMatrix(rotateX, rotateY, scaleX, scaleY);
+    if (m_pCoordSystemRenderer != nullptr) {
+        m_pCoordSystemRenderer->UpdateTransformMatrix(rotateX, rotateY, scaleX, scaleY);
     }
 }
 
-void BezierCurveSample::UpdateMVPMatrix(glm::mat4 &mvpMatrix, int angleX, int angleY, float ratio) {
-    LOGCATE("BezierCurveSample::UpdateMVPMatrix angleX = %d, angleY = %d, ratio = %f", angleX,
+void BezierCurveRenderer::UpdateMVPMatrix(glm::mat4 &mvpMatrix, int angleX, int angleY, float ratio) {
+    LOGCATE("BezierCurveRenderer::UpdateMVPMatrix angleX = %d, angleY = %d, ratio = %f", angleX,
             angleY, ratio);
     angleX = angleX % 360;
     angleY = angleY % 360;
@@ -289,7 +289,7 @@ void BezierCurveSample::UpdateMVPMatrix(glm::mat4 &mvpMatrix, int angleX, int an
     mvpMatrix = Projection * View * Model;
 }
 
-void BezierCurveSample::DrawArray() {
+void BezierCurveRenderer::DrawArray() {
     glDrawArrays(GL_TRIANGLES, 0, POINTS_NUM * POINTS_PRE_TRIANGLES);
     glDrawArrays(GL_LINES, 0, POINTS_NUM * POINTS_PRE_TRIANGLES);
 }

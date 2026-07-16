@@ -4,11 +4,12 @@ interface Constants {
     companion object {
         const val TAG = "OpenGLRender"
         const val ANGLE_TYPE = 300
-        const val SAMPLE_TYPE = 200
+        const val RENDERER_TYPE = 200
 
-        const val SAMPLE_TYPE_KEY_BEATING_HEART = SAMPLE_TYPE + 19
-        const val SAMPLE_TYPE_KEY_CLOUD = SAMPLE_TYPE + 20
-        const val SAMPLE_TYPE_KEY_BEZIER_CURVE = SAMPLE_TYPE + 22
+        const val RENDERER_TYPE_KEY_BEATING_HEART = RENDERER_TYPE + 0
+        const val RENDERER_TYPE_KEY_CLOUD = RENDERER_TYPE + 1
+        const val RENDERER_TYPE_KEY_BEZIER_CURVE = RENDERER_TYPE + 2
+        const val RENDERER_TYPE_KEY_COORD_SYSTEM = RENDERER_TYPE + 3
 
         const val IMAGE_FORMAT_RGBA = 0x01
         const val IMAGE_FORMAT_NV21 = 0x02

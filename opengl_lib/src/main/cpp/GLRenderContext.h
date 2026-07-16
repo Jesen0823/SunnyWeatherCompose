@@ -2,10 +2,10 @@
 #define GLLIB_GLRENDERCONTEXT_H
 
 #include <stdint.h>
-#include "sample/base/GLSampleBase.h"
-#include "sample/BeatingHeartSample.h"
-#include "sample/BezierCurveSample.h"
-#include "sample/CloudSample.h"
+#include "renderers/base/GLRendererBase.h"
+#include "renderers/BeatingHeartRenderer.h"
+#include "renderers/BezierCurveRenderer.h"
+#include "renderers/CloudRenderer.h"
 #include "util/ImageDef.h"
 
 class GLRenderContext {
@@ -31,14 +31,14 @@ private:
 
     virtual ~GLRenderContext();
 
-    void LoadSample(int type);
+    void LoadRenderer(int type);
 
-    void UnLoadSample();
+    void UnLoadRenderer();
 
     static GLRenderContext *m_pInstance;
-    GLSampleBase *m_pSample;
+    GLRendererBase *m_pRenderer;
     NativeImage m_RenderImage;
-    int m_SampleType;
+    int m_RendererType;
     int m_ScreenWidth;
     int m_ScreenHeight;
 };

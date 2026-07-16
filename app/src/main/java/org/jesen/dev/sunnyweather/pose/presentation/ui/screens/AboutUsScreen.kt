@@ -46,7 +46,7 @@ fun AboutUsScreen(onBack: () -> Unit = {}) {
         }
     ) { paddingValues ->
         GLView(
-            sampleType = Constants.SAMPLE_TYPE_KEY_CLOUD,
+            rendererType = Constants.RENDERER_TYPE_KEY_CLOUD,
             textureResId = com.jesen.dev.gllib.R.drawable.noise,
             modifier = Modifier
                 .fillMaxWidth()
