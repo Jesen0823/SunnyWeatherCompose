@@ -24,8 +24,8 @@ local.properties
 .claudeignore
 .kotlin
 .trae
- CLAUDE.md
- app/release/
+CLAUDE.md
+app/release/
 local.properties.template
 log.txt
 
