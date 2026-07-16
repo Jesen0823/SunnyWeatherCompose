@@ -19,3 +19,13 @@ local.properties
 *.jks
 *.pkcs12
 *.p12
+
+# 临时文件
+.claudeignore
+.kotlin
+.trae
+ CLAUDE.md
+ app/release/
+local.properties.template
+log.txt
+

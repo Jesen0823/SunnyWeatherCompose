@@ -20,24 +20,91 @@
 
 **返回字段**:
 
-| JSONPath                         | 字段说明               | 使用场景         |
-| -------------------------------- | ---------------------- | ---------------- |
-| `temperature`                    | 地表 2 米气温          | 显示当前温度     |
-| `apparent_temperature`           | 体感温度               | 显示体感温度     |
-| `humidity`                       | 地表 2 米相对湿度(0-1) | 显示湿度百分比   |
-| `wind.speed`                     | 地表 10 米风速         | 显示风速         |
-| `wind.direction`                 | 地表 10 米风向         | 显示风向         |
-| `skycon`                         | 天气现象代码           | 显示天气图标     |
-| `cloudrate`                      | 总云量(0.0-1.0)        | 显示云量         |
-| `visibility`                     | 地表水平能见度         | 显示能见度       |
-| `pressure`                       | 地面气压               | 显示气压         |
-| `dswrf`                          | 向下短波辐射通量       | 计算紫外线强度   |
-| `precipitation.local.intensity`  | 本地降水强度           | 显示是否正在下雨 |
-| `precipitation.nearest.distance` | 最近降水带距离         | 显示附近降水情况 |
-| `air_quality.pm25`               | PM2.5 浓度             | 显示空气质量     |
-| `air_quality.aqi.chn`            | 国标 AQI               | 显示空气质量指数 |
-| `life_index.ultraviolet.desc`    | 紫外线指数描述         | 显示紫外线指数   |
-| `life_index.comfort.desc`        | 舒适度指数描述         | 显示舒适度       |
+| JSONPath               | 字段说明               | 使用场景       |
+| ---------------------- | ---------------------- | -------------- |
+| `temperature`          | 地表 2 米气温          | 显示当前温度   |
+| `apparent_temperature` | 体感温度               | 显示体感温度   |
+| `humidity`             | 地表 2 米相对湿度(0-1) | 显示湿度百分比 |
+| `wind.speed`           | 地表 10 米风速         | 显示风速       |
+| `wind.direction`       | 地表 10 米风向         | 显示风向       |
+| `skycon`               | 天气现象代码           | 显示天气图标   |
+
+**skycon 天气现象代码枚举：**
+
+| skycon 值             | 显示文本 | 说明                    |
+| --------------------- | -------- | ----------------------- |
+| `CLEAR_DAY`           | 晴       | 白天，云量 < 0.2        |
+| `CLEAR_NIGHT`         | 晴       | 夜间，云量 < 0.2        |
+| `PARTLY_CLOUDY_DAY`   | 多云     | 白天，0.8 >= 云量 > 0.2 |
+| `PARTLY_CLOUDY_NIGHT` | 多云     | 夜间，0.8 >= 云量 > 0.2 |
+| `CLOUDY`              | 阴       | 云量 > 0.8              |
+| `LIGHT_HAZE`          | 轻度雾霾 | PM2.5 100~150           |
+| `MODERATE_HAZE`       | 中度雾霾 | PM2.5 150~200           |
+| `HEAVY_HAZE`          | 重度雾霾 | PM2.5 > 200             |
+| `LIGHT_RAIN`          | 小雨     | 小雨天气                |
+| `MODERATE_RAIN`       | 中雨     | 中雨天气                |
+| `HEAVY_RAIN`          | 大雨     | 大雨天气                |
+| `STORM_RAIN`          | 暴雨     | 暴雨天气                |
+| `FOG`                 | 雾       | 雾天                    |
+| `LIGHT_SNOW`          | 小雪     | 小雪天气                |
+| `MODERATE_SNOW`       | 中雪     | 中雪天气                |
+| `HEAVY_SNOW`          | 大雪     | 大雪天气                |
+| `STORM_SNOW`          | 暴雪     | 暴雪天气                |
+| `DUST`                | 浮尘     | 浮尘天气                |
+| `SAND`                | 沙尘     | 沙尘天气                |
+| `WIND`                | 大风     | 大风天气                |
+
+**天气现象优先级（从高到低）：**
+降雪 > 降雨 > 雾 > 沙尘 > 浮尘 > 雾霾 > 大风 > 阴 > 多云 > 晴
+
+**sky.info（天气显示文本）字段取值：**
+
+`sky.info` 对应代码中 `Sky.getSky(weather.realtime.skycon).info` 的返回值，共有以下 14 种可能取值：
+
+| 显示文本   | 对应的 skycon 值                           | 说明          |
+| ---------- | ------------------------------------------ | ------------- |
+| `晴`       | `CLEAR_DAY`, `CLEAR_NIGHT`                 | 白天/夜间晴天 |
+| `多云`     | `PARTLY_CLOUDY_DAY`, `PARTLY_CLOUDY_NIGHT` | 白天/夜间多云 |
+| `阴`       | `CLOUDY`                                   | 阴天          |
+| `轻度雾霾` | `LIGHT_HAZE`                               | PM2.5 100~150 |
+| `中度雾霾` | `MODERATE_HAZE`                            | PM2.5 150~200 |
+| `重度雾霾` | `HEAVY_HAZE`                               | PM2.5 > 200   |
+| `小雨`     | `LIGHT_RAIN`                               | 小雨天气      |
+| `中雨`     | `MODERATE_RAIN`                            | 中雨天气      |
+| `大雨`     | `HEAVY_RAIN`                               | 大雨天气      |
+| `暴雨`     | `STORM_RAIN`                               | 暴雨天气      |
+| `雾`       | `FOG`                                      | 雾天          |
+| `小雪`     | `LIGHT_SNOW`                               | 小雪天气      |
+| `中雪`     | `MODERATE_SNOW`                            | 中雪天气      |
+| `大雪`     | `HEAVY_SNOW`                               | 大雪天气      |
+| `暴雪`     | `STORM_SNOW`                               | 暴雪天气      |
+| `浮尘`     | `DUST`                                     | 浮尘天气      |
+| `沙尘`     | `SAND`                                     | 沙尘天气      |
+| `大风`     | `WIND`                                     | 大风天气      |
+
+**代码使用示例：**
+
+```kotlin
+// 获取天气枚举对象
+val sky = Sky.getSky(weather.realtime.skycon)  // 如 weather.realtime.skycon = "CLEAR_DAY"
+
+// sky.info 返回值："晴"（字符串）
+text = sky.info  // CurrentWeatherCard.kt#L126
+
+// sky.icon 返回值：R.drawable.ic_clear_day（图标资源ID）
+painter = painterResource(id = sky.icon)  // CurrentWeatherCard.kt#L116
+```
+
+| `cloudrate` | 总云量(0.0-1.0) | 显示云量 |
+| `visibility` | 地表水平能见度 | 显示能见度 |
+| `pressure` | 地面气压 | 显示气压 |
+| `dswrf` | 向下短波辐射通量 | 计算紫外线强度 |
+| `precipitation.local.intensity` | 本地降水强度 | 显示是否正在下雨 |
+| `precipitation.nearest.distance` | 最近降水带距离 | 显示附近降水情况 |
+| `air_quality.pm25` | PM2.5 浓度 | 显示空气质量 |
+| `air_quality.aqi.chn` | 国标 AQI | 显示空气质量指数 |
+| `life_index.ultraviolet.desc` | 紫外线指数描述 | 显示紫外线指数 |
+| `life_index.comfort.desc` | 舒适度指数描述 | 显示舒适度 |
 
 **使用场景**:
 

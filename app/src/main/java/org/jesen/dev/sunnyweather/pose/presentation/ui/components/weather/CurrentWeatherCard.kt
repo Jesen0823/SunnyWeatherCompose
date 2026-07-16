@@ -4,13 +4,12 @@
  * 主要职责：
  * - 显示实时天气信息（温度、天气状况、空气质量）
  * - 通过 LocalProvider 获取天气和城市数据
- * - 点击城市名称可跳转到城市选择页面
- * 
+ *
  * 技术要点：
  * - 使用 LaunchedEffect + Animatable 实现温度文字和图标的入场缩放动画
  * - 根据 AQI 值动态设置空气质量颜色（绿/黄/橙/红/紫）
  * - 使用 Card 组件替代 Surface，更符合 Material3 设计规范
- * - 半透明背景（alpha=0.1）配合 OpenGL 背景效果更佳
+ * - 半透明背景（alpha=0.2）配合 OpenGL 背景效果更佳
  */
 package org.jesen.dev.sunnyweather.pose.presentation.ui.components.weather
 
