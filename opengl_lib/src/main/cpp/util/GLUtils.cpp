@@ -1,6 +1,6 @@
 #include "GLUtils.h"
 #include "LogUtil.h"
-#include <stdlib.h>
+#include <cstdlib>
 #include <cstring>
 
 GLuint GLUtils::LoadShader(GLenum shaderType, const char *pSource) {
@@ -134,7 +134,7 @@ GLUtils::CreateProgramWithFeedback(const char *pVertexShaderSource, const char *
                 if (bufLength) {
                     char *buf = (char *) malloc((size_t) bufLength);
                     if (buf) {
-                        glGetProgramInfoLog(program, bufLength, NULL, buf);
+                        glGetProgramInfoLog(program, bufLength, nullptr, buf);
                         LOGCATE("GLUtils::CreateProgramWithFeedback Could not link program:\n%s\n",
                                 buf);
                         free(buf);
