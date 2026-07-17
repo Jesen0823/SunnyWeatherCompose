@@ -478,12 +478,267 @@ GET https://api.caiyunapp.com/v2.6/{token}/{lng},{lat}/{endpoint}
 | `沙尘`     | `SAND`                                     | 沙尘天气      | 深土黄色调，强颗粒感，沙尘飞舞效果，能见度显著降低，天空呈橙黄色                             |
 | `大风`     | `WIND`                                     | 大风天气      | 云层快速移动，风力线条效果，云朵被拉伸变形，整体呈现动态流动感                               |
 
-- ClearRenderer (晴天) - 白天/夜间晴天
-- CloudyRenderer (阴天) -阴
-- PartyCloudyRender ( 多云) -多云
-- RainRenderer （雨滴动画）- 覆盖小雨/中雨/大雨/暴雨
-- SnowRenderer （雪花动画）- 覆盖小雪/中雪/大雪/暴雪
-- HazeRenderer （雾霾效果）- 覆盖轻度/中度/重度雾霾
-- FogRenderer （雾效果）- 覆盖雾天
-- DustRenderer （沙尘效果）- 覆盖浮尘/沙尘
-- WindRenderer （大风效果）- 覆盖大风
+## OpenGL动效架构设计
+
+### 设计原则
+
+为提高复用性和灵活性，采用**分层组合架构**（Layer-Composite Pattern）：
+
+- 将天气动效拆解为可复用的渲染层（Layer）
+- 每个 skycon 映射为多层组合 + 参数配置
+- 层之间按顺序叠加渲染，支持透明度混合
+- 通过参数化控制同层在不同天气下的表现
+
+### 基础类结构
+
+```
+GLRendererBase (现有基类)
+    │
+    ├── GLLayerBase (新增层基类)
+    │       ├── SkyBackgroundLayer    (天空背景层：渐变、太阳、月亮、星星)
+    │       ├── CloudLayer            (云层：程序化云朵)
+    │       ├── PrecipitationLayer    (降水层：雨滴/雪花粒子)
+    │       ├── ParticleLayer         (颗粒层：雾霾/沙尘/雾)
+    │       └── EffectLayer           (特效层：闪电、风力线条)
+    │
+    └── CompositeRenderer (新增组合渲染器)
+            └── LayerStack (层堆栈，管理渲染顺序)
+```
+
+#### 类接口定义
+
+| 类名                 | 职责                         | 核心方法                                  |
+| -------------------- | ---------------------------- | ----------------------------------------- |
+| `GLRendererBase`     | 现有渲染器基类               | Init(), Draw(), Destroy(), SetParamsInt() |
+| `GLLayerBase`        | 层基类（继承GLRendererBase） | Init(), Draw(), Destroy(), SetParams()    |
+| `SkyBackgroundLayer` | 天空背景层                   | setTimeOfDay(), setSkyColor()             |
+| `CloudLayer`         | 云层                         | setCoverage(), setDarkness(), setSpeed()  |
+| `PrecipitationLayer` | 降水层                       | setType(rain/snow), setIntensity()        |
+| `ParticleLayer`      | 颗粒层                       | setType(haze/fog/dust/sand), setDensity() |
+| `EffectLayer`        | 特效层                       | setLightning(), setWindLines()            |
+| `CompositeRenderer`  | 组合渲染器                   | addLayer(), removeLayer(), Draw()         |
+
+### Layer参数清单
+
+#### SkyBackgroundLayer 参数
+
+| 参数名           | 类型  | 取值范围  | 语义说明         |
+| ---------------- | ----- | --------- | ---------------- |
+| `timeOfDay`      | enum  | DAY/NIGHT | 白天/夜间模式    |
+| `skyTopColor`    | vec3  | RGB       | 天空顶部颜色     |
+| `skyBottomColor` | vec3  | RGB       | 天空底部颜色     |
+| `sunIntensity`   | float | 0.0~1.0   | 太阳亮度（白天） |
+| `moonIntensity`  | float | 0.0~1.0   | 月亮亮度（夜间） |
+| `starDensity`    | float | 0.0~1.0   | 星星密度（夜间） |
+
+#### CloudLayer 参数
+
+| 参数名     | 类型  | 取值范围 | 语义说明                     |
+| ---------- | ----- | -------- | ---------------------------- |
+| `coverage` | float | 0.0~1.0  | 云层覆盖率（0=晴朗，1=全阴） |
+| `darkness` | float | 0.0~1.0  | 云层暗度（0=白色，1=深灰）   |
+| `speed`    | float | 0.0~1.0  | 移动速度（0=静止，1=快速）   |
+| `scale`    | float | 0.5~2.0  | 云层缩放                     |
+
+#### PrecipitationLayer 参数
+
+| 参数名      | 类型  | 取值范围  | 语义说明                       |
+| ----------- | ----- | --------- | ------------------------------ |
+| `type`      | enum  | RAIN/SNOW | 降水类型                       |
+| `intensity` | float | 0.0~1.0   | 降水强度（小雨=0.2，暴雨=1.0） |
+| `speed`     | float | 0.0~1.0   | 下落速度                       |
+| `size`      | float | 0.5~2.0   | 雨滴/雪花大小                  |
+
+#### ParticleLayer 参数
+
+| 参数名       | 类型  | 取值范围           | 语义说明                 |
+| ------------ | ----- | ------------------ | ------------------------ |
+| `type`       | enum  | HAZE/FOG/DUST/SAND | 颗粒类型                 |
+| `density`    | float | 0.0~1.0            | 颗粒密度                 |
+| `color`      | vec3  | RGB                | 颗粒颜色                 |
+| `visibility` | float | 0.0~1.0            | 能见度（0=极低，1=正常） |
+
+#### EffectLayer 参数
+
+| 参数名              | 类型  | 取值范围   | 语义说明         |
+| ------------------- | ----- | ---------- | ---------------- |
+| `lightningEnabled`  | bool  | true/false | 是否启用闪电     |
+| `lightningInterval` | float | 2.0~10.0   | 闪电间隔（秒）   |
+| `windLinesEnabled`  | bool  | true/false | 是否启用风力线条 |
+| `windStrength`      | float | 0.0~1.0    | 风力强度         |
+
+### skycon → 层组合映射表
+
+每个 skycon 映射为多层组合，通过参数控制表现。渲染顺序：背景层 → 云层 → 降水层 → 颗粒层 → 特效层。
+
+| skycon                | 层组合配置                                                                                                                                                                                                                                                                               |
+| --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `CLEAR_DAY`           | SkyBackgroundLayer(timeOfDay=DAY) + CloudLayer(coverage=0.15, darkness=0.3, speed=0.2)                                                                                                                                                                                                   |
+| `CLEAR_NIGHT`         | SkyBackgroundLayer(timeOfDay=NIGHT) + CloudLayer(coverage=0.05, darkness=0.2, speed=0.1)                                                                                                                                                                                                 |
+| `PARTLY_CLOUDY_DAY`   | SkyBackgroundLayer(timeOfDay=DAY) + CloudLayer(coverage=0.5, darkness=0.4, speed=0.3)                                                                                                                                                                                                    |
+| `PARTLY_CLOUDY_NIGHT` | SkyBackgroundLayer(timeOfDay=NIGHT) + CloudLayer(coverage=0.5, darkness=0.5, speed=0.25)                                                                                                                                                                                                 |
+| `CLOUDY`              | SkyBackgroundLayer(timeOfDay=DAY, skyTopColor=0.3,0.35,0.4) + CloudLayer(coverage=0.9, darkness=0.7, speed=0.2)                                                                                                                                                                          |
+| `LIGHT_HAZE`          | SkyBackgroundLayer(timeOfDay=DAY, skyTopColor=0.6,0.55,0.45) + CloudLayer(coverage=0.3, darkness=0.5) + ParticleLayer(type=HAZE, density=0.3, visibility=0.7)                                                                                                                            |
+| `MODERATE_HAZE`       | SkyBackgroundLayer(timeOfDay=DAY, skyTopColor=0.5,0.45,0.35) + CloudLayer(coverage=0.4, darkness=0.6) + ParticleLayer(type=HAZE, density=0.5, visibility=0.5)                                                                                                                            |
+| `HEAVY_HAZE`          | SkyBackgroundLayer(timeOfDay=DAY, skyTopColor=0.4,0.35,0.25) + CloudLayer(coverage=0.5, darkness=0.7) + ParticleLayer(type=HAZE, density=0.8, visibility=0.2)                                                                                                                            |
+| `LIGHT_RAIN`          | SkyBackgroundLayer(timeOfDay=DAY, skyTopColor=0.35,0.4,0.5) + CloudLayer(coverage=0.6, darkness=0.6, speed=0.3) + PrecipitationLayer(type=RAIN, intensity=0.25, speed=0.5)                                                                                                               |
+| `MODERATE_RAIN`       | SkyBackgroundLayer(timeOfDay=DAY, skyTopColor=0.25,0.3,0.4) + CloudLayer(coverage=0.8, darkness=0.7, speed=0.4) + PrecipitationLayer(type=RAIN, intensity=0.5, speed=0.7)                                                                                                                |
+| `HEAVY_RAIN`          | SkyBackgroundLayer(timeOfDay=DAY, skyTopColor=0.2,0.25,0.3) + CloudLayer(coverage=0.9, darkness=0.8, speed=0.5) + PrecipitationLayer(type=RAIN, intensity=0.75, speed=0.9) + EffectLayer(lightningEnabled=true, lightningInterval=8.0)                                                   |
+| `STORM_RAIN`          | SkyBackgroundLayer(timeOfDay=DAY, skyTopColor=0.1,0.15,0.2) + CloudLayer(coverage=1.0, darkness=0.95, speed=0.8) + PrecipitationLayer(type=RAIN, intensity=1.0, speed=1.0) + EffectLayer(lightningEnabled=true, lightningInterval=3.0)                                                   |
+| `FOG`                 | SkyBackgroundLayer(timeOfDay=DAY, skyTopColor=0.8,0.8,0.8) + ParticleLayer(type=FOG, density=0.7, visibility=0.15)                                                                                                                                                                       |
+| `LIGHT_SNOW`          | SkyBackgroundLayer(timeOfDay=DAY, skyTopColor=0.6,0.65,0.75) + CloudLayer(coverage=0.5, darkness=0.5, speed=0.2) + PrecipitationLayer(type=SNOW, intensity=0.2, speed=0.3)                                                                                                               |
+| `MODERATE_SNOW`       | SkyBackgroundLayer(timeOfDay=DAY, skyTopColor=0.5,0.55,0.65) + CloudLayer(coverage=0.7, darkness=0.6, speed=0.25) + PrecipitationLayer(type=SNOW, intensity=0.45, speed=0.4)                                                                                                             |
+| `HEAVY_SNOW`          | SkyBackgroundLayer(timeOfDay=DAY, skyTopColor=0.4,0.45,0.55) + CloudLayer(coverage=0.9, darkness=0.75, speed=0.3) + PrecipitationLayer(type=SNOW, intensity=0.7, speed=0.5) + ParticleLayer(type=FOG, density=0.2, visibility=0.6)                                                       |
+| `STORM_SNOW`          | SkyBackgroundLayer(timeOfDay=DAY, skyTopColor=0.3,0.35,0.45) + CloudLayer(coverage=1.0, darkness=0.9, speed=0.6) + PrecipitationLayer(type=SNOW, intensity=1.0, speed=0.7) + ParticleLayer(type=FOG, density=0.4, visibility=0.3) + EffectLayer(windLinesEnabled=true, windStrength=0.8) |
+| `DUST`                | SkyBackgroundLayer(timeOfDay=DAY, skyTopColor=0.6,0.5,0.35) + ParticleLayer(type=DUST, density=0.4, visibility=0.5)                                                                                                                                                                      |
+| `SAND`                | SkyBackgroundLayer(timeOfDay=DAY, skyTopColor=0.7,0.5,0.25) + ParticleLayer(type=SAND, density=0.7, visibility=0.3) + EffectLayer(windLinesEnabled=true, windStrength=0.6)                                                                                                               |
+| `WIND`                | SkyBackgroundLayer(timeOfDay=DAY) + CloudLayer(coverage=0.4, darkness=0.4, speed=0.9) + EffectLayer(windLinesEnabled=true, windStrength=0.7)                                                                                                                                             |
+
+### 架构演进路径
+
+当前 `GLRenderContext` 只持有单个 `m_pRenderer` 指针，需演进为支持 `CompositeRenderer`：
+
+**阶段1（兼容现有）**：
+
+- `CloudRenderer` 重命名为 `WeatherRenderer`
+-
+
+**阶段2（分层重构）**：
+
+- 实现 `GLLayerBase` 和各具体 Layer
+- 实现 `CompositeRenderer` 管理层堆栈
+- `GLRenderContext` 改为持有 `CompositeRenderer`
+
+**阶段3（动态切换）**：
+
+- 根据 skycon 动态配置层组合
+- 支持层的热切换（如大风天气叠加风力效果到任意天气）
+
+### 复用关系说明
+
+| Layer                  | 被哪些天气复用             | 复用方式                                   |
+| ---------------------- | -------------------------- | ------------------------------------------ |
+| CloudLayer             | 晴、多云、阴、雨、雪、大风 | 通过 coverage/darkness/speed 参数区分      |
+| SkyBackgroundLayer     | 所有天气                   | 通过 timeOfDay 和 skyColor 参数区分        |
+| EffectLayer(lightning) | 大雨、暴雨、暴雪           | 通过 lightningEnabled 和 interval 参数控制 |
+| EffectLayer(wind)      | 大风、沙尘、暴雪           | 通过 windStrength 参数控制                 |
+| ParticleLayer(FOG)     | 大雪、暴雪                 | 低能见度时叠加薄雾效果                     |
+
+### 日夜判定策略
+
+彩云 API 的 skycon 值分为两类：
+
+**显式日夜类型**（自带 DAY/NIGHT 后缀）：
+
+- `CLEAR_DAY`, `CLEAR_NIGHT`
+- `PARTLY_CLOUDY_DAY`, `PARTLY_CLOUDY_NIGHT`
+
+**隐式日夜类型**（无 DAY/NIGHT 后缀）：
+
+- `CLOUDY`, `LIGHT_HAZE`, `MODERATE_HAZE`, `HEAVY_HAZE`
+- `LIGHT_RAIN`, `MODERATE_RAIN`, `HEAVY_RAIN`, `STORM_RAIN`
+- `FOG`, `LIGHT_SNOW`, `MODERATE_SNOW`, `HEAVY_SNOW`, `STORM_SNOW`
+- `DUST`, `SAND`, `WIND`
+
+**判定规则**：隐式日夜类型需要通过外部时间信息判定：
+
+| 判定方式     | 数据源                              | 说明                   |
+| ------------ | ----------------------------------- | ---------------------- |
+| 日出日落时间 | 彩云 API 返回的 sunrise/sunset 字段 | 最准确，与实际天气同步 |
+| 系统时间     | Android System.currentTimeMillis()  | 备用方案，简单直接     |
+| 本地时角     | 根据经纬度计算太阳位置              | 高精度天文算法         |
+
+**推荐实现**：优先使用彩云 API 返回的日出日落时间：
+
+```
+if (currentTime >= sunrise && currentTime < sunset) {
+    timeOfDay = DAY
+} else {
+    timeOfDay = NIGHT
+}
+```
+
+### JNI 桥接规划
+
+#### 现有接口
+
+当前 `GLRenderContext` 通过 `SetParamsInt()` 传递 renderer 类型：
+
+```cpp
+void SetParamsInt(int paramType, int value0, int value1);
+```
+
+对应 Kotlin 层调用：
+
+```kotlin
+GLRenderContext.setParamsInt(RENDERER_TYPE, RENDERER_TYPE_KEY_CLOUD, 0)
+```
+
+#### 演进方案
+
+**阶段1（兼容现有）**：
+
+- 在 Kotlin 层根据 skycon 映射到 int 类型的 renderer ID
+- 通过现有 `SetParamsInt()` 传递
+
+**阶段2（扩展接口）**：
+
+- 新增 `SetSkycon(const char* skycon)` 方法
+- Kotlin 直接传递 skycon 字符串
+- C++ 内部解析并配置层组合
+
+```cpp
+// C++ 新增接口
+void GLRenderContext::SetSkycon(const char* skycon);
+
+// Kotlin 调用
+GLRenderContext.setSkycon("CLEAR_DAY")
+```
+
+#### skycon 传递路径
+
+```
+Sky.kt (getSky())
+    │
+    └── WeatherViewModel (获取 skycon)
+            │
+            └── WeatherScreen (传递 skycon 到 GLView)
+                    │
+                    └── GLView.kt (JNI 调用)
+                            │
+                            └── GLRenderContext::SetSkycon()
+                                    │
+                                    └── CompositeRenderer::configureLayers(skycon)
+```
+
+### 现有 CloudRenderer 与 CloudLayer 参数映射
+
+当前 `CloudRenderer.cpp` 的 fragment shader 中包含多个硬编码常量，这些将直接演变为 `CloudLayer` 的 uniform 参数：
+
+| CloudLayer 参数  | 对应 shader 常量 | 当前值              | 语义说明                         |
+| ---------------- | ---------------- | ------------------- | -------------------------------- |
+| `coverage`       | `cloudcover`     | 0.2                 | 云层覆盖率（当前对应晴天）       |
+| `darkness`       | `clouddark`      | 0.5                 | 云层暗度                         |
+| `lightness`      | `cloudlight`     | 0.3                 | 云层亮部系数                     |
+| `speed`          | `speed`          | 0.03                | 云层移动速度                     |
+| `scale`          | `cloudscale`     | 1.1                 | 云层缩放比例                     |
+| `alpha`          | `cloudalpha`     | 8.0                 | 云层透明度系数                   |
+| `skyTint`        | `skytint`        | 0.5                 | 天空色调混合系数                 |
+| `skyColorTop`    | `skycolour2`     | vec3(0.4, 0.7, 1.0) | 天空顶部颜色（当前对应晴天白天） |
+| `skyColorBottom` | `skycolour1`     | vec3(0.2, 0.4, 0.6) | 天空底部颜色（当前对应晴天白天） |
+
+**阶段1实现指引**：
+
+1. 将上述硬编码常量改为 uniform 变量
+2. 通过 `SetParams()` 方法传递参数值
+3. 根据 skycon 查表设置对应参数组合
+
+### 渲染顺序与混合模式
+
+| 渲染顺序 | Layer              | 混合模式     | 说明                 |
+| -------- | ------------------ | ------------ | -------------------- |
+| 1        | SkyBackgroundLayer | 不透明覆盖   | 绘制天空背景         |
+| 2        | CloudLayer         | Alpha混合    | 云朵覆盖在天空上     |
+| 3        | PrecipitationLayer | Alpha混合    | 雨滴/雪花叠加        |
+| 4        | ParticleLayer      | Alpha混合    | 雾霾/沙尘/雾叠加     |
+| 5        | EffectLayer        | Additive混合 | 闪电、风力线条等特效 |

@@ -13,7 +13,7 @@ public:
 
     virtual ~CoordSystemRenderer();
 
-    virtual void Init();
+    virtual bool Init();
 
     virtual void LoadImage(NativeImage *pImage);
 

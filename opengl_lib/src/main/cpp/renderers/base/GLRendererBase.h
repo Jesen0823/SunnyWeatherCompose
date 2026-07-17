@@ -39,7 +39,7 @@ public:
     virtual ~GLRendererBase() {
     }
 
-    virtual void Init() = 0;
+    virtual bool Init() = 0;
 
     virtual void LoadImage(NativeImage *pImage) {
     }

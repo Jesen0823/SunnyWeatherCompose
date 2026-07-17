@@ -65,6 +65,21 @@ native_OnDrawFrame(JNIEnv *env, jobject thiz) {
     GLRenderContext::GetInstance()->OnDrawFrame();
 }
 
+extern "C"
+JNIEXPORT void JNICALL
+native_SetSkycon(JNIEnv *env, jobject thiz, jstring skycon) {
+    LOGCATE("native_SetSkycon: JNI bridge called");
+    if (skycon == nullptr) {
+        LOGCATE("native_SetSkycon: skycon is null, returning");
+        return;
+    }
+    const char *skyconStr = env->GetStringUTFChars(skycon, nullptr);
+    LOGCATI("native_SetSkycon: skycon = %s", skyconStr);
+    GLRenderContext::GetInstance()->SetSkycon(skyconStr);
+    env->ReleaseStringUTFChars(skycon, skyconStr);
+    LOGCATI("native_SetSkycon: completed");
+}
+
 #ifdef __cplusplus
 }
 #endif
@@ -77,7 +92,8 @@ static JNINativeMethod g_NativeMethods[] = {
         {"native_UpdateTransformMatrix", "(FFFF)V",   (void *) (native_UpdateTransformMatrix)},
         {"native_OnSurfaceCreated",      "()V",       (void *) (native_OnSurfaceCreated)},
         {"native_OnSurfaceChanged",      "(II)V",     (void *) (native_OnSurfaceChanged)},
-        {"native_OnDrawFrame",           "()V",       (void *) (native_OnDrawFrame)}
+        {"native_OnDrawFrame",           "()V",       (void *) (native_OnDrawFrame)},
+        {"native_SetSkycon",             "(Ljava/lang/String;)V", (void *) (native_SetSkycon)}
 };
 
 static int

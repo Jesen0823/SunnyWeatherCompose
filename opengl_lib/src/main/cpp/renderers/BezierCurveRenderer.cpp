@@ -30,8 +30,8 @@ BezierCurveRenderer::~BezierCurveRenderer() {
     }
 }
 
-void BezierCurveRenderer::Init() {
-    if (m_ProgramObj) return;
+bool BezierCurveRenderer::Init() {
+    if (m_ProgramObj) return true;
 
     if (m_pCoordSystemRenderer != nullptr) {
         m_pCoordSystemRenderer->Init();
@@ -120,6 +120,7 @@ void BezierCurveRenderer::Init() {
 
     glBindBuffer(GL_ARRAY_BUFFER, GL_NONE);
     glBindVertexArray(GL_NONE);
+    return true;
 }
 
 void BezierCurveRenderer::LoadImage(NativeImage *pImage) {

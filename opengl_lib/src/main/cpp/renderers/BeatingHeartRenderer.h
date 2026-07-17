@@ -12,7 +12,7 @@ public:
 
     virtual ~BeatingHeartRenderer();
 
-    virtual void Init();
+    virtual bool Init();
 
     virtual void LoadImage(NativeImage *pImage);
 

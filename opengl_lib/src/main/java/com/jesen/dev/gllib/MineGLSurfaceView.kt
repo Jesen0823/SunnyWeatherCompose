@@ -14,7 +14,7 @@ class MineGLSurfaceView(context: Context, mineGLRender: MineGLRender?, attrs: At
     constructor(context: Context, mineGLRender: MineGLRender?) : this(context, mineGLRender, null)
 
     init {
-        setEGLContextClientVersion(2)
+        setEGLContextClientVersion(3)
         mMineGLRender = mineGLRender ?: MineGLRender()
         setEGLConfigChooser(8, 8, 8, 8, 16, 8)
         setRenderer(mMineGLRender)

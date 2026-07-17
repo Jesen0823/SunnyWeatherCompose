@@ -17,7 +17,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.jesen.dev.gllib.Constants
-import org.jesen.dev.sunnyweather.pose.presentation.ui.widget.GLView
+import org.jesen.dev.sunnyweather.pose.presentation.ui.widget.GLEffectView
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -45,9 +45,8 @@ fun AboutUsScreen(onBack: () -> Unit = {}) {
             )
         }
     ) { paddingValues ->
-        GLView(
-            rendererType = Constants.RENDERER_TYPE_KEY_CLOUD,
-            textureResId = com.jesen.dev.gllib.R.drawable.noise,
+        GLEffectView(
+            skycon = Constants.SKYCON_CLEAR_DAY,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(500.dp)

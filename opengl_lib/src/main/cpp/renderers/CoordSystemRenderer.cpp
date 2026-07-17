@@ -19,8 +19,8 @@ CoordSystemRenderer::~CoordSystemRenderer() {
     NativeImageUtil::FreeNativeImage(&m_RenderImage);
 }
 
-void CoordSystemRenderer::Init() {
-    if (m_ProgramObj) return;
+bool CoordSystemRenderer::Init() {
+    if (m_ProgramObj) return true;
 
     glGenTextures(1, &m_TextureId);
     glBindTexture(GL_TEXTURE_2D, m_TextureId);
@@ -107,6 +107,7 @@ void CoordSystemRenderer::Init() {
                  m_RenderImage.height, 0, GL_RGBA, GL_UNSIGNED_BYTE,
                  m_RenderImage.ppPlane[0]);
     glBindTexture(GL_TEXTURE_2D, GL_NONE);
+    return true;
 }
 
 void CoordSystemRenderer::LoadImage(NativeImage *pImage) {

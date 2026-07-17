@@ -20,9 +20,9 @@ BeatingHeartRenderer::~BeatingHeartRenderer() {
     NativeImageUtil::FreeNativeImage(&m_RenderImage);
 }
 
-void BeatingHeartRenderer::Init() {
+bool BeatingHeartRenderer::Init() {
     if (m_ProgramObj)
-        return;
+        return true;
 
     glGenTextures(1, &m_TextureId);
     glBindTexture(GL_TEXTURE_2D, m_TextureId);
@@ -112,6 +112,7 @@ void BeatingHeartRenderer::Init() {
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_VboIds[2]);
 
     glBindVertexArray(GL_NONE);
+    return true;
 }
 
 void BeatingHeartRenderer::LoadImage(NativeImage *pImage) {

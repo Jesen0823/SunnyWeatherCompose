@@ -13,7 +13,7 @@ public:
 
     virtual ~BezierCurveRenderer();
 
-    virtual void Init();
+    virtual bool Init();
 
     virtual void LoadImage(NativeImage *pImage);
 

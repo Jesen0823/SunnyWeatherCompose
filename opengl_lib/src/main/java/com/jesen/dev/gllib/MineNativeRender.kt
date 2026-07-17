@@ -21,4 +21,5 @@ class MineNativeRender {
     external fun native_OnSurfaceCreated()
     external fun native_OnSurfaceChanged(width: Int, height: Int)
     external fun native_OnDrawFrame()
+    external fun native_SetSkycon(skycon: String)
 }

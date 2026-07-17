@@ -21,9 +21,9 @@ CloudRenderer::~CloudRenderer() {
     NativeImageUtil::FreeNativeImage(&m_RenderImage);
 }
 
-void CloudRenderer::Init() {
+bool CloudRenderer::Init() {
     if (m_ProgramObj)
-        return;
+        return true;
 
     glGenTextures(1, &m_TextureId);
     glBindTexture(GL_TEXTURE_2D, m_TextureId);
@@ -183,6 +183,7 @@ void CloudRenderer::Init() {
 
     glBindVertexArray(GL_NONE);
 
+    return true;
 }
 
 void CloudRenderer::LoadImage(NativeImage *pImage) {
