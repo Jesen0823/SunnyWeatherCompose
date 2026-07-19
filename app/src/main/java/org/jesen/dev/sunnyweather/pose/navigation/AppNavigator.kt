@@ -76,6 +76,9 @@ fun AppNavigator(
 
     var isDrawerOpen by remember { mutableStateOf(false) }
 
+    // ========== DEBUG MODE: Disabled auto-navigation to WeatherScreen ==========
+    // TODO: Restore original auto-navigation logic after debugging is complete
+    /*
     LaunchedEffect(savedPlaces, isInitialLoading) {
         if (!isInitialLoading && savedPlaces.isNotEmpty()) {
             val currentTopKey = backStack.lastOrNull()
@@ -86,6 +89,7 @@ fun AppNavigator(
             }
         }
     }
+    */
 
     NavDisplay(
         backStack = backStack,

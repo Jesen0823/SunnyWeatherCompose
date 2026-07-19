@@ -10,7 +10,8 @@ SkyBackgroundLayer::SkyBackgroundLayer()
       m_SkyColorBottom(0.2f, 0.4f, 0.6f),
       m_SunIntensity(1.0f),
       m_MoonIntensity(0.8f),
-      m_StarDensity(1.2f),
+      m_SunVisible(true),
+      m_SkyMode(0),
       m_ScreenWidth(0),
       m_ScreenHeight(0),
       m_Time(0.0f),
@@ -23,8 +24,7 @@ SkyBackgroundLayer::SkyBackgroundLayer()
       m_SkyColorTopLoc(GL_NONE),
       m_SkyColorBottomLoc(GL_NONE),
       m_SunIntensityLoc(GL_NONE),
-      m_MoonIntensityLoc(GL_NONE),
-      m_StarDensityLoc(GL_NONE) {
+      m_MoonIntensityLoc(GL_NONE) {
     m_VboIds[0] = m_VboIds[1] = m_VboIds[2] = GL_NONE;
 }
 
@@ -62,33 +62,21 @@ bool SkyBackgroundLayer::Init() {
             "uniform vec3 u_skyColorBottom;                                           \n"
             "uniform float u_sunIntensity;                                             \n"
             "uniform float u_moonIntensity;                                            \n"
-            "uniform float u_starDensity;                                              \n"
-            "                                                                         \n"
-            "vec2 hash(vec2 p) {                                                      \n"
-            "    p = vec2(dot(p, vec2(127.1, 311.7)), dot(p, vec2(269.5, 183.3)));    \n"
-            "    return -1.0 + 2.0 * fract(sin(p) * 43758.5453123);                   \n"
-            "}                                                                        \n"
-            "                                                                         \n"
-            "float noise(vec2 p) {                                                     \n"
-            "    const float K1 = 0.366025404;                                         \n"
-            "    const float K2 = 0.211324865;                                         \n"
-            "    vec2 i = floor(p + (p.x + p.y) * K1);                                 \n"
-            "    vec2 a = p - i + (i.x + i.y) * K2;                                   \n"
-            "    vec2 o = (a.x > a.y) ? vec2(1.0, 0.0) : vec2(0.0, 1.0);              \n"
-            "    vec2 b = a - o + K2;                                                 \n"
-            "    vec2 c = a - 1.0 + 2.0 * K2;                                         \n"
-            "    vec3 h = max(0.5 - vec3(dot(a, a), dot(b, b), dot(c, c)), 0.0);      \n"
-            "    vec3 n = h * h * h * h * vec3(dot(a, hash(i)),                        \n"
-            "                                  dot(b, hash(i + o)),                     \n"
-            "                                  dot(c, hash(i + 1.0)));                  \n"
-            "    return dot(n, vec3(70.0));                                            \n"
-            "}                                                                        \n"
+            "uniform bool u_sunVisible;                                                \n"
+            "uniform int u_skyMode;                                                    \n"
             "                                                                         \n"
             "void main() {                                                             \n"
             "    vec2 p = gl_FragCoord.xy / u_screenSize.xy;                          \n"
             "    vec3 skyColor = mix(u_skyColorBottom, u_skyColorTop, p.y);            \n"
             "    vec3 result = skyColor;                                               \n"
-            "    if (u_timeOfDay == 0) {                                               \n"
+            "    if (u_skyMode == 1) {                                                 \n"
+            "        result = skyColor * 0.85;                                         \n"
+            "    } else if (u_skyMode == 2) {                                          \n"
+            "        result = skyColor * 0.95 + vec3(0.02, 0.02, 0.05);                \n"
+            "    } else if (u_skyMode == 3) {                                          \n"
+            "        result = skyColor + vec3(0.05, 0.03, 0.0);                        \n"
+            "    }                                                                     \n"
+            "    if (u_timeOfDay == 0 && u_sunVisible) {                               \n"
             "        vec2 sunPos = vec2(0.75, 0.85);                                   \n"
             "        float dist = distance(p, sunPos);                                  \n"
             "        float sunCore = 1.0 - smoothstep(0.0, 0.08, dist);                \n"
@@ -106,7 +94,7 @@ bool SkyBackgroundLayer::Init() {
             "        float rayPattern = sin(rayAngle * 10.0) * 0.4 + 0.6;              \n"
             "        rayPattern *= sin(rayAngle * 5.0) * 0.2 + 0.8;                    \n"
             "        result = result + sunRayColor * sunRays * rayPattern * 0.25;      \n"
-            "    } else {                                                              \n"
+            "    } else if (u_timeOfDay == 1) {                                        \n"
             "        vec2 moonPos = vec2(0.25, 0.8);                                   \n"
             "        float moonDist = distance(p, moonPos);                            \n"
             "        float moonGlow = 1.0 - smoothstep(0.0, 0.50, moonDist);           \n"
@@ -166,7 +154,8 @@ bool SkyBackgroundLayer::Init() {
     m_SkyColorBottomLoc = glGetUniformLocation(m_ProgramObj, "u_skyColorBottom");
     m_SunIntensityLoc = glGetUniformLocation(m_ProgramObj, "u_sunIntensity");
     m_MoonIntensityLoc = glGetUniformLocation(m_ProgramObj, "u_moonIntensity");
-    m_StarDensityLoc = glGetUniformLocation(m_ProgramObj, "u_starDensity");
+    m_SunVisibleLoc = glGetUniformLocation(m_ProgramObj, "u_sunVisible");
+    m_SkyModeLoc = glGetUniformLocation(m_ProgramObj, "u_skyMode");
 
     // 顶点坐标
     GLfloat verticesCoords[] = {
@@ -244,7 +233,8 @@ void SkyBackgroundLayer::Draw(int screenW, int screenH) {
     glUniform3f(m_SkyColorBottomLoc, m_SkyColorBottom.x, m_SkyColorBottom.y, m_SkyColorBottom.z);
     glUniform1f(m_SunIntensityLoc, m_SunIntensity);
     glUniform1f(m_MoonIntensityLoc, m_MoonIntensity);
-    glUniform1f(m_StarDensityLoc, m_StarDensity);
+    glUniform1i(m_SunVisibleLoc, m_SunVisible ? 1 : 0);
+    glUniform1i(m_SkyModeLoc, m_SkyMode);
 
     // 关闭深度测试，确保背景层完全覆盖
     glDisable(GL_DEPTH_TEST);
@@ -272,6 +262,12 @@ void SkyBackgroundLayer::SetParamInt(LayerParamType paramType, int value) {
         case PARAM_TIME_OF_DAY:
             m_TimeOfDay = value;
             break;
+        case PARAM_SUN_VISIBLE:
+            m_SunVisible = (value != 0);
+            break;
+        case PARAM_SKY_MODE:
+            m_SkyMode = value;
+            break;
         default:
             break;
     }
@@ -284,9 +280,6 @@ void SkyBackgroundLayer::SetParamFloat(LayerParamType paramType, float value) {
             break;
         case PARAM_MOON_INTENSITY:
             m_MoonIntensity = value;
-            break;
-        case PARAM_STAR_DENSITY:
-            m_StarDensity = value;
             break;
         default:
             break;

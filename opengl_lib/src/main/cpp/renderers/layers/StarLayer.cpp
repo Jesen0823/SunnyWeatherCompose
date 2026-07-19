@@ -229,11 +229,11 @@ void StarLayer::Destroy() {
 
 void StarLayer::SetParamFloat(LayerParamType paramType, float value) {
     switch (paramType) {
-        case PARAM_STAR_DENSITY:
-            m_StarCount = static_cast<int>(value * 500);
+        case PARAM_STAR_COUNT:
+            m_StarCount = static_cast<int>(value);
             GenerateStars();
             break;
-        case PARAM_TIME_SPEED:
+        case PARAM_STAR_TWINKLE_SPEED:
             m_TwinkleSpeed = value;
             break;
         default:

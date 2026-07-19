@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import org.jesen.dev.sunnyweather.pose.di.AppModule
 import org.jesen.dev.sunnyweather.pose.navigation.AppNavigator
+import org.jesen.dev.sunnyweather.pose.navigation.AboutUsKey
 import org.jesen.dev.sunnyweather.pose.navigation.UnknownKey
 import org.jesen.dev.sunnyweather.pose.navigation.WeatherKey
 import org.jesen.dev.sunnyweather.pose.presentation.viewmodel.PermissionViewModel
@@ -73,6 +74,9 @@ fun SunnyWeatherApp() {
     var launchState by rememberSaveable { mutableStateOf(LaunchState.Loading) }
     var hasRequestedPermission by rememberSaveable { mutableStateOf(false) }
 
+    // ========== DEBUG MODE: Disabled launch state management for rain effect testing ==========
+    // TODO: Restore original launch state logic after debugging is complete
+    /*
     LaunchedEffect(savedPlaces, isPlaceSaved, permissionStatus, isInitialLoading) {
         Log.d(TAG, "LaunchedEffect triggered - savedPlaces.size: ${savedPlaces.size}, isPlaceSaved: $isPlaceSaved, permissionStatus: $permissionStatus, isInitialLoading: $isInitialLoading, current launchState: $launchState, hasRequestedPermission: $hasRequestedPermission")
         
@@ -130,7 +134,16 @@ fun SunnyWeatherApp() {
             permissionViewModel.requestPermission()
         }
     }
+    */
 
+    // ========== DEBUG MODE: Hardcoded initial route for rain effect testing ==========
+    // TODO: Restore original logic after debugging is complete
+    val initialKey = AboutUsKey
+    Log.d(TAG, "DEBUG MODE: initialKey hardcoded to AboutUsKey for rain effect testing")
+    // ===================================================================================
+    
+    /*
+    // Original initialKey logic - commented out for debugging
     val initialKey = when (launchState) {
         LaunchState.Loading -> {
             Log.d(TAG, "Initial key: Loading -> UnknownKey (temporary)")
@@ -157,9 +170,32 @@ fun SunnyWeatherApp() {
             UnknownKey
         }
     }
+    */
 
     Log.d(TAG, "========== AppNavigator starting with initialKey: $initialKey ==========")
     
+    // ========== DEBUG MODE: Skip loading check for direct navigation to AboutUsScreen ==========
+    // TODO: Restore original loading logic after debugging is complete
+    AppNavigator(
+        initialKey = initialKey,
+        isAutoLocating = false,
+        onPlaceSelected = { place ->
+            Log.d(TAG, "onPlaceSelected called: ${place.name}")
+            placeViewModel.savePlace(place)
+        },
+        onClearPlace = {
+            Log.d(TAG, "onClearPlace called")
+            placeViewModel.clearPlace()
+        },
+        onLanguageChanged = {
+            Log.d(TAG, "onLanguageChanged called")
+            val activity = context as? android.app.Activity
+            activity?.recreate()
+        }
+    )
+    
+    /*
+    // Original loading check logic - commented out for debugging
     if (isInitialLoading) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             CircularProgressIndicator(
@@ -186,4 +222,5 @@ fun SunnyWeatherApp() {
             }
         )
     }
+    */
 }

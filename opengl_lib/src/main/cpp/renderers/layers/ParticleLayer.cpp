@@ -46,6 +46,7 @@ bool ParticleLayer::Init() {
     char fShaderStr[] =
             "#version 300 es                                                          \n"
             "precision highp float;                                                   \n"
+            "precision highp int;                                                     \n"
             "layout(location = 0) out vec4 outColor;                                  \n"
             "uniform float u_time;                                                    \n"
             "uniform vec2 u_screenSize;                                               \n"
@@ -54,7 +55,7 @@ bool ParticleLayer::Init() {
             "uniform vec3 u_particleColor;                                            \n"
             "uniform float u_particleVisibility;                                      \n"
             "                                                                         \n"
-            "float hash(vec2 p) {                                                      \n"
+            "vec2 hash(vec2 p) {                                                     \n"
             "    p = vec2(dot(p, vec2(127.1, 311.7)), dot(p, vec2(269.5, 183.3)));    \n"
             "    return -1.0 + 2.0 * fract(sin(p) * 43758.5453123);                   \n"
             "}                                                                        \n"
@@ -116,10 +117,17 @@ bool ParticleLayer::Init() {
             "        alpha = sand * u_particleDensity * (1.0 - u_particleVisibility) * 0.7;\n"
             "    }                                                                    \n"
             "                                                                         \n"
-            "    // 边缘模糊效果                                                       \n"
-            "    float edgeBlur = smoothstep(0.0, 0.2, p.x) * smoothstep(0.8, 1.0, p.x);\n"
-            "    edgeBlur *= smoothstep(0.0, 0.2, p.y) * smoothstep(0.8, 1.0, p.y);   \n"
-            "    alpha *= edgeBlur;                                                   \n"
+            "    // 边缘模糊效果：使用径向距离实现自然的边缘衰减                         \n"
+            "    vec2 center = vec2(0.5);                                             \n"
+            "    float distToCenter = length(p - center);                             \n"
+            "    float maxDist = length(vec2(0.5));                                   \n"
+            "    float radialBlur = smoothstep(maxDist * 0.8, maxDist * 1.1, distToCenter);\n"
+            "    radialBlur = 1.0 - radialBlur;                                       \n"
+            "    \n"
+            "    float edgeBlurX = smoothstep(0.0, 0.15, p.x) * smoothstep(0.85, 1.0, p.x);\n"
+            "    float edgeBlurY = smoothstep(0.0, 0.15, p.y) * smoothstep(0.85, 1.0, p.y);\n"
+            "    float combinedEdgeBlur = edgeBlurX * edgeBlurY * 0.6 + radialBlur * 0.4;\n"
+            "    alpha *= combinedEdgeBlur;                                           \n"
             "                                                                         \n"
             "    result = u_particleColor * alpha;                                    \n"
             "    alpha = clamp(alpha, 0.0, 1.0);                                      \n"
@@ -131,6 +139,7 @@ bool ParticleLayer::Init() {
         LOGCATE("ParticleLayer::Init create program fail");
         return false;
     }
+    LOGCATI("ParticleLayer::Init success, m_ProgramObj=%d", m_ProgramObj);
 
     m_MVPMatLoc = glGetUniformLocation(m_ProgramObj, "u_MVPMatrix");
     m_TimeLoc = glGetUniformLocation(m_ProgramObj, "u_time");

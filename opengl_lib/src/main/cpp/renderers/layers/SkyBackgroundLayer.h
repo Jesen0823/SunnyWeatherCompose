@@ -9,8 +9,8 @@
  * 
  * 负责渲染天空背景，包括：
  * - 天空渐变（日/夜模式不同颜色）
- * - 太阳/月亮光晕效果
- * - 星星闪烁（夜间模式）
+ * - 太阳光晕效果（白天模式）
+ * - 月亮光晕效果（夜间模式）
  * 
  * 参数配置：
  * - timeOfDay: 日夜模式（0=白天，1=夜间）
@@ -18,7 +18,6 @@
  * - skyColorBottom: 天空底部颜色
  * - sunIntensity: 太阳亮度（白天模式）
  * - moonIntensity: 月亮亮度（夜间模式）
- * - starDensity: 星星密度（夜间模式）
  */
 class SkyBackgroundLayer : public GLLayerBase {
 public:
@@ -81,7 +80,8 @@ private:
     GLuint m_SkyColorBottomLoc;         // 天空底部颜色 uniform 位置
     GLuint m_SunIntensityLoc;           // 太阳亮度 uniform 位置
     GLuint m_MoonIntensityLoc;          // 月亮亮度 uniform 位置
-    GLuint m_StarDensityLoc;            // 星星密度 uniform 位置
+    GLuint m_SunVisibleLoc;             // 太阳可见性 uniform 位置
+    GLuint m_SkyModeLoc;                // 天空模式 uniform 位置
     
     glm::mat4 m_MVPMatrix;              // MVP 矩阵
     
@@ -90,7 +90,8 @@ private:
     glm::vec3 m_SkyColorBottom;         // 天空底部颜色
     float m_SunIntensity;               // 太阳亮度（0.0~1.0）
     float m_MoonIntensity;              // 月亮亮度（0.0~1.0）
-    float m_StarDensity;                // 星星密度（0.0~1.0）
+    bool m_SunVisible;                  // 太阳可见性（true=可见，false=隐藏）
+    int m_SkyMode;                      // 天空模式（0=正常，1=阴雨，2=雪天，3=沙尘）
     
     int m_ScreenWidth;                  // 屏幕宽度
     int m_ScreenHeight;                 // 屏幕高度

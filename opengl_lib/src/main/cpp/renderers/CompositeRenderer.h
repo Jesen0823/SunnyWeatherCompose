@@ -11,12 +11,14 @@
  * 
  * 负责管理多个渲染层，按顺序渲染各层，支持层的添加、移除和清空操作。
  * 
- * 渲染顺序：
- * 1. SkyBackgroundLayer（天空背景层）
- * 2. CloudLayer（云层）
- * 3. PrecipitationLayer（降水层）
- * 4. ParticleLayer（颗粒层）
- * 5. EffectLayer（特效层）
+ * 渲染顺序（按 LayerType 升序）：
+ * 1. SkyBackgroundLayer（天空背景层）- 全屏天空渐变 + 太阳/月亮光晕
+ * 2. StarLayer（星星层）- 星星粒子系统（仅夜间显示）
+ * 3. CloudLayer（云层）- 程序化云层，遮挡星星
+ * 4. SnowLayer（雪层）- 雪花粒子效果
+ * 5. ParticleLayer（颗粒层）- 雾霾/雾/沙尘效果
+ * 6. EffectLayer（特效层）- 闪电/风力线条特效
+ * 7. RainLayer（雨层）- 全屏程序化雨丝效果
  * 
  * 层堆栈按照 LayerType 自动排序，确保渲染顺序正确。
  */
@@ -90,6 +92,11 @@ private:
      * 对层堆栈进行排序，确保正确的渲染顺序
      */
     void SortLayers();
+    bool InitFBO(int width, int height);
+    void DestroyFBO();
+    
+    GLuint m_FBO = 0;
+    GLuint m_FBOTexture = 0;
     
     /**
      * 配置晴天效果

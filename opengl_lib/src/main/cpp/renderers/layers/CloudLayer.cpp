@@ -12,6 +12,7 @@ CloudLayer::CloudLayer()
       m_CloudScale(0.7f),
       m_CloudAlpha(20.0f),
       m_IsNight(false),
+      m_CloudMode(0),
       m_ScreenWidth(0),
       m_ScreenHeight(0),
       m_Time(0.0f),
@@ -61,6 +62,7 @@ bool CloudLayer::Init() {
             "uniform float u_cloudScale;                                              \n"
             "uniform float u_cloudAlpha;                                              \n"
             "uniform int u_isNight;                                                   \n"
+            "uniform int u_cloudMode;                                                 \n"
             "const mat2 m = mat2( 1.6,  1.2, -1.2,  1.6 );                            \n"
             "vec2 hash( vec2 p ) {                                                    \n"
             "    p = vec2(dot(p,vec2(127.1,311.7)), dot(p,vec2(269.5,183.3)));        \n"
@@ -143,10 +145,24 @@ bool CloudLayer::Init() {
             "    vec2 gradientUv = p*vec2(u_screenSize.x/u_screenSize.y,1.0) * 0.5;  \n"
             "    float heightNoise = fbm(gradientUv);                                 \n"
             "    float shadow = 1.0 - heightNoise * 0.3;                              \n"
-            "    vec3 dayCloudColor = vec3(0.98, 0.99, 1.0) * cloudBrightness;       \n"
-            "    dayCloudColor = mix(vec3(0.6, 0.65, 0.75), dayCloudColor, cloudShading);\n"
-            "    vec3 nightCloudColor = vec3(0.75, 0.78, 0.85) * cloudBrightness;     \n"
-            "    nightCloudColor = mix(vec3(0.4, 0.45, 0.55), nightCloudColor, cloudShading);\n"
+            "    vec3 dayCloudColor;                                                   \n"
+            "    vec3 nightCloudColor;                                                  \n"
+            "    if (u_cloudMode == 1) {                                               \n"
+            "        dayCloudColor = mix(vec3(0.25, 0.28, 0.35), vec3(0.15, 0.18, 0.22), cloudShading);\n"
+            "        dayCloudColor *= cloudBrightness * 0.7;                            \n"
+            "        nightCloudColor = mix(vec3(0.2, 0.22, 0.28), vec3(0.1, 0.12, 0.18), cloudShading);\n"
+            "        nightCloudColor *= cloudBrightness * 0.6;                          \n"
+            "    } else if (u_cloudMode == 2) {                                        \n"
+            "        dayCloudColor = mix(vec3(0.5, 0.52, 0.6), vec3(0.75, 0.78, 0.85), cloudShading);\n"
+            "        dayCloudColor *= cloudBrightness * 0.95;                           \n"
+            "        nightCloudColor = mix(vec3(0.35, 0.38, 0.45), vec3(0.5, 0.52, 0.6), cloudShading);\n"
+            "        nightCloudColor *= cloudBrightness * 0.85;                         \n"
+            "    } else {                                                              \n"
+            "        dayCloudColor = mix(vec3(0.55, 0.58, 0.65), vec3(0.98, 0.99, 1.0), cloudShading);\n"
+            "        dayCloudColor *= cloudBrightness;                                  \n"
+            "        nightCloudColor = vec3(0.75, 0.78, 0.85) * cloudBrightness;       \n"
+            "        nightCloudColor = mix(vec3(0.4, 0.45, 0.55), nightCloudColor, cloudShading);\n"
+            "    }                                                                     \n"
             "    vec3 cloudColour = mix(dayCloudColor, nightCloudColor, float(u_isNight));\n"
             "    cloudColour *= shadow;                                               \n"
             "    float baseAlpha = f * 0.9 + c * 0.7;                                  \n"
@@ -175,6 +191,7 @@ bool CloudLayer::Init() {
     m_CloudScaleLoc = glGetUniformLocation(m_ProgramObj, "u_cloudScale");
     m_CloudAlphaLoc = glGetUniformLocation(m_ProgramObj, "u_cloudAlpha");
     m_IsNightLoc = glGetUniformLocation(m_ProgramObj, "u_isNight");
+    m_CloudModeLoc = glGetUniformLocation(m_ProgramObj, "u_cloudMode");
 
     // 顶点坐标
     GLfloat verticesCoords[] = {
@@ -232,6 +249,12 @@ void CloudLayer::Draw(int screenW, int screenH) {
 
     m_ScreenWidth = screenW;
     m_ScreenHeight = screenH;
+    
+    static int logFrameCount = 0;
+    if (logFrameCount++ % 60 == 0) {
+        LOGCATI("CloudLayer::Draw: coverage=%.2f, darkness=%.2f, lightness=%.2f, isNight=%d", 
+                m_CloudCoverage, m_CloudDarkness, m_CloudLightness, m_IsNight);
+    }
 
     UpdateMVPMatrix();
 
@@ -254,6 +277,7 @@ void CloudLayer::Draw(int screenW, int screenH) {
     glUniform1f(m_CloudScaleLoc, m_CloudScale);
     glUniform1f(m_CloudAlphaLoc, m_CloudAlpha);
     glUniform1i(m_IsNightLoc, m_IsNight ? 1 : 0);
+    glUniform1i(m_CloudModeLoc, m_CloudMode);
 
     // 启用混合模式，实现半透明云层效果
     glEnable(GL_BLEND);
@@ -279,6 +303,9 @@ void CloudLayer::SetParamInt(LayerParamType paramType, int value) {
     switch (paramType) {
         case PARAM_TIME_OF_DAY:
             m_IsNight = (value == 1);
+            break;
+        case PARAM_CLOUD_MODE:
+            m_CloudMode = value;
             break;
         default:
             break;

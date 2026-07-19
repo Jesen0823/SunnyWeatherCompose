@@ -2,9 +2,11 @@
 #include "layers/SkyBackgroundLayer.h"
 #include "layers/StarLayer.h"
 #include "layers/CloudLayer.h"
-#include "layers/PrecipitationLayer.h"
+#include "layers/SnowLayer.h"
+#include "layers/RainLayer.h"
 #include "layers/ParticleLayer.h"
-#include "layers/EffectLayer.h"
+#include "layers/LightningLayer.h"
+#include "layers/WindLayer.h"
 #include "../util/LogUtil.h"
 
 CompositeRenderer::CompositeRenderer() 
@@ -56,13 +58,55 @@ void CompositeRenderer::Draw(int screenW, int screenH) {
     
     LOGCATI("CompositeRenderer::Draw: drawing %zu layers, screen=%dx%d", m_Layers.size(), screenW, screenH);
     
-    for (size_t i = 0; i < m_Layers.size(); ++i) {
-        auto &layer = m_Layers[i];
-        if (layer->IsEnabled()) {
-            LOGCATI("CompositeRenderer::Draw: drawing layer %zu, type=%d", i, layer->GetLayerType());
-            layer->Draw(screenW, screenH);
-        } else {
-            LOGCATI("CompositeRenderer::Draw: layer %zu disabled, skipping", i);
+    GLLayerBase *rainLayerBase = GetLayer(LAYER_TYPE_RAIN);
+    RainLayer *rainLayer = nullptr;
+    
+    if (rainLayerBase != nullptr) {
+        rainLayer = static_cast<RainLayer *>(rainLayerBase);
+        LOGCATI("CompositeRenderer::Draw: rainLayer found, type=%d", rainLayerBase->GetLayerType());
+    } else {
+        LOGCATI("CompositeRenderer::Draw: rainLayer not found");
+    }
+    
+    if (rainLayer != nullptr && m_FBO == 0) {
+        LOGCATI("CompositeRenderer::Draw: initializing FBO");
+        if (!InitFBO(screenW, screenH)) {
+            LOGCATE("CompositeRenderer::Draw: FBO init failed, falling back to direct rendering");
+            rainLayer = nullptr;
+        }
+    }
+    
+    if (rainLayer != nullptr && m_FBO != 0) {
+        LOGCATI("CompositeRenderer::Draw: using FBO rendering path");
+        glBindFramebuffer(GL_FRAMEBUFFER, m_FBO);
+        glViewport(0, 0, screenW, screenH);
+        glClearColor(0.45f, 0.47f, 0.50f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glDisable(GL_DEPTH_TEST);
+        
+        for (size_t i = 0; i < m_Layers.size(); ++i) {
+            auto &layer = m_Layers[i];
+            if (layer->IsEnabled() && layer->GetLayerType() != LAYER_TYPE_RAIN) {
+                LOGCATI("CompositeRenderer::Draw: drawing to FBO layer %zu, type=%d", i, layer->GetLayerType());
+                layer->Draw(screenW, screenH);
+            }
+        }
+        
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        glViewport(0, 0, screenW, screenH);
+        
+        rainLayer->SetBackgroundTexture(m_FBOTexture);
+        LOGCATI("CompositeRenderer::Draw: drawing RainLayer with FBO texture=%d", m_FBOTexture);
+        rainLayer->Draw(screenW, screenH);
+    } else {
+        for (size_t i = 0; i < m_Layers.size(); ++i) {
+            auto &layer = m_Layers[i];
+            if (layer->IsEnabled()) {
+                LOGCATI("CompositeRenderer::Draw: drawing layer %zu, type=%d", i, layer->GetLayerType());
+                layer->Draw(screenW, screenH);
+            } else {
+                LOGCATI("CompositeRenderer::Draw: layer %zu disabled, skipping", i);
+            }
         }
     }
     
@@ -71,6 +115,7 @@ void CompositeRenderer::Draw(int screenW, int screenH) {
 
 void CompositeRenderer::Destroy() {
     ClearLayers();
+    DestroyFBO();
     m_IsInitialized = false;
 }
 
@@ -134,7 +179,11 @@ int CompositeRenderer::GetLayerCount() const {
 void CompositeRenderer::SortLayers() {
     std::sort(m_Layers.begin(), m_Layers.end(),
         [](const GLLayerBase *a, const GLLayerBase *b) {
-            return a->GetLayerType() < b->GetLayerType();
+            LayerType typeA = a->GetLayerType();
+            LayerType typeB = b->GetLayerType();
+            if (typeA == LAYER_TYPE_RAIN) return false;
+            if (typeB == LAYER_TYPE_RAIN) return true;
+            return typeA < typeB;
         });
 }
 
@@ -234,9 +283,14 @@ void CompositeRenderer::ConfigurePartlyCloudy(bool isNight) {
         skyLayer->SetParamVec3(PARAM_SKY_COLOR_TOP, 0.08f, 0.12f, 0.2f);
         skyLayer->SetParamVec3(PARAM_SKY_COLOR_BOTTOM, 0.12f, 0.18f, 0.3f);
         skyLayer->SetParamFloat(PARAM_MOON_INTENSITY, 0.6f);
-        skyLayer->SetParamFloat(PARAM_STAR_DENSITY, 0.3f);
     }
     AddLayer(skyLayer);
+    
+    if (isNight) {
+        StarLayer *starLayer = new StarLayer();
+        starLayer->SetParamFloat(PARAM_STAR_COUNT, 150.0f);
+        AddLayer(starLayer);
+    }
     
     CloudLayer *cloudLayer = new CloudLayer();
     cloudLayer->SetParamInt(PARAM_TIME_OF_DAY, isNight ? 1 : 0);
@@ -257,9 +311,14 @@ void CompositeRenderer::ConfigureCloudy(bool isNight) {
         skyLayer->SetParamVec3(PARAM_SKY_COLOR_TOP, 0.08f, 0.1f, 0.15f);
         skyLayer->SetParamVec3(PARAM_SKY_COLOR_BOTTOM, 0.1f, 0.12f, 0.18f);
         skyLayer->SetParamFloat(PARAM_MOON_INTENSITY, 0.1f);
-        skyLayer->SetParamFloat(PARAM_STAR_DENSITY, 0.05f);
     }
     AddLayer(skyLayer);
+    
+    if (isNight) {
+        StarLayer *starLayer = new StarLayer();
+        starLayer->SetParamFloat(PARAM_STAR_COUNT, 30.0f);
+        AddLayer(starLayer);
+    }
     
     CloudLayer *cloudLayer = new CloudLayer();
     cloudLayer->SetParamInt(PARAM_TIME_OF_DAY, isNight ? 1 : 0);
@@ -287,9 +346,14 @@ void CompositeRenderer::ConfigureHaze(int level, bool isNight) {
         skyLayer->SetParamVec3(PARAM_SKY_COLOR_TOP, r[level] * 0.2f, g[level] * 0.2f, b[level] * 0.3f);
         skyLayer->SetParamVec3(PARAM_SKY_COLOR_BOTTOM, r[level] * 0.3f, g[level] * 0.3f, b[level] * 0.4f);
         skyLayer->SetParamFloat(PARAM_MOON_INTENSITY, 0.2f);
-        skyLayer->SetParamFloat(PARAM_STAR_DENSITY, 0.2f);
     }
     AddLayer(skyLayer);
+    
+    if (isNight) {
+        StarLayer *starLayer = new StarLayer();
+        starLayer->SetParamFloat(PARAM_STAR_COUNT, 60.0f);
+        AddLayer(starLayer);
+    }
     
     CloudLayer *cloudLayer = new CloudLayer();
     cloudLayer->SetParamInt(PARAM_TIME_OF_DAY, isNight ? 1 : 0);
@@ -315,17 +379,21 @@ void CompositeRenderer::ConfigureHaze(int level, bool isNight) {
 
 void CompositeRenderer::ConfigureRain(int level, bool isNight) {
     float coverage[] = {0.6f, 0.8f, 0.9f, 1.0f};
-    float darkness[] = {0.6f, 0.7f, 0.8f, 0.95f};
-    float speed[] = {0.3f, 0.4f, 0.5f, 0.8f};
-    float intensity[] = {0.25f, 0.5f, 0.75f, 1.0f};
+    float darkness[] = {0.5f, 0.55f, 0.6f, 0.65f};
+    float speed[] = {0.08f, 0.06f, 0.04f, 0.02f};
+    float intensity[] = {0.3f, 0.7f, 1.0f, 1.3f};
     float rainSpeed[] = {0.5f, 0.7f, 0.9f, 1.0f};
-    float lightningInterval[] = {0.0f, 0.0f, 8.0f, 3.0f};
-    float r[] = {0.35f, 0.25f, 0.2f, 0.1f};
-    float g[] = {0.4f, 0.3f, 0.25f, 0.15f};
-    float b[] = {0.5f, 0.4f, 0.3f, 0.2f};
-    float nr[] = {0.1f, 0.08f, 0.05f, 0.03f};
-    float ng[] = {0.12f, 0.1f, 0.07f, 0.04f};
-    float nb[] = {0.18f, 0.15f, 0.1f, 0.06f};
+    float lightningInterval[] = {0.0f, 0.0f, 0.0f, 3.0f};
+    float r[] = {0.6f, 0.55f, 0.5f, 0.45f};
+    float g[] = {0.62f, 0.57f, 0.52f, 0.47f};
+    float b[] = {0.65f, 0.6f, 0.55f, 0.5f};
+    float nr[] = {0.15f, 0.12f, 0.08f, 0.05f};
+    float ng[] = {0.18f, 0.15f, 0.1f, 0.06f};
+    float nb[] = {0.25f, 0.2f, 0.15f, 0.1f};
+    
+    LOGCATI("CompositeRenderer::ConfigureRain: level=%d, isNight=%d, coverage=%.2f, darkness=%.2f, intensity=%.2f, rainSpeed=%.2f", 
+            level, isNight, coverage[level], darkness[level], intensity[level], rainSpeed[level]);
+    LOGCATI("CompositeRenderer::ConfigureRain: skyColor=(%.2f,%.2f,%.2f)", r[level], g[level], b[level]);
     
     SkyBackgroundLayer *skyLayer = new SkyBackgroundLayer();
     skyLayer->SetParamInt(PARAM_TIME_OF_DAY, isNight ? 1 : 0);
@@ -333,33 +401,52 @@ void CompositeRenderer::ConfigureRain(int level, bool isNight) {
         skyLayer->SetParamVec3(PARAM_SKY_COLOR_TOP, r[level], g[level], b[level]);
         skyLayer->SetParamVec3(PARAM_SKY_COLOR_BOTTOM, r[level] * 0.9f, g[level] * 0.9f, b[level] * 0.9f);
         skyLayer->SetParamFloat(PARAM_SUN_INTENSITY, 0.1f);
+        skyLayer->SetParamInt(PARAM_SUN_VISIBLE, 0);
+        skyLayer->SetParamInt(PARAM_SKY_MODE, 0);
     } else {
         skyLayer->SetParamVec3(PARAM_SKY_COLOR_TOP, nr[level], ng[level], nb[level]);
         skyLayer->SetParamVec3(PARAM_SKY_COLOR_BOTTOM, nr[level] * 1.2f, ng[level] * 1.2f, nb[level] * 1.2f);
         skyLayer->SetParamFloat(PARAM_MOON_INTENSITY, 0.05f);
-        skyLayer->SetParamFloat(PARAM_STAR_DENSITY, 0.05f);
+        skyLayer->SetParamInt(PARAM_SKY_MODE, 1);
     }
     AddLayer(skyLayer);
+    
+    if (isNight) {
+        StarLayer *starLayer = new StarLayer();
+        starLayer->SetParamFloat(PARAM_STAR_COUNT, 20.0f);
+        AddLayer(starLayer);
+    }
     
     CloudLayer *cloudLayer = new CloudLayer();
     cloudLayer->SetParamInt(PARAM_TIME_OF_DAY, isNight ? 1 : 0);
     cloudLayer->SetParamFloat(PARAM_CLOUD_COVERAGE, coverage[level]);
     cloudLayer->SetParamFloat(PARAM_CLOUD_DARKNESS, isNight ? darkness[level] * 1.1f : darkness[level]);
-    cloudLayer->SetParamFloat(PARAM_CLOUD_LIGHTNESS, isNight ? 0.1f : 0.2f);
+    cloudLayer->SetParamFloat(PARAM_CLOUD_LIGHTNESS, isNight ? 0.15f : 0.4f);
     cloudLayer->SetParamFloat(PARAM_CLOUD_SPEED, speed[level]);
+    cloudLayer->SetParamInt(PARAM_CLOUD_MODE, 1);
     AddLayer(cloudLayer);
     
-    PrecipitationLayer *precipitationLayer = new PrecipitationLayer();
-    precipitationLayer->SetParamInt(PARAM_PRECIPITATION_TYPE, 0);
-    precipitationLayer->SetParamFloat(PARAM_PRECIPITATION_INTENSITY, intensity[level]);
-    precipitationLayer->SetParamFloat(PARAM_PRECIPITATION_SPEED, rainSpeed[level]);
-    AddLayer(precipitationLayer);
+    RainLayer *rainLayer = new RainLayer();
+    float rainIntensity = intensity[level];
+    if (level == 3) rainIntensity = 2.2f;
+    rainLayer->SetParamFloat(PARAM_RAIN_INTENSITY, rainIntensity);
+    rainLayer->SetParamFloat(PARAM_RAIN_WIND_SPEED, level == 3 ? 0.8f : 0.2f + (float)level * 0.15f);
+    rainLayer->SetParamFloat(PARAM_RAIN_REFRACTION, 0.3f + (float)level * 0.25f);
+    AddLayer(rainLayer);
     
-    if (level >= 2) {
-        EffectLayer *effectLayer = new EffectLayer();
-        effectLayer->SetParamInt(PARAM_EFFECT_LIGHTNING_ENABLED, 1);
-        effectLayer->SetParamFloat(PARAM_EFFECT_LIGHTNING_INTERVAL, lightningInterval[level]);
-        AddLayer(effectLayer);
+    ParticleLayer *particleLayer = new ParticleLayer();
+    particleLayer->SetParamInt(PARAM_PARTICLE_TYPE, 1);
+    particleLayer->SetParamFloat(PARAM_PARTICLE_DENSITY, level == 3 ? 0.6f : 0.3f);
+    particleLayer->SetParamFloat(PARAM_PARTICLE_VISIBILITY, level == 3 ? 0.3f : 0.5f);
+    particleLayer->SetParamVec3(PARAM_SKY_COLOR_TOP, r[level] * 0.8f, g[level] * 0.8f, b[level] * 0.8f);
+    AddLayer(particleLayer);
+    
+    if (level == 3) {
+        LightningLayer *lightningLayer = new LightningLayer();
+        lightningLayer->SetParamInt(PARAM_LIGHTNING_ENABLED, 1);
+        lightningLayer->SetParamFloat(PARAM_LIGHTNING_INTERVAL, lightningInterval[level]);
+        lightningLayer->SetParamInt(PARAM_LIGHTNING_IS_NIGHT, isNight ? 1 : 0);
+        AddLayer(lightningLayer);
     }
 }
 
@@ -374,9 +461,14 @@ void CompositeRenderer::ConfigureFog(bool isNight) {
         skyLayer->SetParamVec3(PARAM_SKY_COLOR_TOP, 0.2f, 0.22f, 0.28f);
         skyLayer->SetParamVec3(PARAM_SKY_COLOR_BOTTOM, 0.25f, 0.27f, 0.33f);
         skyLayer->SetParamFloat(PARAM_MOON_INTENSITY, 0.1f);
-        skyLayer->SetParamFloat(PARAM_STAR_DENSITY, 0.1f);
     }
     AddLayer(skyLayer);
+    
+    if (isNight) {
+        StarLayer *starLayer = new StarLayer();
+        starLayer->SetParamFloat(PARAM_STAR_COUNT, 40.0f);
+        AddLayer(starLayer);
+    }
     
     ParticleLayer *particleLayer = new ParticleLayer();
     particleLayer->SetParamInt(PARAM_PARTICLE_TYPE, 1);
@@ -415,13 +507,20 @@ void CompositeRenderer::ConfigureSnow(int level, bool isNight) {
         skyLayer->SetParamVec3(PARAM_SKY_COLOR_TOP, r[level], g[level], b[level]);
         skyLayer->SetParamVec3(PARAM_SKY_COLOR_BOTTOM, r[level] * 0.9f, g[level] * 0.9f, b[level] * 0.9f);
         skyLayer->SetParamFloat(PARAM_SUN_INTENSITY, 0.2f);
+        skyLayer->SetParamInt(PARAM_SKY_MODE, 2);
     } else {
         skyLayer->SetParamVec3(PARAM_SKY_COLOR_TOP, nr[level], ng[level], nb[level]);
         skyLayer->SetParamVec3(PARAM_SKY_COLOR_BOTTOM, nr[level] * 1.1f, ng[level] * 1.1f, nb[level] * 1.1f);
         skyLayer->SetParamFloat(PARAM_MOON_INTENSITY, 0.3f);
-        skyLayer->SetParamFloat(PARAM_STAR_DENSITY, 0.3f);
+        skyLayer->SetParamInt(PARAM_SKY_MODE, 2);
     }
     AddLayer(skyLayer);
+    
+    if (isNight) {
+        StarLayer *starLayer = new StarLayer();
+        starLayer->SetParamFloat(PARAM_STAR_COUNT, 100.0f);
+        AddLayer(starLayer);
+    }
     
     CloudLayer *cloudLayer = new CloudLayer();
     cloudLayer->SetParamInt(PARAM_TIME_OF_DAY, isNight ? 1 : 0);
@@ -429,13 +528,13 @@ void CompositeRenderer::ConfigureSnow(int level, bool isNight) {
     cloudLayer->SetParamFloat(PARAM_CLOUD_DARKNESS, isNight ? darkness[level] * 1.1f : darkness[level]);
     cloudLayer->SetParamFloat(PARAM_CLOUD_LIGHTNESS, isNight ? 0.15f : 0.25f);
     cloudLayer->SetParamFloat(PARAM_CLOUD_SPEED, speed[level]);
+    cloudLayer->SetParamInt(PARAM_CLOUD_MODE, 2);
     AddLayer(cloudLayer);
     
-    PrecipitationLayer *precipitationLayer = new PrecipitationLayer();
-    precipitationLayer->SetParamInt(PARAM_PRECIPITATION_TYPE, 1);
-    precipitationLayer->SetParamFloat(PARAM_PRECIPITATION_INTENSITY, intensity[level]);
-    precipitationLayer->SetParamFloat(PARAM_PRECIPITATION_SPEED, snowSpeed[level]);
-    AddLayer(precipitationLayer);
+    SnowLayer *snowLayer = new SnowLayer();
+    snowLayer->SetParamFloat(PARAM_SNOW_INTENSITY, intensity[level]);
+    snowLayer->SetParamFloat(PARAM_SNOW_SPEED, snowSpeed[level]);
+    AddLayer(snowLayer);
     
     if (level >= 2) {
         ParticleLayer *particleLayer = new ParticleLayer();
@@ -455,10 +554,10 @@ void CompositeRenderer::ConfigureSnow(int level, bool isNight) {
     }
     
     if (level == 3) {
-        EffectLayer *effectLayer = new EffectLayer();
-        effectLayer->SetParamInt(PARAM_EFFECT_WIND_LINES_ENABLED, 1);
-        effectLayer->SetParamFloat(PARAM_EFFECT_WIND_STRENGTH, 0.8f);
-        AddLayer(effectLayer);
+        WindLayer *windLayer = new WindLayer();
+        windLayer->SetParamInt(PARAM_WIND_LINES_ENABLED, 1);
+        windLayer->SetParamFloat(PARAM_WIND_STRENGTH, 0.8f);
+        AddLayer(windLayer);
     }
 }
 
@@ -473,9 +572,14 @@ void CompositeRenderer::ConfigureDust(bool isNight) {
         skyLayer->SetParamVec3(PARAM_SKY_COLOR_TOP, 0.15f, 0.12f, 0.08f);
         skyLayer->SetParamVec3(PARAM_SKY_COLOR_BOTTOM, 0.2f, 0.16f, 0.1f);
         skyLayer->SetParamFloat(PARAM_MOON_INTENSITY, 0.15f);
-        skyLayer->SetParamFloat(PARAM_STAR_DENSITY, 0.15f);
     }
     AddLayer(skyLayer);
+    
+    if (isNight) {
+        StarLayer *starLayer = new StarLayer();
+        starLayer->SetParamFloat(PARAM_STAR_COUNT, 50.0f);
+        AddLayer(starLayer);
+    }
     
     ParticleLayer *particleLayer = new ParticleLayer();
     particleLayer->SetParamInt(PARAM_PARTICLE_TYPE, 2);
@@ -504,9 +608,14 @@ void CompositeRenderer::ConfigureSand(bool isNight) {
         skyLayer->SetParamVec3(PARAM_SKY_COLOR_TOP, 0.18f, 0.12f, 0.06f);
         skyLayer->SetParamVec3(PARAM_SKY_COLOR_BOTTOM, 0.22f, 0.15f, 0.08f);
         skyLayer->SetParamFloat(PARAM_MOON_INTENSITY, 0.1f);
-        skyLayer->SetParamFloat(PARAM_STAR_DENSITY, 0.1f);
     }
     AddLayer(skyLayer);
+    
+    if (isNight) {
+        StarLayer *starLayer = new StarLayer();
+        starLayer->SetParamFloat(PARAM_STAR_COUNT, 35.0f);
+        AddLayer(starLayer);
+    }
     
     ParticleLayer *particleLayer = new ParticleLayer();
     particleLayer->SetParamInt(PARAM_PARTICLE_TYPE, 3);
@@ -523,10 +632,10 @@ void CompositeRenderer::ConfigureSand(bool isNight) {
     particleLayer->SetParamFloat(PARAM_PARTICLE_VISIBILITY, 0.3f);
     AddLayer(particleLayer);
     
-    EffectLayer *effectLayer = new EffectLayer();
-    effectLayer->SetParamInt(PARAM_EFFECT_WIND_LINES_ENABLED, 1);
-    effectLayer->SetParamFloat(PARAM_EFFECT_WIND_STRENGTH, 0.6f);
-    AddLayer(effectLayer);
+    WindLayer *windLayer = new WindLayer();
+    windLayer->SetParamInt(PARAM_WIND_LINES_ENABLED, 1);
+    windLayer->SetParamFloat(PARAM_WIND_STRENGTH, 0.6f);
+    AddLayer(windLayer);
 }
 
 void CompositeRenderer::ConfigureWind(bool isNight) {
@@ -540,9 +649,14 @@ void CompositeRenderer::ConfigureWind(bool isNight) {
         skyLayer->SetParamVec3(PARAM_SKY_COLOR_TOP, 0.08f, 0.12f, 0.22f);
         skyLayer->SetParamVec3(PARAM_SKY_COLOR_BOTTOM, 0.12f, 0.18f, 0.32f);
         skyLayer->SetParamFloat(PARAM_MOON_INTENSITY, 0.4f);
-        skyLayer->SetParamFloat(PARAM_STAR_DENSITY, 0.4f);
     }
     AddLayer(skyLayer);
+    
+    if (isNight) {
+        StarLayer *starLayer = new StarLayer();
+        starLayer->SetParamFloat(PARAM_STAR_COUNT, 180.0f);
+        AddLayer(starLayer);
+    }
     
     CloudLayer *cloudLayer = new CloudLayer();
     cloudLayer->SetParamInt(PARAM_TIME_OF_DAY, isNight ? 1 : 0);
@@ -552,8 +666,53 @@ void CompositeRenderer::ConfigureWind(bool isNight) {
     cloudLayer->SetParamFloat(PARAM_CLOUD_SPEED, 0.9f);
     AddLayer(cloudLayer);
     
-    EffectLayer *effectLayer = new EffectLayer();
-    effectLayer->SetParamInt(PARAM_EFFECT_WIND_LINES_ENABLED, 1);
-    effectLayer->SetParamFloat(PARAM_EFFECT_WIND_STRENGTH, 0.7f);
-    AddLayer(effectLayer);
+    WindLayer *windLayer = new WindLayer();
+    windLayer->SetParamInt(PARAM_WIND_LINES_ENABLED, 1);
+    windLayer->SetParamFloat(PARAM_WIND_STRENGTH, 0.7f);
+    AddLayer(windLayer);
+}
+
+bool CompositeRenderer::InitFBO(int width, int height) {
+    LOGCATI("CompositeRenderer::InitFBO: width=%d, height=%d", width, height);
+    
+    glGenFramebuffers(1, &m_FBO);
+    glBindFramebuffer(GL_FRAMEBUFFER, m_FBO);
+    
+    glGenTextures(1, &m_FBOTexture);
+    glBindTexture(GL_TEXTURE_2D, m_FBOTexture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_FBOTexture, 0);
+    
+    GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+    if (status != GL_FRAMEBUFFER_COMPLETE) {
+        LOGCATE("CompositeRenderer::InitFBO: FBO creation failed, status=%d", status);
+        glDeleteTextures(1, &m_FBOTexture);
+        glDeleteFramebuffers(1, &m_FBO);
+        m_FBO = 0;
+        m_FBOTexture = 0;
+        return false;
+    }
+    
+    glBindTexture(GL_TEXTURE_2D, 0);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    
+    LOGCATI("CompositeRenderer::InitFBO: success, FBO=%d, texture=%d", m_FBO, m_FBOTexture);
+    return true;
+}
+
+void CompositeRenderer::DestroyFBO() {
+    if (m_FBOTexture != 0) {
+        glDeleteTextures(1, &m_FBOTexture);
+        m_FBOTexture = 0;
+    }
+    if (m_FBO != 0) {
+        glDeleteFramebuffers(1, &m_FBO);
+        m_FBO = 0;
+    }
+    LOGCATI("CompositeRenderer::DestroyFBO: completed");
 }

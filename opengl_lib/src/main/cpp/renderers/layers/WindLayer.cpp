@@ -1,12 +1,10 @@
-#include "EffectLayer.h"
+#include "WindLayer.h"
 #include "../../util/GLUtils.h"
 #include "../../util/LogUtil.h"
 #include "gtc/matrix_transform.hpp"
 
-EffectLayer::EffectLayer() 
-    : GLLayerBase(LAYER_TYPE_EFFECT),
-      m_LightningEnabled(false),
-      m_LightningInterval(5.0f),
+WindLayer::WindLayer() 
+    : GLLayerBase(LAYER_TYPE_WIND),
       m_WindLinesEnabled(false),
       m_WindStrength(0.5f),
       m_ScreenWidth(0),
@@ -17,23 +15,18 @@ EffectLayer::EffectLayer()
       m_MVPMatLoc(GL_NONE),
       m_TimeLoc(GL_NONE),
       m_ScreenSizeLoc(GL_NONE),
-      m_LightningEnabledLoc(GL_NONE),
-      m_LightningIntervalLoc(GL_NONE),
       m_WindLinesEnabledLoc(GL_NONE),
       m_WindStrengthLoc(GL_NONE) {
     m_VboIds[0] = m_VboIds[1] = m_VboIds[2] = GL_NONE;
 }
 
-EffectLayer::~EffectLayer() {}
+WindLayer::~WindLayer() {}
 
-bool EffectLayer::Init() {
-    LOGCATI("EffectLayer::Init: called, m_ProgramObj=%d", m_ProgramObj);
+bool WindLayer::Init() {
     if (m_ProgramObj) {
-        LOGCATI("EffectLayer::Init: already initialized, skipping");
         return true;
     }
 
-    // 顶点着色器
     char vShaderStr[] =
             "#version 300 es                                       \n"
             "layout(location = 0) in vec4 a_position;              \n"
@@ -42,45 +35,29 @@ bool EffectLayer::Init() {
             "    gl_Position = u_MVPMatrix * a_position;           \n"
             "}";
 
-    // 片段着色器：闪电和风力线条特效
     char fShaderStr[] =
             "#version 300 es                                                          \n"
             "precision highp float;                                                   \n"
             "layout(location = 0) out vec4 outColor;                                  \n"
             "uniform float u_time;                                                    \n"
             "uniform vec2 u_screenSize;                                               \n"
-            "uniform bool u_lightningEnabled;                                         \n"
-            "uniform float u_lightningInterval;                                       \n"
             "uniform bool u_windLinesEnabled;                                         \n"
             "uniform float u_windStrength;                                            \n"
             "                                                                         \n"
-            "float hash(vec2 p) {                                                      \n"
-            "    p = vec2(dot(p, vec2(127.1, 311.7)), dot(p, vec2(269.5, 183.3)));    \n"
-            "    return -1.0 + 2.0 * fract(sin(p) * 43758.5453123);                   \n"
+            "float hash(float x) {                                                     \n"
+            "    return fract(sin(x) * 43758.5453123);                                  \n"
             "}                                                                        \n"
             "                                                                         \n"
             "float noise(vec2 p) {                                                     \n"
-            "    const float K1 = 0.366025404;                                         \n"
-            "    const float K2 = 0.211324865;                                         \n"
-            "    vec2 i = floor(p + (p.x + p.y) * K1);                                 \n"
-            "    vec2 a = p - i + (i.x + i.y) * K2;                                   \n"
-            "    vec2 o = (a.x > a.y) ? vec2(1.0, 0.0) : vec2(0.0, 1.0);              \n"
-            "    vec2 b = a - o + K2;                                                 \n"
-            "    vec2 c = a - 1.0 + 2.0 * K2;                                         \n"
-            "    vec3 h = max(0.5 - vec3(dot(a, a), dot(b, b), dot(c, c)), 0.0);      \n"
-            "    vec3 n = h * h * h * h * vec3(dot(a, hash(i)), dot(b, hash(i + o)), dot(c, hash(i + 1.0)));\n"
-            "    return dot(n, vec3(70.0));                                            \n"
-            "}                                                                        \n"
-            "                                                                         \n"
-            "float lightningFlash(float time, float interval) {                         \n"
-            "    float flash = 0.0;                                                    \n"
-            "    float noiseVal = noise(vec2(time * 100.0, 0.0));                      \n"
-            "    float trigger = smoothstep(0.95, 1.0, noiseVal);                      \n"
-            "    if (trigger > 0.5) {                                                 \n"
-            "        float flashTime = mod(time, interval);                             \n"
-            "        flash = smoothstep(0.0, 0.02, flashTime) * smoothstep(0.05, 0.02, flashTime);\n"
-            "    }                                                                    \n"
-            "    return flash;                                                         \n"
+            "    vec2 i = floor(p);                                                    \n"
+            "    vec2 f = fract(p);                                                    \n"
+            "    float u = f.x * f.x * (3.0 - 2.0 * f.x);                              \n"
+            "    float v = f.y * f.y * (3.0 - 2.0 * f.y);                              \n"
+            "    float a = hash(i.x + hash(i.y));                                       \n"
+            "    float b = hash(i.x + 1.0 + hash(i.y));                                \n"
+            "    float c = hash(i.x + hash(i.y + 1.0));                                \n"
+            "    float d = hash(i.x + 1.0 + hash(i.y + 1.0));                          \n"
+            "    return mix(mix(a, b, u), mix(c, d, u), v);                            \n"
             "}                                                                        \n"
             "                                                                         \n"
             "float windLine(vec2 p, float time, float strength) {                      \n"
@@ -115,40 +92,29 @@ bool EffectLayer::Init() {
             "    vec2 p = gl_FragCoord.xy / u_screenSize.xy;                          \n"
             "    vec3 result = vec3(0.0);                                             \n"
             "    float alpha = 0.0;                                                   \n"
-            "                                                                         \n"
-            "    // 闪电效果                                                           \n"
-            "    if (u_lightningEnabled) {                                            \n"
-            "        float flash = lightningFlash(u_time, u_lightningInterval);        \n"
-            "        result += vec3(1.0) * flash;                                      \n"
-            "        alpha += flash;                                                   \n"
-            "    }                                                                    \n"
-            "                                                                         \n"
-            "    // 风力线条效果                                                       \n"
+            "    \n"
             "    if (u_windLinesEnabled) {                                            \n"
             "        float wind = windLine(p, u_time, u_windStrength);                \n"
             "        result += vec3(0.8, 0.85, 0.9) * wind;                           \n"
             "        alpha += wind;                                                    \n"
             "    }                                                                    \n"
-            "                                                                         \n"
+            "    \n"
             "    alpha = clamp(alpha, 0.0, 1.0);                                      \n"
             "    outColor = vec4(result, alpha);                                       \n"
             "}";
 
     m_ProgramObj = GLUtils::CreateProgram(vShaderStr, fShaderStr, m_VertexShader, m_FragmentShader);
     if (!m_ProgramObj) {
-        LOGCATE("EffectLayer::Init create program fail");
+        LOGCATE("WindLayer::Init create program fail");
         return false;
     }
 
     m_MVPMatLoc = glGetUniformLocation(m_ProgramObj, "u_MVPMatrix");
     m_TimeLoc = glGetUniformLocation(m_ProgramObj, "u_time");
     m_ScreenSizeLoc = glGetUniformLocation(m_ProgramObj, "u_screenSize");
-    m_LightningEnabledLoc = glGetUniformLocation(m_ProgramObj, "u_lightningEnabled");
-    m_LightningIntervalLoc = glGetUniformLocation(m_ProgramObj, "u_lightningInterval");
     m_WindLinesEnabledLoc = glGetUniformLocation(m_ProgramObj, "u_windLinesEnabled");
     m_WindStrengthLoc = glGetUniformLocation(m_ProgramObj, "u_windStrength");
 
-    // 顶点坐标
     GLfloat verticesCoords[] = {
             -1.0f, 1.0f, 0.0f,
             -1.0f, -1.0f, 0.0f,
@@ -156,7 +122,6 @@ bool EffectLayer::Init() {
             1.0f, 1.0f, 0.0f
     };
 
-    // 纹理坐标
     GLfloat textureCoords[] = {
             0.0f, 0.0f,
             0.0f, 1.0f,
@@ -164,7 +129,6 @@ bool EffectLayer::Init() {
             1.0f, 0.0f
     };
 
-    // 索引
     GLushort indices[] = {0, 1, 2, 0, 2, 3};
 
     glGenBuffers(3, m_VboIds);
@@ -191,13 +155,8 @@ bool EffectLayer::Init() {
     return true;
 }
 
-void EffectLayer::Draw(int screenW, int screenH) {
-    if (!m_ProgramObj) {
-        LOGCATE("EffectLayer::Draw: m_ProgramObj is null, skipping");
-        return;
-    }
-    if (!m_Enabled) {
-        LOGCATE("EffectLayer::Draw: layer disabled, skipping");
+void WindLayer::Draw(int screenW, int screenH) {
+    if (!m_ProgramObj || !m_Enabled) {
         return;
     }
 
@@ -210,20 +169,15 @@ void EffectLayer::Draw(int screenW, int screenH) {
 
     glBindVertexArray(m_VaoId);
 
-    // 更新时间
     m_FrameIndex++;
     m_Time = m_FrameIndex * 0.04f;
 
-    // 设置 uniform 参数
     glUniformMatrix4fv(m_MVPMatLoc, 1, GL_FALSE, &m_MVPMatrix[0][0]);
     glUniform1f(m_TimeLoc, m_Time);
     glUniform2f(m_ScreenSizeLoc, screenW, screenH);
-    glUniform1i(m_LightningEnabledLoc, m_LightningEnabled ? 1 : 0);
-    glUniform1f(m_LightningIntervalLoc, m_LightningInterval);
     glUniform1i(m_WindLinesEnabledLoc, m_WindLinesEnabled ? 1 : 0);
     glUniform1f(m_WindStrengthLoc, m_WindStrength);
 
-    // 启用混合模式，实现特效叠加效果
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
@@ -234,7 +188,7 @@ void EffectLayer::Draw(int screenW, int screenH) {
     glBindVertexArray(GL_NONE);
 }
 
-void EffectLayer::Destroy() {
+void WindLayer::Destroy() {
     if (m_ProgramObj) {
         glDeleteProgram(m_ProgramObj);
         glDeleteBuffers(3, m_VboIds);
@@ -243,12 +197,9 @@ void EffectLayer::Destroy() {
     }
 }
 
-void EffectLayer::SetParamInt(LayerParamType paramType, int value) {
+void WindLayer::SetParamInt(LayerParamType paramType, int value) {
     switch (paramType) {
-        case PARAM_EFFECT_LIGHTNING_ENABLED:
-            m_LightningEnabled = (value != 0);
-            break;
-        case PARAM_EFFECT_WIND_LINES_ENABLED:
+        case PARAM_WIND_LINES_ENABLED:
             m_WindLinesEnabled = (value != 0);
             break;
         default:
@@ -256,12 +207,9 @@ void EffectLayer::SetParamInt(LayerParamType paramType, int value) {
     }
 }
 
-void EffectLayer::SetParamFloat(LayerParamType paramType, float value) {
+void WindLayer::SetParamFloat(LayerParamType paramType, float value) {
     switch (paramType) {
-        case PARAM_EFFECT_LIGHTNING_INTERVAL:
-            m_LightningInterval = value;
-            break;
-        case PARAM_EFFECT_WIND_STRENGTH:
+        case PARAM_WIND_STRENGTH:
             m_WindStrength = value;
             break;
         default:
@@ -269,12 +217,10 @@ void EffectLayer::SetParamFloat(LayerParamType paramType, float value) {
     }
 }
 
-void EffectLayer::UpdateMVPMatrix() {
+void WindLayer::UpdateMVPMatrix() {
     float ratio = (float) m_ScreenWidth / m_ScreenHeight;
-
     glm::mat4 Projection = glm::ortho(-1.0f, 1.0f, -1.0f, 1.0f, 0.1f, 100.0f);
     glm::mat4 View = glm::lookAt(glm::vec3(0, 0, 4), glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
     glm::mat4 Model = glm::mat4(1.0f);
-
     m_MVPMatrix = Projection * View * Model;
 }

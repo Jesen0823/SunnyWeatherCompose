@@ -12,9 +12,12 @@ enum LayerType {
     LAYER_TYPE_SKY_BACKGROUND = 0,    // 天空背景层
     LAYER_TYPE_STAR = 1,               // 星星层
     LAYER_TYPE_CLOUD = 2,              // 云层
-    LAYER_TYPE_PRECIPITATION = 3,      // 降水层（雨/雪）
+    LAYER_TYPE_SNOW = 3,               // 雪层（雪花粒子效果）
     LAYER_TYPE_PARTICLE = 4,           // 颗粒层（雾霾/雾/沙尘）
-    LAYER_TYPE_EFFECT = 5              // 特效层（闪电/风力线条）
+    LAYER_TYPE_EFFECT = 5,             // 特效层（兼容旧版）
+    LAYER_TYPE_RAIN = 6,               // 雨层（全屏程序化雨丝）
+    LAYER_TYPE_LIGHTNING = 7,          // 闪电层
+    LAYER_TYPE_WIND = 8                // 风力层
 };
 
 /**
@@ -34,7 +37,12 @@ enum LayerParamType {
     PARAM_SKY_COLOR_BOTTOM = 201,      // 天空底部颜色
     PARAM_SUN_INTENSITY = 202,         // 太阳亮度
     PARAM_MOON_INTENSITY = 203,        // 月亮亮度
-    PARAM_STAR_DENSITY = 204,          // 星星密度
+    PARAM_SUN_VISIBLE = 204,           // 太阳可见性（0=隐藏，1=可见）
+    PARAM_SKY_MODE = 205,              // 天空模式（0=正常，1=阴雨，2=雪天，3=沙尘）
+    
+    // StarLayer 参数
+    PARAM_STAR_COUNT = 700,            // 星星数量
+    PARAM_STAR_TWINKLE_SPEED = 701,    // 闪烁速度（0.5~2.0）
     
     // CloudLayer 参数
     PARAM_CLOUD_COVERAGE = 300,        // 云层覆盖率（0.0~1.0）
@@ -43,12 +51,12 @@ enum LayerParamType {
     PARAM_CLOUD_SPEED = 303,           // 云层移动速度（0.0~1.0）
     PARAM_CLOUD_SCALE = 304,           // 云层缩放（0.5~2.0）
     PARAM_CLOUD_ALPHA = 305,           // 云层透明度系数
+    PARAM_CLOUD_MODE = 306,            // 云层模式（0=正常，1=暴雨乌云，2=雪天云层）
     
-    // PrecipitationLayer 参数
-    PARAM_PRECIPITATION_TYPE = 400,    // 降水类型（0=雨，1=雪）
-    PARAM_PRECIPITATION_INTENSITY = 401, // 降水强度（0.0~1.0）
-    PARAM_PRECIPITATION_SPEED = 402,   // 下落速度（0.0~1.0）
-    PARAM_PRECIPITATION_SIZE = 403,    // 雨滴/雪花大小（0.5~2.0）
+    // SnowLayer 参数
+    PARAM_SNOW_INTENSITY = 400,        // 雪量强度（0.0~1.0）
+    PARAM_SNOW_SPEED = 401,            // 雪花下落速度（0.0~1.0）
+    PARAM_SNOW_SIZE = 402,              // 雪花大小（0.5~2.0）
     
     // ParticleLayer 参数
     PARAM_PARTICLE_TYPE = 500,         // 颗粒类型（0=雾霾，1=雾，2=浮尘，3=沙尘）
@@ -58,18 +66,33 @@ enum LayerParamType {
     PARAM_PARTICLE_COLOR_B = 504,      // 颗粒颜色 B 分量
     PARAM_PARTICLE_VISIBILITY = 505,   // 能见度（0.0~1.0）
     
-    // EffectLayer 参数
+    // EffectLayer 参数（兼容旧版）
     PARAM_EFFECT_LIGHTNING_ENABLED = 600,    // 闪电启用（0=关闭，1=开启）
     PARAM_EFFECT_LIGHTNING_INTERVAL = 601,   // 闪电间隔（秒）
     PARAM_EFFECT_WIND_LINES_ENABLED = 602,   // 风力线条启用（0=关闭，1=开启）
-    PARAM_EFFECT_WIND_STRENGTH = 603         // 风力强度（0.0~1.0）
+    PARAM_EFFECT_WIND_STRENGTH = 603,        // 风力强度（0.0~1.0）
+    PARAM_EFFECT_IS_NIGHT = 604,             // 是否夜间（0=白天，1=夜间）
+    
+    // LightningLayer 参数
+    PARAM_LIGHTNING_ENABLED = 900,           // 闪电启用（0=关闭，1=开启）
+    PARAM_LIGHTNING_INTERVAL = 901,          // 闪电间隔（秒）
+    PARAM_LIGHTNING_IS_NIGHT = 902,          // 是否夜间（0=白天，1=夜间）
+    
+    // WindLayer 参数
+    PARAM_WIND_LINES_ENABLED = 910,          // 风力线条启用（0=关闭，1=开启）
+    PARAM_WIND_STRENGTH = 911,               // 风力强度（0.0~1.0）
+    
+    // RainLayer 参数
+    PARAM_RAIN_INTENSITY = 800,             // 雨量强度（0.0~1.5）
+    PARAM_RAIN_WIND_SPEED = 801,            // 风速（-1.0~1.0，负向左，正向右）
+    PARAM_RAIN_REFRACTION = 802            // 折射率（0.0~0.1）
 };
 
 /**
  * 层基类
  * 
  * 继承自 GLRendererBase，为天气动效系统提供统一的层接口
- * 所有渲染层（SkyBackgroundLayer、CloudLayer、PrecipitationLayer 等）
+ * 所有渲染层（SkyBackgroundLayer、CloudLayer、SnowLayer、RainLayer 等）
  * 都必须继承此类并实现其虚函数
  */
 class GLLayerBase : public GLRendererBase {
