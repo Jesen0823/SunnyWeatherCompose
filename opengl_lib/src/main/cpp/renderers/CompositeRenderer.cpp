@@ -413,17 +413,17 @@ void CompositeRenderer::ConfigureHaze(int level, bool isNight) {
 
 void CompositeRenderer::ConfigureRain(int level, bool isNight) {
     float coverage[] = {0.6f, 0.8f, 0.9f, 1.0f};
-    float darkness[] = {0.5f, 0.55f, 0.6f, 0.65f};
+    float darkness[] = {0.5f, 0.55f, 0.6f, 0.55f};
     float speed[] = {0.08f, 0.06f, 0.04f, 0.02f};
     float intensity[] = {0.3f, 0.7f, 1.0f, 1.3f};
     float rainSpeed[] = {0.5f, 0.7f, 0.9f, 1.0f};
     float lightningInterval[] = {0.0f, 0.0f, 0.0f, 3.0f};
-    float r[] = {0.6f, 0.55f, 0.5f, 0.45f};
-    float g[] = {0.62f, 0.57f, 0.52f, 0.47f};
-    float b[] = {0.65f, 0.6f, 0.55f, 0.5f};
-    float nr[] = {0.15f, 0.12f, 0.08f, 0.05f};
-    float ng[] = {0.18f, 0.15f, 0.1f, 0.06f};
-    float nb[] = {0.25f, 0.2f, 0.15f, 0.1f};
+    float r[] = {0.6f, 0.55f, 0.45f, 0.25f};
+    float g[] = {0.62f, 0.57f, 0.47f, 0.28f};
+    float b[] = {0.65f, 0.6f, 0.52f, 0.35f};
+    float nr[] = {0.15f, 0.14f, 0.17f, 0.20f};
+    float ng[] = {0.18f, 0.17f, 0.20f, 0.22f};
+    float nb[] = {0.25f, 0.24f, 0.27f, 0.32f};
     
     LOGCATI("CompositeRenderer::ConfigureRain: level=%d, isNight=%d, coverage=%.2f, darkness=%.2f, intensity=%.2f, rainSpeed=%.2f", 
             level, isNight, coverage[level], darkness[level], intensity[level], rainSpeed[level]);
@@ -454,9 +454,11 @@ void CompositeRenderer::ConfigureRain(int level, bool isNight) {
     CloudLayer *cloudLayer = new CloudLayer();
     cloudLayer->SetParamInt(PARAM_TIME_OF_DAY, isNight ? 1 : 0);
     cloudLayer->SetParamFloat(PARAM_CLOUD_COVERAGE, coverage[level]);
-    cloudLayer->SetParamFloat(PARAM_CLOUD_DARKNESS, isNight ? darkness[level] * 1.1f : darkness[level]);
-    cloudLayer->SetParamFloat(PARAM_CLOUD_LIGHTNESS, isNight ? 0.15f : 0.4f);
+    cloudLayer->SetParamFloat(PARAM_CLOUD_DARKNESS, isNight ? darkness[level] * 1.0f : darkness[level]);
+    cloudLayer->SetParamFloat(PARAM_CLOUD_LIGHTNESS, isNight ? 0.3f : 0.5f);
     cloudLayer->SetParamFloat(PARAM_CLOUD_SPEED, speed[level]);
+    cloudLayer->SetParamFloat(PARAM_CLOUD_SCALE, level == 3 ? 0.55f : 0.65f);
+    cloudLayer->SetParamFloat(PARAM_CLOUD_ALPHA, level == 3 ? 28.0f : 22.0f);
     cloudLayer->SetParamInt(PARAM_CLOUD_MODE, 1);
     AddLayer(cloudLayer);
     

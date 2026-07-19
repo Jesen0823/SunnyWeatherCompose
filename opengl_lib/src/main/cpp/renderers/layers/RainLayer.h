@@ -5,19 +5,48 @@
 #include <glm.hpp>
 #include <vector>
 
+/**
+ * 雨滴结构体
+ * 存储单个雨滴的物理属性和渲染信息
+ */
 struct Raindrop {
-    glm::vec2 pos;
-    glm::vec2 velocity;
-    float size;
-    float mass;
-    float drag;
-    float offset;
-    glm::vec2 spread;
-    float density;
-    int parent;
-    glm::vec2 lastTrailPos;
+    glm::vec2 pos;              // 当前位置
+    glm::vec2 velocity;         // 速度向量
+    float size;                 // 雨滴大小
+    float mass;                 // 质量（影响下落速度）
+    float drag;                 // 空气阻力系数
+    float offset;               // 渲染偏移量
+    glm::vec2 spread;           // 飞溅扩散范围
+    float density;              // 密度系数
+    int parent;                 // 父雨滴索引（用于雨滴分裂）
+    glm::vec2 lastTrailPos;     // 上一帧位置（用于绘制拖尾）
 };
 
+/**
+ * 雨层
+ * 
+ * 负责渲染雨滴效果，包括：
+ * - 雨滴粒子系统（基于物理模拟的下落运动）
+ * - 雨滴拖尾效果
+ * - 雨滴与背景的折射效果
+ * - 雨滴飞溅效果（与地面碰撞）
+ * 
+ * 实现原理：
+ * 使用 FBO 离屏渲染，先绘制背景到纹理，然后通过折射着色器渲染雨滴，
+ * 产生雨滴透过玻璃般的折射视觉效果。雨滴使用粒子系统进行物理模拟，
+ * 支持风的影响导致倾斜下落。
+ * 
+ * 参数配置：
+ * - rainIntensity: 降雨强度（0.0~2.0），影响雨滴数量和密度
+ * - windSpeed: 风速（-1.0~1.0），正值向右，负值向左
+ * - refraction: 折射率（0.0~1.0），控制雨滴对背景的折射程度
+ * 
+ * 使用场景：
+ * - LIGHT_RAIN（小雨）：强度 0.3，风速 0.2，折射 0.35
+ * - MODERATE_RAIN（中雨）：强度 0.7，风速 0.4，折射 0.6
+ * - HEAVY_RAIN（大雨）：强度 1.0，风速 0.6，折射 0.85
+ * - STORM_RAIN（暴雨）：强度 2.2，风速 0.8，折射 1.15
+ */
 class RainLayer : public GLLayerBase {
 public:
     RainLayer();
