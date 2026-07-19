@@ -7,6 +7,7 @@
 #include "layers/ParticleLayer.h"
 #include "layers/LightningLayer.h"
 #include "layers/WindLayer.h"
+#include "layers/AmbientOverlayLayer.h"
 #include "../util/LogUtil.h"
 
 CompositeRenderer::CompositeRenderer() 
@@ -76,6 +77,18 @@ void CompositeRenderer::Draw(int screenW, int screenH) {
         }
     }
     
+    GLLayerBase *lightningBase = GetLayer(LAYER_TYPE_LIGHTNING);
+    LightningLayer *lightningLayer = nullptr;
+    if (lightningBase != nullptr) {
+        lightningLayer = static_cast<LightningLayer *>(lightningBase);
+    }
+    
+    GLLayerBase *ambientBase = GetLayer(LAYER_TYPE_AMBIENT_OVERLAY);
+    AmbientOverlayLayer *ambientLayer = nullptr;
+    if (ambientBase != nullptr) {
+        ambientLayer = static_cast<AmbientOverlayLayer *>(ambientBase);
+    }
+    
     if (rainLayer != nullptr && m_FBO != 0) {
         LOGCATI("CompositeRenderer::Draw: using FBO rendering path");
         glBindFramebuffer(GL_FRAMEBUFFER, m_FBO);
@@ -86,8 +99,12 @@ void CompositeRenderer::Draw(int screenW, int screenH) {
         
         for (size_t i = 0; i < m_Layers.size(); ++i) {
             auto &layer = m_Layers[i];
-            if (layer->IsEnabled() && layer->GetLayerType() != LAYER_TYPE_RAIN) {
-                LOGCATI("CompositeRenderer::Draw: drawing to FBO layer %zu, type=%d", i, layer->GetLayerType());
+            LayerType type = layer->GetLayerType();
+            if (layer->IsEnabled() && 
+                type != LAYER_TYPE_RAIN && 
+                type != LAYER_TYPE_LIGHTNING && 
+                type != LAYER_TYPE_AMBIENT_OVERLAY) {
+                LOGCATI("CompositeRenderer::Draw: drawing to FBO layer %zu, type=%d", i, type);
                 layer->Draw(screenW, screenH);
             }
         }
@@ -101,12 +118,27 @@ void CompositeRenderer::Draw(int screenW, int screenH) {
     } else {
         for (size_t i = 0; i < m_Layers.size(); ++i) {
             auto &layer = m_Layers[i];
-            if (layer->IsEnabled()) {
-                LOGCATI("CompositeRenderer::Draw: drawing layer %zu, type=%d", i, layer->GetLayerType());
+            LayerType type = layer->GetLayerType();
+            if (layer->IsEnabled() && 
+                type != LAYER_TYPE_LIGHTNING && 
+                type != LAYER_TYPE_AMBIENT_OVERLAY) {
+                LOGCATI("CompositeRenderer::Draw: drawing layer %zu, type=%d", i, type);
                 layer->Draw(screenW, screenH);
             } else {
-                LOGCATI("CompositeRenderer::Draw: layer %zu disabled, skipping", i);
+                LOGCATI("CompositeRenderer::Draw: layer %zu disabled or excluded, skipping", i);
             }
+        }
+    }
+    
+    if (lightningLayer != nullptr) {
+        LOGCATI("CompositeRenderer::Draw: drawing LightningLayer");
+        lightningLayer->Draw(screenW, screenH);
+        
+        float flashIntensity = lightningLayer->GetFlashIntensity();
+        if (ambientLayer != nullptr) {
+            ambientLayer->SetFlashIntensity(flashIntensity);
+            LOGCATI("CompositeRenderer::Draw: drawing AmbientOverlayLayer, flashIntensity=%.3f", flashIntensity);
+            ambientLayer->Draw(screenW, screenH);
         }
     }
     
@@ -183,6 +215,8 @@ void CompositeRenderer::SortLayers() {
             LayerType typeB = b->GetLayerType();
             if (typeA == LAYER_TYPE_RAIN) return false;
             if (typeB == LAYER_TYPE_RAIN) return true;
+            if (typeA == LAYER_TYPE_AMBIENT_OVERLAY) return false;
+            if (typeB == LAYER_TYPE_AMBIENT_OVERLAY) return true;
             return typeA < typeB;
         });
 }
@@ -447,6 +481,10 @@ void CompositeRenderer::ConfigureRain(int level, bool isNight) {
         lightningLayer->SetParamFloat(PARAM_LIGHTNING_INTERVAL, lightningInterval[level]);
         lightningLayer->SetParamInt(PARAM_LIGHTNING_IS_NIGHT, isNight ? 1 : 0);
         AddLayer(lightningLayer);
+        
+        AmbientOverlayLayer *ambientLayer = new AmbientOverlayLayer();
+        ambientLayer->SetParamInt(PARAM_LIGHTNING_IS_NIGHT, isNight ? 1 : 0);
+        AddLayer(ambientLayer);
     }
 }
 

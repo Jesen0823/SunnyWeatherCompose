@@ -1,6 +1,7 @@
 #include "LightningLayer.h"
 #include "../../util/GLUtils.h"
 #include "../../util/LogUtil.h"
+#include "glm.hpp"
 #include "gtc/matrix_transform.hpp"
 
 LightningLayer::LightningLayer() 
@@ -12,12 +13,12 @@ LightningLayer::LightningLayer()
       m_ScreenHeight(0),
       m_Time(0.0f),
       m_FrameIndex(0),
+      m_CurrentFlashIntensity(0.0f),
       m_VaoId(GL_NONE),
       m_MVPMatLoc(GL_NONE),
       m_TimeLoc(GL_NONE),
       m_ScreenSizeLoc(GL_NONE),
-      m_LightningEnabledLoc(GL_NONE),
-      m_LightningIntervalLoc(GL_NONE),
+      m_FlashIntensityLoc(GL_NONE),
       m_IsNightLoc(GL_NONE) {
     m_VboIds[0] = m_VboIds[1] = m_VboIds[2] = GL_NONE;
 }
@@ -40,191 +41,129 @@ bool LightningLayer::Init() {
     char fShaderStr[] =
             "#version 300 es                                                          \n"
             "precision highp float;                                                   \n"
-            "precision highp int;                                                     \n"
             "layout(location = 0) out vec4 outColor;                                  \n"
             "uniform float u_time;                                                    \n"
             "uniform vec2 u_screenSize;                                               \n"
-            "uniform bool u_lightningEnabled;                                         \n"
-            "uniform float u_lightningInterval;                                       \n"
+            "uniform float u_flashIntensity;                                          \n"
             "uniform bool u_isNight;                                                  \n"
             "                                                                         \n"
-            "float hash(float x) {                                                     \n"
-            "    return fract(sin(x) * 43758.5453123);                                  \n"
+            "float rand(vec2 p) {                                                     \n"
+            "    return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453);      \n"
             "}                                                                        \n"
             "                                                                         \n"
-            "float noise(vec2 p) {                                                     \n"
-            "    vec2 i = floor(p);                                                    \n"
-            "    vec2 f = fract(p);                                                    \n"
-            "    float u = f.x * f.x * (3.0 - 2.0 * f.x);                              \n"
-            "    float v = f.y * f.y * (3.0 - 2.0 * f.y);                              \n"
-            "    float a = hash(i.x + hash(i.y));                                       \n"
-            "    float b = hash(i.x + 1.0 + hash(i.y));                                \n"
-            "    float c = hash(i.x + hash(i.y + 1.0));                                \n"
-            "    float d = hash(i.x + 1.0 + hash(i.y + 1.0));                          \n"
-            "    return mix(mix(a, b, u), mix(c, d, u), v);                            \n"
+            "float sdSegment(vec2 p, vec2 a, vec2 b) {                                \n"
+            "    vec2 ab = b - a;                                                     \n"
+            "    float t = clamp(dot(p - a, ab) / dot(ab, ab), 0.0, 1.0);            \n"
+            "    return length(p - a - ab * t);                                       \n"
             "}                                                                        \n"
             "                                                                         \n"
-            "float lightningSegment(vec2 p, vec2 start, vec2 end, float width) {       \n"
-            "    vec2 dir = end - start;                                               \n"
-            "    float len = length(dir);                                              \n"
-            "    if (len < 0.001) return 0.0;                                         \n"
-            "    dir /= len;                                                           \n"
-            "    vec2 perp = vec2(-dir.y, dir.x);                                      \n"
-            "    vec2 rel = p - start;                                                 \n"
-            "    float proj = dot(rel, dir);                                           \n"
-            "    float dist = abs(dot(rel, perp));                                     \n"
-            "    if (proj < 0.0 || proj > len) return 0.0;                             \n"
-            "    float line = smoothstep(width, 0.0, dist);                            \n"
-            "    float fade = smoothstep(len * 0.05, len * 0.95, proj);                \n"
-            "    return line * fade;                                                   \n"
-            "}                                                                        \n"
-            "                                                                         \n"
-            "float lightningBranch(vec2 p, vec2 start, vec2 end, float width, int depth, float randSeed) {\n"
-            "    float result = 0.0;                                                   \n"
-            "    const int maxDepth = 4;                                               \n"
-            "    \n"
-            "    vec2 starts[16];                                                      \n"
-            "    vec2 ends[16];                                                        \n"
-            "    float widths[16];                                                     \n"
-            "    int depths[16];                                                       \n"
-            "    int stackSize = 0;                                                    \n"
-            "    \n"
-            "    starts[0] = start;                                                    \n"
-            "    ends[0] = end;                                                        \n"
-            "    widths[0] = width;                                                    \n"
-            "    depths[0] = depth;                                                    \n"
-            "    stackSize = 1;                                                        \n"
-            "    \n"
-            "    while (stackSize > 0) {                                               \n"
-            "        stackSize--;                                                      \n"
-            "        vec2 s = starts[stackSize];                                       \n"
-            "        vec2 e = ends[stackSize];                                         \n"
-            "        float w = widths[stackSize];                                      \n"
-            "        int d = depths[stackSize];                                        \n"
-            "        \n"
-            "        result += lightningSegment(p, s, e, w);                           \n"
-            "        \n"
-            "        if (d < maxDepth) {                                               \n"
-            "            vec2 mid = (s + e) * 0.5;                                     \n"
-            "            float perturb = 0.08 * (1.0 + float(d) * 0.15);               \n"
-            "            mid.x += noise(vec2(s.y * 200.0 + randSeed, float(d) * 50.0)) * perturb;\n"
-            "            mid.y += noise(vec2(s.x * 200.0 + randSeed, float(d) * 30.0)) * 0.02;\n"
-            "            \n"
-            "            float widthRand = 0.85 + noise(vec2(float(d) * 70.0 + randSeed)) * 0.3;\n"
-            "            \n"
-            "            starts[stackSize] = s;                                        \n"
-            "            ends[stackSize] = mid;                                        \n"
-            "            widths[stackSize] = w * 0.75 * widthRand;                     \n"
-            "            depths[stackSize] = d + 1;                                    \n"
-            "            stackSize++;                                                  \n"
-            "            \n"
-            "            starts[stackSize] = mid;                                      \n"
-            "            ends[stackSize] = e;                                          \n"
-            "            widths[stackSize] = w * 0.75 * (1.3 - widthRand);             \n"
-            "            depths[stackSize] = d + 1;                                    \n"
-            "            stackSize++;                                                  \n"
-            "            \n"
-            "            if (noise(vec2(mid.y * 100.0 + randSeed, float(d) * 20.0)) > 0.6 && d < maxDepth - 1) {\n"
-            "                float branchAngle = noise(vec2(float(d) * 30.0 + randSeed)) * 0.3 - 0.15;\n"
-            "                float branchLength = (e.y - mid.y) * (0.3 + noise(vec2(float(d) * 40.0 + randSeed)) * 0.4);\n"
-            "                vec2 branchEnd = mid + vec2(branchAngle, -branchLength);  \n"
-            "                starts[stackSize] = mid;                                  \n"
-            "                ends[stackSize] = branchEnd;                              \n"
-            "                widths[stackSize] = w * 0.3 * (0.7 + noise(vec2(float(d) * 50.0)) * 0.5);\n"
-            "                depths[stackSize] = d + 2;                                \n"
-            "                stackSize++;                                              \n"
-            "            }                                                             \n"
-            "        }                                                                 \n"
-            "    }                                                                     \n"
-            "    return result;                                                        \n"
-            "}                                                                        \n"
-            "                                                                         \n"
-            "float lightningFlash(float time, float interval) {                         \n"
-            "    float result = 0.0;                                                   \n"
-            "    float cycleTime = mod(time, interval);                                \n"
-            "    \n"
-            "    if (cycleTime < 0.25) {                                               \n"
-            "        float t = cycleTime / 0.25;                                       \n"
-            "        result = smoothstep(0.0, 0.3, t) * smoothstep(1.0, 0.6, t) * 0.1;\n"
-            "    }                                                                    \n"
-            "    \n"
-            "    if (cycleTime >= 0.25 && cycleTime < 0.32) {                          \n"
-            "        float t = (cycleTime - 0.25) / 0.07;                              \n"
-            "        result += smoothstep(0.0, 0.2, t) * smoothstep(1.0, 0.8, t);      \n"
-            "    }                                                                    \n"
-            "    \n"
-            "    if (cycleTime >= 0.35 && cycleTime < 0.4) {                           \n"
-            "        float t = (cycleTime - 0.35) / 0.05;                              \n"
-            "        result += smoothstep(0.0, 0.3, t) * smoothstep(1.0, 0.7, t) * 0.6;\n"
-            "    }                                                                    \n"
-            "    \n"
-            "    if (cycleTime >= 0.43 && cycleTime < 0.47) {                          \n"
-            "        float t = (cycleTime - 0.43) / 0.04;                              \n"
-            "        result += smoothstep(0.0, 0.4, t) * smoothstep(1.0, 0.6, t) * 0.4;\n"
-            "    }                                                                    \n"
-            "    \n"
-            "    return result;                                                        \n"
+            "float getLightningValue(vec2 uv, vec2 start, vec2 end, float width) {    \n"
+            "    float dist = sdSegment(uv, start, end);                              \n"
+            "    float core = smoothstep(width * 0.2, 0.0, dist) * 1.5;               \n"
+            "    float inner = smoothstep(width * 0.5, 0.0, dist);                    \n"
+            "    float outer = smoothstep(width * 1.2, 0.0, dist);                   \n"
+            "    float glow = smoothstep(width * 4.0, 0.0, dist);                    \n"
+            "    inner *= (1.0 - core);                                              \n"
+            "    outer *= (1.0 - inner);                                             \n"
+            "    glow *= (1.0 - outer);                                              \n"
+            "    return core + inner * 0.8 + outer * 0.4 + glow * 0.2;               \n"
             "}                                                                        \n"
             "                                                                         \n"
             "void main() {                                                             \n"
-            "    vec2 p = gl_FragCoord.xy / u_screenSize.xy;                          \n"
-            "    vec3 result = vec3(0.0);                                             \n"
-            "    float alpha = 0.0;                                                   \n"
+            "    vec2 uv = gl_FragCoord.xy / u_screenSize.xy;                          \n"
+            "    vec3 col = vec3(0.0);                                                 \n"
+            "    float alpha = 0.0;                                                    \n"
             "    \n"
-            "    vec3 lightningColor = u_isNight ? vec3(0.8, 0.88, 1.0) : vec3(0.95, 0.98, 1.0);\n"
-            "    vec3 edgeColor = u_isNight ? vec3(0.5, 0.65, 1.0) : vec3(0.75, 0.82, 1.0);\n"
-            "    vec3 glowColor = u_isNight ? vec3(0.3, 0.5, 0.9) : vec3(0.6, 0.75, 0.95);\n"
+            "    float flash = u_flashIntensity;                                       \n"
             "    \n"
-            "    if (u_lightningEnabled) {                                            \n"
-            "        float flash = lightningFlash(u_time, u_lightningInterval);        \n"
-            "        if (flash > 0.005) {                                              \n"
-            "            float lightningPath = 0.0;                                    \n"
-            "            float randSeed = u_time * 1000.0;                             \n"
-            "            float mainX = 0.15 + noise(vec2(randSeed)) * 0.7;             \n"
-            "            float widthRand = 0.5 + noise(vec2(randSeed + 100.0)) * 0.5;  \n"
-            "            float mainWidth = 0.006 * widthRand;                          \n"
-            "            float flashIntensity = 0.6 + noise(vec2(randSeed + 200.0)) * 0.4;\n"
-            "            \n"
-            "            vec2 start = vec2(mainX, 1.1);                                \n"
-            "            vec2 end = vec2(mainX + noise(vec2(randSeed + 300.0)) * 0.2, -0.1);\n"
-            "            lightningPath += lightningBranch(p, start, end, mainWidth, 0, randSeed);\n"
-            "            \n"
-            "            if (noise(vec2(randSeed + 400.0)) > 0.45) {                   \n"
-            "                float branchX1 = mainX + 0.15 + noise(vec2(randSeed + 500.0)) * 0.12;\n"
-            "                vec2 branchStart1 = vec2(branchX1, 1.05 + noise(vec2(randSeed + 600.0)) * 0.05);\n"
-            "                vec2 branchEnd1 = vec2(branchX1 - noise(vec2(randSeed + 700.0)) * 0.12, 0.3);\n"
-            "                lightningPath += lightningBranch(p, branchStart1, branchEnd1, mainWidth * 0.55, 1, randSeed + 1000.0);\n"
-            "            }                                                             \n"
-            "            \n"
-            "            if (noise(vec2(randSeed + 800.0)) > 0.55) {                   \n"
-            "                float branchX2 = mainX - 0.12 + noise(vec2(randSeed + 900.0)) * 0.1;\n"
-            "                vec2 branchStart2 = vec2(branchX2, 0.9 + noise(vec2(randSeed + 1000.0)) * 0.08);\n"
-            "                vec2 branchEnd2 = vec2(branchX2 + noise(vec2(randSeed + 1100.0)) * 0.1, 0.25);\n"
-            "                lightningPath += lightningBranch(p, branchStart2, branchEnd2, mainWidth * 0.4, 2, randSeed + 2000.0);\n"
-            "            }                                                             \n"
-            "            \n"
-            "            float coreAlpha = lightningPath * flash * flashIntensity * 12.0;\n"
-            "            float edgeAlpha = lightningPath * flash * flashIntensity * 6.0;\n"
-            "            float glowAlpha = lightningPath * flash * flashIntensity * 3.0;\n"
-            "            \n"
-            "            float glowWidth = mainWidth * 3.0;\n"
-            "            float glow = smoothstep(glowWidth, 0.0, lightningPath * 50.0);\n"
-            "            glow *= smoothstep(0.5, 0.0, lightningPath * 30.0);\n"
-            "            \n"
-            "            result += lightningColor * coreAlpha;                          \n"
-            "            result += edgeColor * edgeAlpha * 0.6;                        \n"
-            "            result += glowColor * glow * flash * flashIntensity * 0.5;    \n"
-            "            alpha += coreAlpha + edgeAlpha * 0.4 + glow * 0.3;            \n"
-            "            \n"
-            "            float ambientFlash = flash * flashIntensity * 0.4;             \n"
-            "            vec3 ambientColor = u_isNight ? vec3(0.55, 0.65, 0.85) : vec3(0.82, 0.86, 0.92);\n"
-            "            result += ambientColor * ambientFlash;                        \n"
-            "            alpha += ambientFlash;                                         \n"
+            "    if (flash < 0.001) {                                                  \n"
+            "        outColor = vec4(col, alpha);                                      \n"
+            "        return;                                                           \n"
+            "    }                                                                    \n"
+            "    \n"
+            "    float seed = floor(u_time * 500.0);                                   \n"
+            "    float mainX = 0.1 + rand(vec2(seed)) * 0.8;                          \n"
+            "    float widthVar = 0.5 + rand(vec2(seed + 100.0)) * 0.5;               \n"
+            "    float brightnessVar = 0.5 + rand(vec2(seed + 200.0)) * 0.5;          \n"
+            "    float heightVar = 0.4 + rand(vec2(seed + 300.0)) * 0.6;              \n"
+            "    \n"
+            "    float totalFlash = flash * brightnessVar;                            \n"
+            "    float baseWidth = 0.015 * widthVar;                                  \n"
+            "    \n"
+            "    vec3 coreCol = vec3(1.0, 1.0, 0.95);                                 \n"
+            "    vec3 innerCol = u_isNight ? vec3(0.85, 0.92, 1.0) : vec3(0.96, 0.98, 1.0);\n"
+            "    vec3 outerCol = u_isNight ? vec3(0.6, 0.75, 1.0) : vec3(0.85, 0.9, 0.98);\n"
+            "    vec3 glowCol = u_isNight ? vec3(0.4, 0.55, 0.9) : vec3(0.7, 0.8, 0.95);\n"
+            "    \n"
+            "    vec2 p0 = vec2(mainX, 1.1);                                          \n"
+            "    vec2 p1 = vec2(mainX + (rand(vec2(seed + 400.0)) - 0.5) * 0.3, 0.85);\n"
+            "    vec2 p2 = vec2(p1.x + (rand(vec2(seed + 500.0)) - 0.5) * 0.25, 0.6);\n"
+            "    vec2 p3 = vec2(p2.x + (rand(vec2(seed + 600.0)) - 0.5) * 0.2, 0.4);  \n"
+            "    vec2 p4 = vec2(p3.x + (rand(vec2(seed + 700.0)) - 0.5) * 0.15, 1.1 - heightVar);\n"
+            "    \n"
+            "    float s0 = getLightningValue(uv, p0, p1, baseWidth);                 \n"
+            "    float s1 = getLightningValue(uv, p1, p2, baseWidth * 0.9);           \n"
+            "    float s2 = getLightningValue(uv, p2, p3, baseWidth * 0.8);           \n"
+            "    float s3 = getLightningValue(uv, p3, p4, baseWidth * 0.7);           \n"
+            "    \n"
+            "    float mainLightning = max(max(s0, s1), max(s2, s3));                 \n"
+            "    col += coreCol * mainLightning * totalFlash * 2.0;                    \n"
+            "    \n"
+            "    if (rand(vec2(seed + 800.0)) > 0.3) {                                \n"
+            "        float bx1 = p1.x + (rand(vec2(seed + 900.0)) - 0.5) * 0.35;      \n"
+            "        vec2 bp0 = vec2(bx1, p1.y);                                      \n"
+            "        vec2 bp1 = vec2(bx1 + (rand(vec2(seed + 1000.0)) - 0.5) * 0.3, bp0.y - rand(vec2(seed + 1100.0)) * 0.45);\n"
+            "        vec2 bp2 = vec2(bp1.x + (rand(vec2(seed + 1200.0)) - 0.5) * 0.2, bp1.y - rand(vec2(seed + 1300.0)) * 0.35);\n"
+            "        float bs0 = getLightningValue(uv, bp0, bp1, baseWidth * 0.5);    \n"
+            "        float bs1 = getLightningValue(uv, bp1, bp2, baseWidth * 0.35);   \n"
+            "        col += coreCol * max(bs0, bs1) * totalFlash * 0.8;               \n"
+            "        \n"
+            "        if (rand(vec2(seed + 1400.0)) > 0.5) {                           \n"
+            "            float bx1a = bp1.x + (rand(vec2(seed + 1500.0)) - 0.5) * 0.2;\n"
+            "            vec2 bp0a = vec2(bx1a, bp1.y);                               \n"
+            "            vec2 bp1a = vec2(bx1a + (rand(vec2(seed + 1600.0)) - 0.5) * 0.15, bp0a.y - rand(vec2(seed + 1700.0)) * 0.3);\n"
+            "            float bsa = getLightningValue(uv, bp0a, bp1a, baseWidth * 0.25);\n"
+            "            col += coreCol * bsa * totalFlash * 0.5;                     \n"
             "        }                                                                \n"
             "    }                                                                    \n"
             "    \n"
+            "    if (rand(vec2(seed + 1800.0)) > 0.4) {                              \n"
+            "        float bx2 = p2.x + (rand(vec2(seed + 1900.0)) - 0.5) * 0.25;    \n"
+            "        vec2 bp0 = vec2(bx2, p2.y);                                      \n"
+            "        vec2 bp1 = vec2(bx2 + (rand(vec2(seed + 2000.0)) - 0.5) * 0.25, bp0.y - rand(vec2(seed + 2100.0)) * 0.4);\n"
+            "        float bs = getLightningValue(uv, bp0, bp1, baseWidth * 0.45);    \n"
+            "        col += coreCol * bs * totalFlash * 0.7;                          \n"
+            "    }                                                                    \n"
+            "    \n"
+            "    if (rand(vec2(seed + 2200.0)) > 0.45) {                             \n"
+            "        float bx3 = p3.x + (rand(vec2(seed + 2300.0)) - 0.5) * 0.2;     \n"
+            "        vec2 bp0 = vec2(bx3, p3.y);                                      \n"
+            "        vec2 bp1 = vec2(bx3 + (rand(vec2(seed + 2400.0)) - 0.5) * 0.15, bp0.y - rand(vec2(seed + 2500.0)) * 0.3);\n"
+            "        float bs = getLightningValue(uv, bp0, bp1, baseWidth * 0.4);     \n"
+            "        col += coreCol * bs * totalFlash * 0.6;                          \n"
+            "    }                                                                    \n"
+            "    \n"
+            "    if (rand(vec2(seed + 2600.0)) > 0.5) {                              \n"
+            "        float bx4 = p0.x + (rand(vec2(seed + 2700.0)) - 0.5) * 0.2;     \n"
+            "        vec2 bp0 = vec2(bx4, p0.y - 0.05);                               \n"
+            "        vec2 bp1 = vec2(bx4 + (rand(vec2(seed + 2800.0)) - 0.5) * 0.25, bp0.y - rand(vec2(seed + 2900.0)) * 0.35);\n"
+            "        float bs = getLightningValue(uv, bp0, bp1, baseWidth * 0.5);     \n"
+            "        col += coreCol * bs * totalFlash * 0.75;                         \n"
+            "    }                                                                    \n"
+            "    \n"
+            "    float distToLightning = min(min(sdSegment(uv, p0, p1), sdSegment(uv, p1, p2)),\n"
+            "                                min(sdSegment(uv, p2, p3), sdSegment(uv, p3, p4)));\n"
+            "    float ambientGlow = smoothstep(baseWidth * 15.0, 0.0, distToLightning);\n"
+            "    col += glowCol * ambientGlow * totalFlash * 0.4;                     \n"
+            "    \n"
+            "    float flicker = 0.8 + rand(vec2(u_time * 10000.0, uv.x)) * 0.2;     \n"
+            "    col *= flicker;                                                       \n"
+            "    \n"
+            "    col = clamp(col, 0.0, 1.0);                                          \n"
+            "    alpha = max(max(col.r, col.g), col.b);                               \n"
             "    alpha = clamp(alpha, 0.0, 1.0);                                      \n"
-            "    outColor = vec4(result, alpha);                                       \n"
+            "    \n"
+            "    outColor = vec4(col, alpha);                                          \n"
             "}";
 
     m_ProgramObj = GLUtils::CreateProgram(vShaderStr, fShaderStr, m_VertexShader, m_FragmentShader);
@@ -236,8 +175,7 @@ bool LightningLayer::Init() {
     m_MVPMatLoc = glGetUniformLocation(m_ProgramObj, "u_MVPMatrix");
     m_TimeLoc = glGetUniformLocation(m_ProgramObj, "u_time");
     m_ScreenSizeLoc = glGetUniformLocation(m_ProgramObj, "u_screenSize");
-    m_LightningEnabledLoc = glGetUniformLocation(m_ProgramObj, "u_lightningEnabled");
-    m_LightningIntervalLoc = glGetUniformLocation(m_ProgramObj, "u_lightningInterval");
+    m_FlashIntensityLoc = glGetUniformLocation(m_ProgramObj, "u_flashIntensity");
     m_IsNightLoc = glGetUniformLocation(m_ProgramObj, "u_isNight");
 
     GLfloat verticesCoords[] = {
@@ -281,7 +219,8 @@ bool LightningLayer::Init() {
 }
 
 void LightningLayer::Draw(int screenW, int screenH) {
-    if (!m_ProgramObj || !m_Enabled) {
+    if (!m_ProgramObj || !m_Enabled || !m_LightningEnabled) {
+        m_CurrentFlashIntensity = 0.0f;
         return;
     }
 
@@ -297,15 +236,53 @@ void LightningLayer::Draw(int screenW, int screenH) {
     m_FrameIndex++;
     m_Time = m_FrameIndex * 0.04f;
 
+    float cycleTime = fmod(m_Time, m_LightningInterval);
+    float flashDuration = 1.2f;
+    float flashPhase = cycleTime / flashDuration;
+    float flash = 0.0f;
+    
+    if (flashPhase < 1.0f) {
+        float preFlash = glm::smoothstep(0.0f, 0.08f, flashPhase) * glm::smoothstep(0.25f, 0.15f, flashPhase) * 0.1f;
+        
+        float mainFlash = 0.0f;
+        if (flashPhase >= 0.25f && flashPhase < 0.35f) {
+            float t = (flashPhase - 0.25f) / 0.1f;
+            mainFlash = glm::smoothstep(0.0f, 0.1f, t) * glm::smoothstep(1.0f, 0.7f, t);
+        }
+        
+        float bounce1 = 0.0f;
+        if (flashPhase >= 0.38f && flashPhase < 0.48f) {
+            float t = (flashPhase - 0.38f) / 0.1f;
+            bounce1 = glm::smoothstep(0.0f, 0.15f, t) * glm::smoothstep(1.0f, 0.55f, t) * 0.7f;
+        }
+        
+        float bounce2 = 0.0f;
+        if (flashPhase >= 0.52f && flashPhase < 0.62f) {
+            float t = (flashPhase - 0.52f) / 0.1f;
+            bounce2 = glm::smoothstep(0.0f, 0.2f, t) * glm::smoothstep(1.0f, 0.5f, t) * 0.5f;
+        }
+        
+        float bounce3 = 0.0f;
+        if (flashPhase >= 0.66f && flashPhase < 0.76f) {
+            float t = (flashPhase - 0.66f) / 0.1f;
+            bounce3 = glm::smoothstep(0.0f, 0.25f, t) * glm::smoothstep(1.0f, 0.45f, t) * 0.35f;
+        }
+        
+        float decay = glm::smoothstep(0.8f, 1.0f, flashPhase) * 0.2f;
+        
+        flash = preFlash + mainFlash + bounce1 + bounce2 + bounce3 + decay;
+    }
+    
+    m_CurrentFlashIntensity = flash;
+
     glUniformMatrix4fv(m_MVPMatLoc, 1, GL_FALSE, &m_MVPMatrix[0][0]);
     glUniform1f(m_TimeLoc, m_Time);
     glUniform2f(m_ScreenSizeLoc, screenW, screenH);
-    glUniform1i(m_LightningEnabledLoc, m_LightningEnabled ? 1 : 0);
-    glUniform1f(m_LightningIntervalLoc, m_LightningInterval);
+    glUniform1f(m_FlashIntensityLoc, flash);
     glUniform1i(m_IsNightLoc, m_IsNight ? 1 : 0);
 
     glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE);
 
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, (const void *) 0);
 

@@ -1,13 +1,13 @@
-#ifndef GLLIB_LIGHTNINGLAYER_H
-#define GLLIB_LIGHTNINGLAYER_H
+#ifndef GLLIB_AMBIENTOVERLAYLAYER_H
+#define GLLIB_AMBIENTOVERLAYLAYER_H
 
 #include "../base/GLLayerBase.h"
 #include <glm.hpp>
 
-class LightningLayer : public GLLayerBase {
+class AmbientOverlayLayer : public GLLayerBase {
 public:
-    LightningLayer();
-    virtual ~LightningLayer();
+    AmbientOverlayLayer();
+    virtual ~AmbientOverlayLayer();
     
     virtual bool Init() override;
     virtual void Draw(int screenW, int screenH) override;
@@ -16,8 +16,7 @@ public:
     virtual void SetParamInt(LayerParamType paramType, int value) override;
     virtual void SetParamFloat(LayerParamType paramType, float value) override;
     
-    float GetCurrentFlashIntensity() const { return m_CurrentFlashIntensity; }
-    float GetFlashIntensity() const { return m_CurrentFlashIntensity; }
+    void SetFlashIntensity(float intensity);
     
 private:
     void UpdateMVPMatrix();
@@ -25,23 +24,16 @@ private:
     GLuint m_VaoId;
     GLuint m_VboIds[3];
     GLuint m_MVPMatLoc;
-    GLuint m_TimeLoc;
-    GLuint m_ScreenSizeLoc;
     GLuint m_FlashIntensityLoc;
     GLuint m_IsNightLoc;
     
     glm::mat4 m_MVPMatrix;
     
-    bool m_LightningEnabled;
-    float m_LightningInterval;
+    float m_FlashIntensity;
     bool m_IsNight;
     
     int m_ScreenWidth;
     int m_ScreenHeight;
-    
-    float m_Time;
-    int m_FrameIndex;
-    float m_CurrentFlashIntensity;
 };
 
-#endif // GLLIB_LIGHTNINGLAYER_H
+#endif // GLLIB_AMBIENTOVERLAYLAYER_H

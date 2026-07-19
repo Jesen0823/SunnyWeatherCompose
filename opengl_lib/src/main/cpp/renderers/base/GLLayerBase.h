@@ -17,7 +17,8 @@ enum LayerType {
     LAYER_TYPE_EFFECT = 5,             // 特效层（兼容旧版）
     LAYER_TYPE_RAIN = 6,               // 雨层（全屏程序化雨丝）
     LAYER_TYPE_LIGHTNING = 7,          // 闪电层
-    LAYER_TYPE_WIND = 8                // 风力层
+    LAYER_TYPE_WIND = 8,               // 风力层
+    LAYER_TYPE_AMBIENT_OVERLAY = 9     // 环境亮度覆盖层（闪电时全局亮变）
 };
 
 /**
