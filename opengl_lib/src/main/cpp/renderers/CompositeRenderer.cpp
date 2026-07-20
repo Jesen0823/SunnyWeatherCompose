@@ -45,66 +45,55 @@ bool CompositeRenderer::Init() {
 
 void CompositeRenderer::Draw(int screenW, int screenH) {
     if (!m_IsInitialized && !m_Layers.empty()) {
-        LOGCATI("CompositeRenderer::Draw: not initialized yet, calling Init()");
         Init();
-        LOGCATI("CompositeRenderer::Draw: Init() completed");
     }
     if (!m_IsInitialized) {
-        LOGCATE("CompositeRenderer::Draw: not initialized and no layers, skipping draw");
         return;
     }
     
     m_ScreenWidth = screenW;
     m_ScreenHeight = screenH;
     
-    LOGCATI("CompositeRenderer::Draw: drawing %zu layers, screen=%dx%d", m_Layers.size(), screenW, screenH);
+    static int drawFrameCount = 0;
+    drawFrameCount++;
     
-    GLLayerBase *rainLayerBase = GetLayer(LAYER_TYPE_RAIN);
     RainLayer *rainLayer = nullptr;
-    
-    if (rainLayerBase != nullptr) {
-        rainLayer = static_cast<RainLayer *>(rainLayerBase);
-        LOGCATI("CompositeRenderer::Draw: rainLayer found, type=%d", rainLayerBase->GetLayerType());
-    } else {
-        LOGCATI("CompositeRenderer::Draw: rainLayer not found");
+    auto rainIt = m_LayerMap.find(LAYER_TYPE_RAIN);
+    if (rainIt != m_LayerMap.end()) {
+        rainLayer = static_cast<RainLayer *>(rainIt->second);
     }
     
-    if (rainLayer != nullptr && m_FBO == 0) {
-        LOGCATI("CompositeRenderer::Draw: initializing FBO");
+    if (rainLayer != nullptr && rainLayer->IsEnabled() && m_FBO == 0) {
         if (!InitFBO(screenW, screenH)) {
-            LOGCATE("CompositeRenderer::Draw: FBO init failed, falling back to direct rendering");
             rainLayer = nullptr;
         }
     }
     
-    GLLayerBase *lightningBase = GetLayer(LAYER_TYPE_LIGHTNING);
     LightningLayer *lightningLayer = nullptr;
-    if (lightningBase != nullptr) {
-        lightningLayer = static_cast<LightningLayer *>(lightningBase);
+    auto lightningIt = m_LayerMap.find(LAYER_TYPE_LIGHTNING);
+    if (lightningIt != m_LayerMap.end()) {
+        lightningLayer = static_cast<LightningLayer *>(lightningIt->second);
     }
     
-    GLLayerBase *ambientBase = GetLayer(LAYER_TYPE_AMBIENT_OVERLAY);
     AmbientOverlayLayer *ambientLayer = nullptr;
-    if (ambientBase != nullptr) {
-        ambientLayer = static_cast<AmbientOverlayLayer *>(ambientBase);
+    auto ambientIt = m_LayerMap.find(LAYER_TYPE_AMBIENT_OVERLAY);
+    if (ambientIt != m_LayerMap.end()) {
+        ambientLayer = static_cast<AmbientOverlayLayer *>(ambientIt->second);
     }
     
     if (rainLayer != nullptr && m_FBO != 0) {
-        LOGCATI("CompositeRenderer::Draw: using FBO rendering path");
         glBindFramebuffer(GL_FRAMEBUFFER, m_FBO);
         glViewport(0, 0, screenW, screenH);
         glClearColor(0.45f, 0.47f, 0.50f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glDisable(GL_DEPTH_TEST);
         
-        for (size_t i = 0; i < m_Layers.size(); ++i) {
-            auto &layer = m_Layers[i];
+        for (auto &layer : m_Layers) {
             LayerType type = layer->GetLayerType();
             if (layer->IsEnabled() && 
                 type != LAYER_TYPE_RAIN && 
                 type != LAYER_TYPE_LIGHTNING && 
                 type != LAYER_TYPE_AMBIENT_OVERLAY) {
-                LOGCATI("CompositeRenderer::Draw: drawing to FBO layer %zu, type=%d", i, type);
                 layer->Draw(screenW, screenH);
             }
         }
@@ -113,36 +102,27 @@ void CompositeRenderer::Draw(int screenW, int screenH) {
         glViewport(0, 0, screenW, screenH);
         
         rainLayer->SetBackgroundTexture(m_FBOTexture);
-        LOGCATI("CompositeRenderer::Draw: drawing RainLayer with FBO texture=%d", m_FBOTexture);
         rainLayer->Draw(screenW, screenH);
     } else {
-        for (size_t i = 0; i < m_Layers.size(); ++i) {
-            auto &layer = m_Layers[i];
+        for (auto &layer : m_Layers) {
             LayerType type = layer->GetLayerType();
             if (layer->IsEnabled() && 
                 type != LAYER_TYPE_LIGHTNING && 
                 type != LAYER_TYPE_AMBIENT_OVERLAY) {
-                LOGCATI("CompositeRenderer::Draw: drawing layer %zu, type=%d", i, type);
                 layer->Draw(screenW, screenH);
-            } else {
-                LOGCATI("CompositeRenderer::Draw: layer %zu disabled or excluded, skipping", i);
             }
         }
     }
     
-    if (lightningLayer != nullptr) {
-        LOGCATI("CompositeRenderer::Draw: drawing LightningLayer");
+    if (lightningLayer != nullptr && lightningLayer->IsEnabled()) {
         lightningLayer->Draw(screenW, screenH);
         
         float flashIntensity = lightningLayer->GetFlashIntensity();
-        if (ambientLayer != nullptr) {
+        if (ambientLayer != nullptr && ambientLayer->IsEnabled()) {
             ambientLayer->SetFlashIntensity(flashIntensity);
-            LOGCATI("CompositeRenderer::Draw: drawing AmbientOverlayLayer, flashIntensity=%.3f", flashIntensity);
             ambientLayer->Draw(screenW, screenH);
         }
     }
-    
-    LOGCATI("CompositeRenderer::Draw: draw completed");
 }
 
 void CompositeRenderer::Destroy() {
@@ -413,17 +393,20 @@ void CompositeRenderer::ConfigureHaze(int level, bool isNight) {
 
 void CompositeRenderer::ConfigureRain(int level, bool isNight) {
     float coverage[] = {0.6f, 0.8f, 0.9f, 1.0f};
-    float darkness[] = {0.5f, 0.55f, 0.6f, 0.55f};
+    float darkness[] = {0.30f, 0.40f, 0.50f, 0.65f};
+    float lightness[] = {0.75f, 0.65f, 0.50f, 0.35f};
     float speed[] = {0.08f, 0.06f, 0.04f, 0.02f};
-    float intensity[] = {0.3f, 0.7f, 1.0f, 1.3f};
+    float scale[] = {0.90f, 0.80f, 0.70f, 0.55f};
+    float alpha[] = {14.0f, 18.0f, 22.0f, 28.0f};
+    float intensity[] = {0.3f, 0.7f, 1.3f, 1.8f};
     float rainSpeed[] = {0.5f, 0.7f, 0.9f, 1.0f};
     float lightningInterval[] = {0.0f, 0.0f, 0.0f, 3.0f};
-    float r[] = {0.6f, 0.55f, 0.45f, 0.25f};
-    float g[] = {0.62f, 0.57f, 0.47f, 0.28f};
-    float b[] = {0.65f, 0.6f, 0.52f, 0.35f};
-    float nr[] = {0.15f, 0.14f, 0.17f, 0.20f};
-    float ng[] = {0.18f, 0.17f, 0.20f, 0.22f};
-    float nb[] = {0.25f, 0.24f, 0.27f, 0.32f};
+    float r[] = {0.48f, 0.38f, 0.28f, 0.20f};
+    float g[] = {0.52f, 0.44f, 0.33f, 0.25f};
+    float b[] = {0.68f, 0.58f, 0.48f, 0.38f};
+    float nr[] = {0.28f, 0.24f, 0.20f, 0.17f};
+    float ng[] = {0.32f, 0.28f, 0.24f, 0.20f};
+    float nb[] = {0.48f, 0.42f, 0.36f, 0.30f};
     
     LOGCATI("CompositeRenderer::ConfigureRain: level=%d, isNight=%d, coverage=%.2f, darkness=%.2f, intensity=%.2f, rainSpeed=%.2f", 
             level, isNight, coverage[level], darkness[level], intensity[level], rainSpeed[level]);
@@ -454,11 +437,11 @@ void CompositeRenderer::ConfigureRain(int level, bool isNight) {
     CloudLayer *cloudLayer = new CloudLayer();
     cloudLayer->SetParamInt(PARAM_TIME_OF_DAY, isNight ? 1 : 0);
     cloudLayer->SetParamFloat(PARAM_CLOUD_COVERAGE, coverage[level]);
-    cloudLayer->SetParamFloat(PARAM_CLOUD_DARKNESS, isNight ? darkness[level] * 1.0f : darkness[level]);
-    cloudLayer->SetParamFloat(PARAM_CLOUD_LIGHTNESS, isNight ? 0.3f : 0.5f);
+    cloudLayer->SetParamFloat(PARAM_CLOUD_DARKNESS, isNight ? darkness[level] * 1.1f : darkness[level]);
+    cloudLayer->SetParamFloat(PARAM_CLOUD_LIGHTNESS, isNight ? lightness[level] * 0.8f : lightness[level]);
     cloudLayer->SetParamFloat(PARAM_CLOUD_SPEED, speed[level]);
-    cloudLayer->SetParamFloat(PARAM_CLOUD_SCALE, level == 3 ? 0.55f : 0.65f);
-    cloudLayer->SetParamFloat(PARAM_CLOUD_ALPHA, level == 3 ? 28.0f : 22.0f);
+    cloudLayer->SetParamFloat(PARAM_CLOUD_SCALE, scale[level]);
+    cloudLayer->SetParamFloat(PARAM_CLOUD_ALPHA, alpha[level]);
     cloudLayer->SetParamInt(PARAM_CLOUD_MODE, 1);
     AddLayer(cloudLayer);
     

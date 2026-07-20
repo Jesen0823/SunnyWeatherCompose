@@ -262,13 +262,13 @@ void RainLayer::SpawnRaindrop() {
     float dragFactor;
     
     if (m_RainIntensity > 1.5f) {
-        sizeFactor = randomRange(0.4f, 0.9f);
-        densityFactor = randomRange(0.4f, 0.8f);
-        dragFactor = randomRange(0.005f, 0.04f);
+        sizeFactor = randomRange(0.5f, 1.0f);
+        densityFactor = randomRange(0.35f, 0.75f);
+        dragFactor = randomRange(0.005f, 0.03f);
     } else if (m_RainIntensity > 0.8f) {
-        sizeFactor = randomRange(0.3f, 0.7f);
-        densityFactor = randomRange(0.5f, 1.0f);
-        dragFactor = randomRange(0.03f, 0.1f);
+        sizeFactor = randomRange(0.35f, 0.75f);
+        densityFactor = randomRange(0.45f, 0.95f);
+        dragFactor = randomRange(0.025f, 0.08f);
     } else {
         sizeFactor = randomRange(0.15f, 0.5f);
         densityFactor = randomRange(0.6f, 1.0f);

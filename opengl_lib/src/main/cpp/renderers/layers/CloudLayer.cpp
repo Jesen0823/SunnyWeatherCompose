@@ -51,7 +51,7 @@ bool CloudLayer::Init() {
     // 片段着色器：程序化云朵效果（透明叠加，背景由 SkyBackgroundLayer 提供）
     char fShaderStr[] =
             "#version 300 es                                                          \n"
-            "precision highp float;                                                   \n"
+            "precision mediump float;                                                 \n"
             "layout(location = 0) out vec4 outColor;                                  \n"
             "uniform float u_time;                                                    \n"
             "uniform vec2 u_screenSize;                                               \n"
@@ -81,12 +81,12 @@ bool CloudLayer::Init() {
             "    return dot(n, vec3(70.0));                                           \n"
             "}                                                                        \n"
             "float fbm(vec2 n) {                                                      \n"
-            "    float total = 0.0, amplitude = 0.18;                                 \n"
+            "    float total = 0.0, amplitude = 0.22;                                 \n"
             "    float frequency = 1.0;                                               \n"
             "    for (int i = 0; i < 5; i++) {                                        \n"
             "        total += noise(n * frequency) * amplitude;                        \n"
             "        frequency *= 2.0;                                                 \n"
-            "        amplitude *= 0.5;                                                \n"
+            "        amplitude *= 0.48;                                               \n"
             "    }                                                                    \n"
             "    return total;                                                        \n"
             "}                                                                        \n"
@@ -99,44 +99,44 @@ bool CloudLayer::Init() {
             "    float r = 0.0;                                                       \n"
             "    uv *= u_cloudScale;                                                  \n"
             "    uv -= q - time * 0.5;                                                \n"
-            "    float weight = 1.0;                                                  \n"
+            "    float weight = 0.85;                                                 \n"
             "    for (int i=0; i<6; i++){                                             \n"
             "        r += abs(weight*noise( uv ));                                    \n"
             "        uv = m*uv + time * 0.3;                                          \n"
-            "        weight *= 0.6;                                                   \n"
+            "        weight *= 0.72;                                                  \n"
             "    }                                                                    \n"
             "    float f = 0.0;                                                       \n"
             "    uv = p*vec2(u_screenSize.x/u_screenSize.y,1.0);                      \n"
             "    uv *= u_cloudScale * 1.2;                                            \n"
             "    uv -= q - time * 0.7;                                                \n"
-            "    weight = 0.9;                                                        \n"
+            "    weight = 0.75;                                                       \n"
             "    for (int i=0; i<6; i++){                                             \n"
             "        f += weight*noise( uv );                                         \n"
             "        uv = m*uv + time * 0.5;                                          \n"
-            "        weight *= 0.5;                                                   \n"
+            "        weight *= 0.62;                                                  \n"
             "    }                                                                    \n"
             "    f *= r * 1.5 + f * 0.8;                                              \n"
             "    float c = 0.0;                                                       \n"
             "    time = u_time * u_cloudSpeed * 2.0;                                  \n"
             "    uv = p*vec2(u_screenSize.x/u_screenSize.y,1.0);                      \n"
-            "    uv *= u_cloudScale*2.5;                                              \n"
+            "    uv *= u_cloudScale*1.8;                                              \n"
             "    uv -= q - time;                                                      \n"
-            "    weight = 0.5;                                                        \n"
+            "    weight = 0.45;                                                       \n"
             "    for (int i=0; i<5; i++){                                             \n"
             "        c += weight*noise(uv);                                           \n"
             "        uv = m*uv + time;                                                \n"
-            "        weight *= 0.5;                                                   \n"
+            "        weight *= 0.65;                                                  \n"
             "    }                                                                    \n"
             "    float c1 = 0.0;                                                      \n"
             "    time = u_time * u_cloudSpeed * 3.0;                                  \n"
             "    uv = p*vec2(u_screenSize.x/u_screenSize.y,1.0);                      \n"
-            "    uv *= u_cloudScale*3.5;                                              \n"
+            "    uv *= u_cloudScale*2.5;                                              \n"
             "    uv -= q - time;                                                      \n"
-            "    weight = 0.5;                                                        \n"
+            "    weight = 0.45;                                                       \n"
             "    for (int i=0; i<5; i++){                                             \n"
             "        c1 += abs(weight*noise( uv ));                                   \n"
             "        uv = m*uv + time;                                                \n"
-            "        weight *= 0.5;                                                   \n"
+            "        weight *= 0.65;                                                  \n"
             "    }                                                                    \n"
             "    c += c1;                                                             \n"
             "    float cloudBase = f * 0.6 + c * 0.4;                                 \n"
@@ -148,14 +148,14 @@ bool CloudLayer::Init() {
             "    vec3 dayCloudColor;                                                   \n"
             "    vec3 nightCloudColor;                                                  \n"
             "    if (u_cloudMode == 1) {                                               \n"
-            "        dayCloudColor = mix(vec3(0.35, 0.38, 0.44), vec3(0.34, 0.37, 0.42), cloudShading);\n"
-            "        dayCloudColor *= cloudBrightness * 0.95;                           \n"
-            "        nightCloudColor = mix(vec3(0.30, 0.33, 0.40), vec3(0.28, 0.31, 0.38), cloudShading);\n"
-            "        nightCloudColor *= cloudBrightness * 0.85;                         \n"
+            "        dayCloudColor = mix(vec3(0.20, 0.23, 0.28), vec3(0.45, 0.48, 0.53), cloudShading);\n"
+            "        dayCloudColor *= cloudBrightness * 1.0;                            \n"
+            "        nightCloudColor = mix(vec3(0.15, 0.18, 0.23), vec3(0.35, 0.38, 0.43), cloudShading);\n"
+            "        nightCloudColor *= cloudBrightness * 0.9;                          \n"
             "    } else if (u_cloudMode == 2) {                                        \n"
-            "        dayCloudColor = mix(vec3(0.5, 0.52, 0.6), vec3(0.75, 0.78, 0.85), cloudShading);\n"
+            "        dayCloudColor = mix(vec3(0.45, 0.48, 0.55), vec3(0.80, 0.82, 0.88), cloudShading);\n"
             "        dayCloudColor *= cloudBrightness * 0.95;                           \n"
-            "        nightCloudColor = mix(vec3(0.35, 0.38, 0.45), vec3(0.5, 0.52, 0.6), cloudShading);\n"
+            "        nightCloudColor = mix(vec3(0.30, 0.33, 0.40), vec3(0.55, 0.58, 0.65), cloudShading);\n"
             "        nightCloudColor *= cloudBrightness * 0.85;                         \n"
             "    } else {                                                              \n"
             "        dayCloudColor = mix(vec3(0.55, 0.58, 0.65), vec3(0.98, 0.99, 1.0), cloudShading);\n"
@@ -238,35 +238,23 @@ bool CloudLayer::Init() {
 }
 
 void CloudLayer::Draw(int screenW, int screenH) {
-    if (!m_ProgramObj) {
-        LOGCATE("CloudLayer::Draw: m_ProgramObj is null, skipping");
-        return;
-    }
-    if (!m_Enabled) {
-        LOGCATE("CloudLayer::Draw: layer disabled, skipping");
+    if (!m_ProgramObj || !m_Enabled) {
         return;
     }
 
-    m_ScreenWidth = screenW;
-    m_ScreenHeight = screenH;
-    
-    static int logFrameCount = 0;
-    if (logFrameCount++ % 60 == 0) {
-        LOGCATI("CloudLayer::Draw: coverage=%.2f, darkness=%.2f, lightness=%.2f, isNight=%d", 
-                m_CloudCoverage, m_CloudDarkness, m_CloudLightness, m_IsNight);
+    if (m_ScreenWidth != screenW || m_ScreenHeight != screenH) {
+        m_ScreenWidth = screenW;
+        m_ScreenHeight = screenH;
+        UpdateMVPMatrix();
     }
-
-    UpdateMVPMatrix();
 
     glUseProgram(m_ProgramObj);
 
     glBindVertexArray(m_VaoId);
 
-    // 更新时间
     m_FrameIndex++;
     m_Time = m_FrameIndex * 0.04f;
 
-    // 设置 uniform 参数
     glUniformMatrix4fv(m_MVPMatLoc, 1, GL_FALSE, &m_MVPMatrix[0][0]);
     glUniform1f(m_TimeLoc, m_Time);
     glUniform2f(m_ScreenSizeLoc, screenW, screenH);
@@ -279,7 +267,6 @@ void CloudLayer::Draw(int screenW, int screenH) {
     glUniform1i(m_IsNightLoc, m_IsNight ? 1 : 0);
     glUniform1i(m_CloudModeLoc, m_CloudMode);
 
-    // 启用混合模式，实现半透明云层效果
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
