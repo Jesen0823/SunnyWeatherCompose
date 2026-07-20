@@ -46,7 +46,7 @@ fun AboutUsScreen(onBack: () -> Unit = {}) {
         }
     ) { paddingValues ->
         GLEffectView(
-            skycon = Constants.SKYCON_STORM_RAIN,
+            skycon = Constants.SKYCON_HEAVY_SNOW,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(500.dp)

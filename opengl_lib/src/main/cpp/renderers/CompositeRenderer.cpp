@@ -510,38 +510,48 @@ void CompositeRenderer::ConfigureFog(bool isNight) {
 }
 
 void CompositeRenderer::ConfigureSnow(int level, bool isNight) {
-    float coverage[] = {0.5f, 0.7f, 0.9f, 1.0f};
-    float darkness[] = {0.5f, 0.6f, 0.75f, 0.9f};
-    float speed[] = {0.2f, 0.25f, 0.3f, 0.6f};
-    float intensity[] = {0.2f, 0.45f, 0.7f, 1.0f};
-    float snowSpeed[] = {0.3f, 0.4f, 0.5f, 0.7f};
+    float coverage[] = {0.6f, 0.8f, 0.95f, 1.0f};
+    float darkness[] = {0.35f, 0.55f, 0.75f, 0.90f};
+    float lightness[] = {0.70f, 0.55f, 0.40f, 0.25f};
+    float speed[] = {0.002f, 0.003f, 0.004f, 0.005f};
+    float scale[] = {0.90f, 0.75f, 0.60f, 0.45f};
+    float alpha[] = {14.0f, 20.0f, 26.0f, 32.0f};
+    float intensity[] = {0.6f, 0.7f, 0.8f, 0.95f};
+    float snowSpeed[] = {0.3f, 0.4f, 0.65f, 0.9f};
+    float snowSize[] = {3.5f, 5.0f, 2.0f, 2.2f};
+    float windForce[] = {0.0f, 0.05f, 0.4f, 0.8f};
+    int particleCounts[] = {280, 525, 735, 1225};
+    float snowShape[] = {0.0f, 0.0f, 1.0f, 1.0f};
     float fogDensity[] = {0.0f, 0.0f, 0.2f, 0.4f};
     float visibility[] = {0.0f, 0.0f, 0.6f, 0.3f};
-    float r[] = {0.6f, 0.5f, 0.4f, 0.3f};
-    float g[] = {0.65f, 0.55f, 0.45f, 0.35f};
-    float b[] = {0.75f, 0.65f, 0.55f, 0.45f};
-    float nr[] = {0.15f, 0.12f, 0.08f, 0.05f};
-    float ng[] = {0.18f, 0.15f, 0.1f, 0.06f};
-    float nb[] = {0.25f, 0.2f, 0.15f, 0.1f};
+    float r[] = {0.50f, 0.42f, 0.35f, 0.22f};
+    float g[] = {0.58f, 0.46f, 0.38f, 0.24f};
+    float b[] = {0.70f, 0.52f, 0.42f, 0.28f};
+    float nr[] = {0.25f, 0.20f, 0.15f, 0.10f};
+    float ng[] = {0.28f, 0.23f, 0.18f, 0.12f};
+    float nb[] = {0.38f, 0.30f, 0.22f, 0.15f};
+    float sunIntensity[] = {0.15f, 0.05f, 0.0f, 0.0f};
+    int sunVisible[] = {1, 1, 0, 0};
     
     SkyBackgroundLayer *skyLayer = new SkyBackgroundLayer();
     skyLayer->SetParamInt(PARAM_TIME_OF_DAY, isNight ? 1 : 0);
     if (!isNight) {
         skyLayer->SetParamVec3(PARAM_SKY_COLOR_TOP, r[level], g[level], b[level]);
-        skyLayer->SetParamVec3(PARAM_SKY_COLOR_BOTTOM, r[level] * 0.9f, g[level] * 0.9f, b[level] * 0.9f);
-        skyLayer->SetParamFloat(PARAM_SUN_INTENSITY, 0.2f);
+        skyLayer->SetParamVec3(PARAM_SKY_COLOR_BOTTOM, r[level] * 0.92f, g[level] * 0.92f, b[level] * 0.92f);
+        skyLayer->SetParamFloat(PARAM_SUN_INTENSITY, sunIntensity[level]);
+        skyLayer->SetParamInt(PARAM_SUN_VISIBLE, sunVisible[level]);
         skyLayer->SetParamInt(PARAM_SKY_MODE, 2);
     } else {
         skyLayer->SetParamVec3(PARAM_SKY_COLOR_TOP, nr[level], ng[level], nb[level]);
-        skyLayer->SetParamVec3(PARAM_SKY_COLOR_BOTTOM, nr[level] * 1.1f, ng[level] * 1.1f, nb[level] * 1.1f);
-        skyLayer->SetParamFloat(PARAM_MOON_INTENSITY, 0.3f);
+        skyLayer->SetParamVec3(PARAM_SKY_COLOR_BOTTOM, nr[level] * 1.05f, ng[level] * 1.05f, nb[level] * 1.05f);
+        skyLayer->SetParamFloat(PARAM_MOON_INTENSITY, 0.2f);
         skyLayer->SetParamInt(PARAM_SKY_MODE, 2);
     }
     AddLayer(skyLayer);
     
     if (isNight) {
         StarLayer *starLayer = new StarLayer();
-        starLayer->SetParamFloat(PARAM_STAR_COUNT, 100.0f);
+        starLayer->SetParamFloat(PARAM_STAR_COUNT, 50.0f);
         AddLayer(starLayer);
     }
     
@@ -549,14 +559,20 @@ void CompositeRenderer::ConfigureSnow(int level, bool isNight) {
     cloudLayer->SetParamInt(PARAM_TIME_OF_DAY, isNight ? 1 : 0);
     cloudLayer->SetParamFloat(PARAM_CLOUD_COVERAGE, coverage[level]);
     cloudLayer->SetParamFloat(PARAM_CLOUD_DARKNESS, isNight ? darkness[level] * 1.1f : darkness[level]);
-    cloudLayer->SetParamFloat(PARAM_CLOUD_LIGHTNESS, isNight ? 0.15f : 0.25f);
+    cloudLayer->SetParamFloat(PARAM_CLOUD_LIGHTNESS, isNight ? lightness[level] * 0.8f : lightness[level]);
     cloudLayer->SetParamFloat(PARAM_CLOUD_SPEED, speed[level]);
+    cloudLayer->SetParamFloat(PARAM_CLOUD_SCALE, scale[level]);
+    cloudLayer->SetParamFloat(PARAM_CLOUD_ALPHA, alpha[level]);
     cloudLayer->SetParamInt(PARAM_CLOUD_MODE, 2);
     AddLayer(cloudLayer);
     
     SnowLayer *snowLayer = new SnowLayer();
+    snowLayer->SetParamInt(PARAM_SNOW_PARTICLE_COUNT, particleCounts[level]);
     snowLayer->SetParamFloat(PARAM_SNOW_INTENSITY, intensity[level]);
     snowLayer->SetParamFloat(PARAM_SNOW_SPEED, snowSpeed[level]);
+    snowLayer->SetParamFloat(PARAM_SNOW_SIZE, snowSize[level]);
+    snowLayer->SetParamFloat(PARAM_SNOW_WIND, windForce[level]);
+    snowLayer->SetParamFloat(PARAM_SNOW_SHAPE, snowShape[level]);
     AddLayer(snowLayer);
     
     if (level >= 2) {

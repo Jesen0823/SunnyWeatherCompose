@@ -37,13 +37,25 @@ interface Constants {
         /** 阴 */
         const val SKYCON_CLOUDY = "CLOUDY"
 
-        /** 轻度雾霾 */
+        /** 轻度雾霾
+         * 空气污染细颗粒物（PM2.5）是形成霾天气的重要原因
+         * 天空淡黄色或土黄色
+         *
+         */
         const val SKYCON_LIGHT_HAZE = "LIGHT_HAZE"
 
-        /** 中度雾霾 */
+        /** 中度雾霾
+         * 空气污染细颗粒物（PM2.5）是形成霾天气的重要原因
+         * 空气较为浑浊，天空黄色
+         * 能见度低
+         */
         const val SKYCON_MODERATE_HAZE = "MODERATE_HAZE"
 
-        /** 重度雾霾 */
+        /** 重度雾霾
+         * 空气污染细颗粒物（PM2.5）是形成霾天气的重要原因
+         * 空气浑浊，天空深黄接近红色
+         * 能见度极低
+         */
         const val SKYCON_HEAVY_HAZE = "HEAVY_HAZE"
 
         /** 小雨 */
@@ -58,7 +70,11 @@ interface Constants {
         /** 暴雨 */
         const val SKYCON_STORM_RAIN = "STORM_RAIN"
 
-        /** 雾 */
+        /** 雾
+         * 大量微小水汽悬浮空气造成
+         * 乳白色，能见度低
+         * 空气湿度高
+         */
         const val SKYCON_FOG = "FOG"
 
         /** 小雪 */
@@ -73,10 +89,20 @@ interface Constants {
         /** 暴雪 */
         const val SKYCON_STORM_SNOW = "STORM_SNOW"
 
-        /** 浮尘 */
+        /** 浮尘
+         * 浮尘天气,细粒浮游空中形成“落黄沙”
+         * 能见度差
+         * 空气湿度低
+         * 出现时远方物体呈土黄色，太阳呈苍白色或淡黄色
+         */
         const val SKYCON_DUST = "DUST"
 
-        /** 沙尘 */
+        /** 沙尘
+         * 能见度更低，而且风力很大
+         * 空气湿度低
+         * 地面大量尘沙吹起，所以空气相当浑浊
+         *
+         */
         const val SKYCON_SAND = "SAND"
 
         /** 大风 */

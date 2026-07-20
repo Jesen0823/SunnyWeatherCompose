@@ -57,7 +57,10 @@ enum LayerParamType {
     // SnowLayer 参数
     PARAM_SNOW_INTENSITY = 400,        // 雪量强度（0.0~1.0）
     PARAM_SNOW_SPEED = 401,            // 雪花下落速度（0.0~1.0）
-    PARAM_SNOW_SIZE = 402,              // 雪花大小（0.5~2.0）
+    PARAM_SNOW_SIZE = 402,             // 雪花大小（0.5~2.0）
+    PARAM_SNOW_WIND = 403,             // 风力（-1.0~1.0）
+    PARAM_SNOW_PARTICLE_COUNT = 404,   // 粒子数量（1000~10000）
+    PARAM_SNOW_SHAPE = 405,            // 雪花形状（0=颗粒状，1=雪花状）
     
     // ParticleLayer 参数
     PARAM_PARTICLE_TYPE = 500,         // 颗粒类型（0=雾霾，1=雾，2=浮尘，3=沙尘）
