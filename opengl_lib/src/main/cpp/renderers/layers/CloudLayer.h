@@ -73,12 +73,14 @@ private:
     GLuint m_CloudScaleLoc;             // 云层缩放
     GLuint m_CloudAlphaLoc;             // 云层透明度系数
     GLuint m_IsNightLoc;                // 夜晚模式标识
+    GLuint m_CloudModeLoc;              // 云层模式标识
     
     glm::mat4 m_MVPMatrix;              // MVP 矩阵
     
     // 参数值
     float m_CloudCoverage;              // 云层覆盖率（0.0~1.0）
     bool m_IsNight;                     // 是否夜晚模式
+    int m_CloudMode;                    // 云层模式（0=正常，1=暴雨乌云，2=雪天云层）
     float m_CloudDarkness;              // 云层暗度（0.0~1.0）
     float m_CloudLightness;             // 云层亮部系数（0.0~1.0）
     float m_CloudSpeed;                 // 云层移动速度（0.0~1.0）

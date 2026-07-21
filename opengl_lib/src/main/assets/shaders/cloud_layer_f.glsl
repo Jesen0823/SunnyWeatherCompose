@@ -10,6 +10,7 @@ uniform float u_cloudSpeed;
 uniform float u_cloudScale;
 uniform float u_cloudAlpha;
 uniform int u_isNight;
+uniform int u_cloudMode;
 const mat2 m = mat2(1.6, 1.2, -1.2, 1.6);
 
 vec2 hash(vec2 p) {
@@ -86,13 +87,27 @@ void main() {
         weight *= 0.6;
     }
     c += c1;
-    vec3 cloudColour = mix(vec3(0.88, 0.90, 0.96), vec3(1.0, 1.0, 1.0), clamp(c * 1.5, 0.0, 1.0));
+    vec3 dayCloudBase = vec3(0.88, 0.90, 0.96);
+    vec3 snowCloudBase = vec3(0.92, 0.93, 0.96);
+    vec3 cloudColour = mix(dayCloudBase, snowCloudBase, float(u_cloudMode == 2));
+    cloudColour = mix(cloudColour, vec3(1.0, 1.0, 1.0), clamp(c * 1.0, 0.0, 1.0));
+
+    cloudColour = mix(cloudColour, vec3(0.3, 0.3, 0.35), u_cloudDarkness);
+    cloudColour *= (1.0 + u_cloudLightness * 0.3);
 
     f = u_cloudCoverage + u_cloudAlpha * f * r;
     float cloudAlpha = clamp(f + c, 0.0, 1.0);
-    float nightAlpha = u_isNight == 1 ? 0.8 : 1.0;
+    float nightAlpha = u_isNight == 1 ? 0.85 : 1.0;
     cloudAlpha *= nightAlpha;
+    
     vec3 nightTint = mix(vec3(0.15, 0.18, 0.25), vec3(0.35, 0.38, 0.48), c);
-    cloudColour = mix(cloudColour, nightTint, float(u_isNight));
+    vec3 snowNightTint = mix(vec3(0.25, 0.28, 0.32), vec3(0.45, 0.48, 0.52), c);
+    vec3 currentNightTint = mix(nightTint, snowNightTint, float(u_cloudMode == 2));
+    cloudColour = mix(cloudColour, currentNightTint, float(u_isNight));
+    
+    float snowBrightness = u_cloudMode == 2 ? (1.0 - u_cloudDarkness * 0.3) : 1.0;
+    cloudColour *= snowBrightness;
+    cloudColour = clamp(cloudColour, 0.0, 1.0);
+    
     outColor = vec4(cloudColour, cloudAlpha);
 }

@@ -13,6 +13,7 @@ CloudLayer::CloudLayer()
       m_CloudScale(0.7f),
       m_CloudAlpha(20.0f),
       m_IsNight(false),
+      m_CloudMode(0),
       m_ScreenWidth(0),
       m_ScreenHeight(0),
       m_Time(0.0f),
@@ -27,7 +28,8 @@ CloudLayer::CloudLayer()
       m_CloudSpeedLoc(GL_NONE),
       m_CloudScaleLoc(GL_NONE),
       m_CloudAlphaLoc(GL_NONE),
-      m_IsNightLoc(GL_NONE) {
+      m_IsNightLoc(GL_NONE),
+      m_CloudModeLoc(GL_NONE) {
     m_VboIds[0] = m_VboIds[1] = m_VboIds[2] = GL_NONE;
 }
 
@@ -68,6 +70,7 @@ bool CloudLayer::Init() {
     m_CloudScaleLoc = glGetUniformLocation(m_ProgramObj, "u_cloudScale");
     m_CloudAlphaLoc = glGetUniformLocation(m_ProgramObj, "u_cloudAlpha");
     m_IsNightLoc = glGetUniformLocation(m_ProgramObj, "u_isNight");
+    m_CloudModeLoc = glGetUniformLocation(m_ProgramObj, "u_cloudMode");
 
     // 顶点坐标
     GLfloat verticesCoords[] = {
@@ -141,6 +144,7 @@ void CloudLayer::Draw(int screenW, int screenH) {
     glUniform1f(m_CloudScaleLoc, m_CloudScale);
     glUniform1f(m_CloudAlphaLoc, m_CloudAlpha);
     glUniform1i(m_IsNightLoc, m_IsNight ? 1 : 0);
+    glUniform1i(m_CloudModeLoc, m_CloudMode);
 
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -165,6 +169,9 @@ void CloudLayer::SetParamInt(LayerParamType paramType, int value) {
     switch (paramType) {
         case PARAM_TIME_OF_DAY:
             m_IsNight = (value == 1);
+            break;
+        case PARAM_CLOUD_MODE:
+            m_CloudMode = value;
             break;
         default:
             break;

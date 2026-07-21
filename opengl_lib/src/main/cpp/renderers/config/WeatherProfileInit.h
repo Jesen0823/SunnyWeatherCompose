@@ -1,0 +1,6 @@
+#ifndef GLLIB_WEATHERPROFILEINIT_H
+#define GLLIB_WEATHERPROFILEINIT_H
+
+void RegisterWeatherProfileBuilders();
+
+#endif // GLLIB_WEATHERPROFILEINIT_H

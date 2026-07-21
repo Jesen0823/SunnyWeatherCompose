@@ -18,6 +18,22 @@ import com.jesen.dev.gllib.MineGLSurfaceView
 
 private const val TAG = "GLEffectView"
 
+/**
+ * OpenGL天气动效视图组件
+ *
+ * 集成OpenGL渲染到Compose界面的桥梁组件，负责管理OpenGL渲染器的完整生命周期：
+ * - 组件创建时初始化渲染器
+ * - 组件可见时恢复渲染
+ * - 组件不可见时暂停渲染
+ * - 组件销毁时释放资源
+ *
+ * 支持响应式天气类型切换，当skycon变化时自动更新渲染效果。
+ *
+ * @param skycon 天气类型字符串，如 "CLEAR_DAY", "HEAVY_SNOW", "STORM_RAIN" 等
+ * @param modifier Compose修饰符，用于控制布局
+ * @param renderMode OpenGL渲染模式，默认RENDERMODE_CONTINUOUSLY（持续渲染）
+ *                  可选RENDERMODE_WHEN_DIRTY（按需渲染）
+ */
 @Composable
 fun GLEffectView(
     skycon: String,
@@ -29,6 +45,7 @@ fun GLEffectView(
     var glSurfaceView by remember { mutableStateOf<MineGLSurfaceView?>(null) }
     var glRender by remember { mutableStateOf<MineGLRender?>(null) }
     var lastSkycon by remember { mutableStateOf("") }
+    var isPaused by remember { mutableStateOf(false) }
 
     AndroidView(
         factory = { ctx ->
@@ -69,6 +86,8 @@ fun GLEffectView(
             view.onPause()
             glRender?.unInit()
             Log.d(TAG, "onRelease: unInit completed")
+            glSurfaceView = null
+            glRender = null
         }
     )
 
@@ -76,15 +95,25 @@ fun GLEffectView(
         Log.d(TAG, "DisposableEffect: creating lifecycle observer, glSurfaceView = ${glSurfaceView != null}")
         
         val observer = LifecycleEventObserver { _, event ->
-            Log.d(TAG, "DisposableEffect: lifecycle event = ${event.name}, glSurfaceView = ${glSurfaceView != null}")
+            Log.d(TAG, "DisposableEffect: lifecycle event = ${event.name}, glSurfaceView = ${glSurfaceView != null}, isPaused = [$isPaused]")
+            
             when (event) {
                 Lifecycle.Event.ON_RESUME -> {
-                    glSurfaceView?.onResume()
-                    Log.d(TAG, "DisposableEffect: called onResume()")
+                    if (isPaused) {
+                        glSurfaceView?.onResume()
+                        isPaused = false
+                        Log.d(TAG, "DisposableEffect: called onResume(), rendering resumed")
+                    }
                 }
                 Lifecycle.Event.ON_PAUSE -> {
                     glSurfaceView?.onPause()
-                    Log.d(TAG, "DisposableEffect: called onPause()")
+                    isPaused = true
+                    Log.d(TAG, "DisposableEffect: called onPause(), rendering paused")
+                }
+                Lifecycle.Event.ON_STOP -> {
+                    glSurfaceView?.onPause()
+                    isPaused = true
+                    Log.d(TAG, "DisposableEffect: called onStop(), rendering stopped")
                 }
                 else -> {}
             }
@@ -97,6 +126,10 @@ fun GLEffectView(
             Log.d(TAG, "DisposableEffect: onDispose called")
             lifecycleOwner.lifecycle.removeObserver(observer)
             Log.d(TAG, "DisposableEffect: observer removed")
+            
+            glSurfaceView?.onPause()
+            isPaused = true
+            Log.d(TAG, "DisposableEffect: rendering paused on dispose")
         }
     }
 }

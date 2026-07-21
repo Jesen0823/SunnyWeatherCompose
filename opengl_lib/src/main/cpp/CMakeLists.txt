@@ -20,7 +20,9 @@ file(GLOB src_files
         ${CMAKE_SOURCE_DIR}/*.cpp
         ${CMAKE_SOURCE_DIR}/util/*.cpp
         ${CMAKE_SOURCE_DIR}/renderers/*.cpp
-        ${CMAKE_SOURCE_DIR}/renderers/layers/*.cpp)
+        ${CMAKE_SOURCE_DIR}/renderers/layers/*.cpp
+        ${CMAKE_SOURCE_DIR}/renderers/config/*.cpp
+        ${CMAKE_SOURCE_DIR}/renderers/config/builders/*.cpp)
 
 add_library(${CMAKE_PROJECT_NAME} SHARED
         ${src_files})

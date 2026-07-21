@@ -1,4 +1,5 @@
 #include "GLRenderContext.h"
+#include "renderers/config/WeatherProfileInit.h"
 #include "util/LogUtil.h"
 
 GLRenderContext *GLRenderContext::m_pInstance = nullptr;
@@ -10,6 +11,8 @@ GLRenderContext::GLRenderContext() {
     m_RendererType = RENDERER_TYPE_KEY_BEZIER_CURVE;
     m_ScreenWidth = 0;
     m_ScreenHeight = 0;
+
+    RegisterWeatherProfileBuilders();
 }
 
 GLRenderContext::~GLRenderContext() {

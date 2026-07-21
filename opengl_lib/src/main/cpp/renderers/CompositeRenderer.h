@@ -2,6 +2,7 @@
 #define GLLIB_COMPOSITERENDERER_H
 
 #include "base/GLLayerBase.h"
+#include "config/WeatherProfile.h"
 #include <vector>
 #include <map>
 #include <string>
@@ -15,12 +16,18 @@
  * 1. SkyBackgroundLayer（天空背景层）- 全屏天空渐变 + 太阳/月亮光晕
  * 2. StarLayer（星星层）- 星星粒子系统（仅夜间显示）
  * 3. CloudLayer（云层）- 程序化云层，遮挡星星
- * 4. SnowLayer（雪层）- 雪花粒子效果
- * 5. ParticleLayer（颗粒层）- 雾霾/雾/沙尘效果
- * 6. EffectLayer（特效层）- 闪电/风力线条特效
- * 7. RainLayer（雨层）- 全屏程序化雨丝效果
+ * 4. WindLayer（风力层）- 风线效果
+ * 5. SnowLayer（雪层）- 雪花粒子效果
+ * 6. ParticleLayer（颗粒层）- 雾霾/雾/沙尘效果
+ * 7. RainLayer（雨层）- 全屏程序化雨丝效果（使用FBO）
+ * 8. LightningLayer（闪电层）- 闪电特效
+ * 9. AmbientOverlayLayer（环境光覆盖层）- 闪电时全局亮变
  * 
  * 层堆栈按照 LayerType 自动排序，确保渲染顺序正确。
+ * 
+ * 设计模式：Facade模式 + Template Method模式
+ * - Facade模式：为上层提供统一的渲染接口
+ * - Template Method模式：各Layer实现统一的Init/Draw/Destroy接口
  */
 class CompositeRenderer : public GLRendererBase {
 public:
@@ -87,79 +94,37 @@ public:
      */
     void ConfigureLayers(const char *skycon);
     
+    /**
+     * 根据 WeatherProfile 配置层组合
+     * @param profile 天气配置文件
+     */
+    void ConfigureLayers(const WeatherProfile& profile);
+    
 private:
     /**
      * 对层堆栈进行排序，确保正确的渲染顺序
      */
     void SortLayers();
+    
+    /**
+     * 根据 LayerConfig 创建并配置 Layer
+     * @param config Layer配置
+     * @return 创建的Layer指针，创建失败返回nullptr
+     */
+    GLLayerBase* CreateLayer(const LayerConfig& config);
+    
+    /**
+     * 应用Layer参数到Layer实例
+     * @param layer Layer实例
+     * @param config Layer配置
+     */
+    void ApplyLayerParams(GLLayerBase* layer, const LayerConfig& config);
+    
     bool InitFBO(int width, int height);
     void DestroyFBO();
     
     GLuint m_FBO = 0;
     GLuint m_FBOTexture = 0;
-    
-    /**
-     * 配置晴天效果
-     * @param isNight 是否夜间
-     */
-    void ConfigureClear(bool isNight);
-    
-    /**
-     * 配置多云效果
-     * @param isNight 是否夜间
-     */
-    void ConfigurePartlyCloudy(bool isNight);
-    
-    /**
-     * 配置阴天效果
-     * @param isNight 是否夜间
-     */
-    void ConfigureCloudy(bool isNight);
-    
-    /**
-     * 配置雾霾效果
-     * @param level 雾霾等级（0=轻度，1=中度，2=重度）
-     * @param isNight 是否夜间
-     */
-    void ConfigureHaze(int level, bool isNight);
-    
-    /**
-     * 配置雨效果
-     * @param level 雨量等级（0=小雨，1=中雨，2=大雨，3=暴雨）
-     * @param isNight 是否夜间
-     */
-    void ConfigureRain(int level, bool isNight);
-    
-    /**
-     * 配置雾效果
-     * @param isNight 是否夜间
-     */
-    void ConfigureFog(bool isNight);
-    
-    /**
-     * 配置雪效果
-     * @param level 雪量等级（0=小雪，1=中雪，2=大雪，3=暴雪）
-     * @param isNight 是否夜间
-     */
-    void ConfigureSnow(int level, bool isNight);
-    
-    /**
-     * 配置浮尘效果
-     * @param isNight 是否夜间
-     */
-    void ConfigureDust(bool isNight);
-    
-    /**
-     * 配置沙尘效果
-     * @param isNight 是否夜间
-     */
-    void ConfigureSand(bool isNight);
-    
-    /**
-     * 配置大风效果
-     * @param isNight 是否夜间
-     */
-    void ConfigureWind(bool isNight);
     
     std::vector<GLLayerBase *> m_Layers;  // 层堆栈
     std::map<LayerType, GLLayerBase *> m_LayerMap;  // 层类型到层的映射
@@ -168,6 +133,8 @@ private:
     int m_ScreenHeight;                   // 屏幕高度
     
     bool m_IsInitialized;                 // 是否已初始化
+    
+    RenderFlags m_RenderFlags;            // 渲染标记
 };
 
 #endif // GLLIB_COMPOSITERENDERER_H

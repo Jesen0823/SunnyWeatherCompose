@@ -18,6 +18,24 @@
 #define RENDERER_TYPE_KEY_SET_TOUCH_LOC               RENDERER_TYPE+999
 #define RENDERER_TYPE_SET_GRAVITY_XY                  RENDERER_TYPE+1000
 
+/**
+ * OpenGL渲染器基类
+ * 
+ * 所有渲染器（包括传统Renderer和Layer）的抽象基类，定义统一的生命周期接口。
+ * 
+ * 设计模式：Template Method模式
+ * - 定义渲染器的骨架算法，子类实现具体步骤
+ * - 提供统一的Init/Draw/Destroy生命周期管理
+ * 
+ * 核心职责：
+ * - 管理着色器程序（顶点着色器、片段着色器、程序对象）
+ * - 管理表面尺寸信息
+ * - 提供线程安全的操作接口（通过m_Lock）
+ * 
+ * 使用场景：
+ * - 传统Renderer：BeatingHeartRenderer、BezierCurveRenderer、CloudRenderer等
+ * - 天气动效Layer：SkyBackgroundLayer、CloudLayer、SnowLayer等（通过GLLayerBase继承）
+ */
 class GLRendererBase {
 protected:
     GLuint m_VertexShader;
