@@ -97,8 +97,8 @@ bool CoordSystemRenderer::Init() {
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, m_TextureId);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, m_RenderImage.width,
-                 m_RenderImage.height, 0, GL_RGBA, GL_UNSIGNED_BYTE,
-                 m_RenderImage.ppPlane[0]);
+            m_RenderImage.height, 0, GL_RGBA, GL_UNSIGNED_BYTE,
+            m_RenderImage.ppPlane[0]);
     glBindTexture(GL_TEXTURE_2D, GL_NONE);
     return true;
 }
@@ -123,8 +123,8 @@ void CoordSystemRenderer::Draw(int screenW, int screenH) {
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, m_TextureId);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, m_RenderImage.width,
-                 m_RenderImage.height, 0, GL_RGBA, GL_UNSIGNED_BYTE,
-                 m_RenderImage.ppPlane[0]);
+            m_RenderImage.height, 0, GL_RGBA, GL_UNSIGNED_BYTE,
+            m_RenderImage.ppPlane[0]);
     glBindTexture(GL_TEXTURE_2D, GL_NONE);
 
     glUseProgram(m_ProgramObj);

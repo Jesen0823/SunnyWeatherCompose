@@ -1,15 +1,16 @@
 #version 300 es
-layout(location = 0) in float a_tData;
+layout (location = 0) in float a_tData;
 uniform vec4 u_StartEndPoints;
 uniform vec4 u_ControlPoints;
 uniform mat4 u_MVPMatrix;
 uniform float u_Offset;
-vec2 bezier3(in vec2 p0, in vec2 p1, in vec2 p2, in vec2 p3, in float t){
-    float tt = (1.0 - t) * (1.0 -t);
-    return tt * (1.0 -t) *p0 + 3.0 * t * tt * p1 + 3.0 * t *t *(1.0 -t) *p2
-           + t *t *t *p3;
+
+vec2 bezier3(in vec2 p0, in vec2 p1, in vec2 p2, in vec2 p3, in float t) {
+    float tt = (1.0 - t) * (1.0 - t);
+    return tt * (1.0 - t) * p0 + 3.0 * t * tt * p1 + 3.0 * t * t * (1.0 - t) * p2
+    + t * t * t * p3;
 }
-vec2 bezier3_(in vec2 p0, in vec2 p1, in vec2 p2, in vec2 p3, in float t){
+vec2 bezier3_(in vec2 p0, in vec2 p1, in vec2 p2, in vec2 p3, in float t) {
     vec2 q0 = mix(p0, p1, t);
     vec2 q1 = mix(p1, p2, t);
     vec2 q2 = mix(p2, p3, t);
@@ -30,9 +31,9 @@ void main() {
     p3.y *= u_Offset;
     float t = a_tData;
     vec2 point = bezier3_(p0, p1, p2, p3, t);
-    if (t < 0.0){
+    if (t < 0.0) {
         pos.xy = vec2(0.0, 0.0);
-    }else{
+    } else {
         pos.xy = point;
     }
     gl_PointSize = 4.0;

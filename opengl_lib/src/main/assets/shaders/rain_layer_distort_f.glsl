@@ -1,7 +1,8 @@
 #version 300 es
 precision mediump float;
 in vec2 vTexCoord;
-layout(location = 0) out vec4 fragColor;
+layout (location = 0) out vec4 fragColor;
+
 void main() {
     vec2 centered = vTexCoord - vec2(0.5);
     float dist = length(centered);

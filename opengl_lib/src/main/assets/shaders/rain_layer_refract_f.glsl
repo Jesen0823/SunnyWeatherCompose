@@ -1,11 +1,12 @@
 #version 300 es
 precision mediump float;
 in vec2 vTexCoord;
-layout(location = 0) out vec4 fragColor;
+layout (location = 0) out vec4 fragColor;
 uniform sampler2D uBackground;
 uniform sampler2D uDistort;
 uniform float uRefraction;
 uniform float uTime;
+
 void main() {
     vec4 distort = texture(uDistort, vTexCoord);
     float mask = distort.a;

@@ -7,7 +7,7 @@
 #include "base/GLRendererBase.h"
 #include "ImageDef.h"
 
-class CoordSystemRenderer :public GLRendererBase{
+class CoordSystemRenderer : public GLRendererBase {
 public:
     CoordSystemRenderer();
 

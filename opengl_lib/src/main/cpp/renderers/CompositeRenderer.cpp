@@ -10,10 +10,11 @@
 #include "layers/AmbientOverlayLayer.h"
 #include "../util/LogUtil.h"
 
-CompositeRenderer::CompositeRenderer() 
-    : m_ScreenWidth(0),
-      m_ScreenHeight(0),
-      m_IsInitialized(false) {}
+CompositeRenderer::CompositeRenderer()
+        : m_ScreenWidth(0),
+          m_ScreenHeight(0),
+          m_IsInitialized(false) {
+}
 
 CompositeRenderer::~CompositeRenderer() {
     ClearLayers();
@@ -24,9 +25,9 @@ bool CompositeRenderer::Init() {
         LOGCATI("CompositeRenderer::Init: already initialized, skipping");
         return true;
     }
-    
+
     LOGCATI("CompositeRenderer::Init: initializing %zu layers", m_Layers.size());
-    
+
     bool allSuccess = true;
     for (size_t i = 0; i < m_Layers.size(); ++i) {
         LOGCATI("CompositeRenderer::Init: initializing layer %zu, type=%d", i, m_Layers[i]->GetLayerType());
@@ -37,7 +38,7 @@ bool CompositeRenderer::Init() {
         }
         LOGCATI("CompositeRenderer::Init: layer %zu initialized", i);
     }
-    
+
     m_IsInitialized = true;
     LOGCATI("CompositeRenderer::Init: all %zu layers initialized, success=%d", m_Layers.size(), allSuccess);
     return allSuccess;
@@ -50,73 +51,73 @@ void CompositeRenderer::Draw(int screenW, int screenH) {
     if (!m_IsInitialized) {
         return;
     }
-    
+
     m_ScreenWidth = screenW;
     m_ScreenHeight = screenH;
-    
+
     static int drawFrameCount = 0;
     drawFrameCount++;
-    
+
     RainLayer *rainLayer = nullptr;
     auto rainIt = m_LayerMap.find(LAYER_TYPE_RAIN);
     if (rainIt != m_LayerMap.end()) {
         rainLayer = static_cast<RainLayer *>(rainIt->second);
     }
-    
+
     if (rainLayer != nullptr && rainLayer->IsEnabled() && m_FBO == 0) {
         if (!InitFBO(screenW, screenH)) {
             rainLayer = nullptr;
         }
     }
-    
+
     LightningLayer *lightningLayer = nullptr;
     auto lightningIt = m_LayerMap.find(LAYER_TYPE_LIGHTNING);
     if (lightningIt != m_LayerMap.end()) {
         lightningLayer = static_cast<LightningLayer *>(lightningIt->second);
     }
-    
+
     AmbientOverlayLayer *ambientLayer = nullptr;
     auto ambientIt = m_LayerMap.find(LAYER_TYPE_AMBIENT_OVERLAY);
     if (ambientIt != m_LayerMap.end()) {
         ambientLayer = static_cast<AmbientOverlayLayer *>(ambientIt->second);
     }
-    
+
     if (rainLayer != nullptr && m_FBO != 0) {
         glBindFramebuffer(GL_FRAMEBUFFER, m_FBO);
         glViewport(0, 0, screenW, screenH);
         glClearColor(0.45f, 0.47f, 0.50f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glDisable(GL_DEPTH_TEST);
-        
-        for (auto &layer : m_Layers) {
+
+        for (auto &layer: m_Layers) {
             LayerType type = layer->GetLayerType();
-            if (layer->IsEnabled() && 
-                type != LAYER_TYPE_RAIN && 
-                type != LAYER_TYPE_LIGHTNING && 
-                type != LAYER_TYPE_AMBIENT_OVERLAY) {
+            if (layer->IsEnabled() &&
+                    type != LAYER_TYPE_RAIN &&
+                    type != LAYER_TYPE_LIGHTNING &&
+                    type != LAYER_TYPE_AMBIENT_OVERLAY) {
                 layer->Draw(screenW, screenH);
             }
         }
-        
+
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         glViewport(0, 0, screenW, screenH);
-        
+
         rainLayer->SetBackgroundTexture(m_FBOTexture);
         rainLayer->Draw(screenW, screenH);
     } else {
-        for (auto &layer : m_Layers) {
+        for (auto &layer: m_Layers) {
             LayerType type = layer->GetLayerType();
-            if (layer->IsEnabled() && 
-                type != LAYER_TYPE_LIGHTNING && 
-                type != LAYER_TYPE_AMBIENT_OVERLAY) {
+            if (layer->IsEnabled() &&
+                    type != LAYER_TYPE_LIGHTNING &&
+                    type != LAYER_TYPE_AMBIENT_OVERLAY) {
                 layer->Draw(screenW, screenH);
             }
         }
     }
-    
+
     if (lightningLayer != nullptr && lightningLayer->IsEnabled()) {
         lightningLayer->Draw(screenW, screenH);
-        
+
         float flashIntensity = lightningLayer->GetFlashIntensity();
         if (ambientLayer != nullptr && ambientLayer->IsEnabled()) {
             ambientLayer->SetFlashIntensity(flashIntensity);
@@ -133,18 +134,18 @@ void CompositeRenderer::Destroy() {
 
 void CompositeRenderer::AddLayer(GLLayerBase *layer) {
     if (!layer) return;
-    
+
     LayerType type = layer->GetLayerType();
-    
+
     if (m_LayerMap.find(type) != m_LayerMap.end()) {
         RemoveLayer(type);
     }
-    
+
     m_Layers.push_back(layer);
     m_LayerMap[type] = layer;
-    
+
     SortLayers();
-    
+
     if (m_IsInitialized) {
         layer->Init();
     }
@@ -154,12 +155,12 @@ void CompositeRenderer::RemoveLayer(LayerType layerType) {
     auto it = m_LayerMap.find(layerType);
     if (it != m_LayerMap.end()) {
         GLLayerBase *layer = it->second;
-        
+
         auto vecIt = std::find(m_Layers.begin(), m_Layers.end(), layer);
         if (vecIt != m_Layers.end()) {
             m_Layers.erase(vecIt);
         }
-        
+
         layer->Destroy();
         delete layer;
         m_LayerMap.erase(it);
@@ -167,7 +168,7 @@ void CompositeRenderer::RemoveLayer(LayerType layerType) {
 }
 
 void CompositeRenderer::ClearLayers() {
-    for (auto &layer : m_Layers) {
+    for (auto &layer: m_Layers) {
         layer->Destroy();
         delete layer;
     }
@@ -190,27 +191,27 @@ int CompositeRenderer::GetLayerCount() const {
 
 void CompositeRenderer::SortLayers() {
     std::sort(m_Layers.begin(), m_Layers.end(),
-        [](const GLLayerBase *a, const GLLayerBase *b) {
-            LayerType typeA = a->GetLayerType();
-            LayerType typeB = b->GetLayerType();
-            if (typeA == LAYER_TYPE_RAIN) return false;
-            if (typeB == LAYER_TYPE_RAIN) return true;
-            if (typeA == LAYER_TYPE_AMBIENT_OVERLAY) return false;
-            if (typeB == LAYER_TYPE_AMBIENT_OVERLAY) return true;
-            if (typeA == LAYER_TYPE_WIND && typeB == LAYER_TYPE_SNOW) return true;
-            if (typeB == LAYER_TYPE_WIND && typeA == LAYER_TYPE_SNOW) return false;
-            return typeA < typeB;
-        });
+            [](const GLLayerBase *a, const GLLayerBase *b) {
+                LayerType typeA = a->GetLayerType();
+                LayerType typeB = b->GetLayerType();
+                if (typeA == LAYER_TYPE_RAIN) return false;
+                if (typeB == LAYER_TYPE_RAIN) return true;
+                if (typeA == LAYER_TYPE_AMBIENT_OVERLAY) return false;
+                if (typeB == LAYER_TYPE_AMBIENT_OVERLAY) return true;
+                if (typeA == LAYER_TYPE_WIND && typeB == LAYER_TYPE_SNOW) return true;
+                if (typeB == LAYER_TYPE_WIND && typeA == LAYER_TYPE_SNOW) return false;
+                return typeA < typeB;
+            });
 }
 
 void CompositeRenderer::ConfigureLayers(const char *skycon) {
     if (!skycon) return;
-    
+
     ClearLayers();
-    
+
     std::string skyconStr(skycon);
     bool isNight = skyconStr.find("NIGHT") != std::string::npos;
-    
+
     if (skyconStr == "CLEAR_DAY") {
         ConfigureClear(false);
     } else if (skyconStr == "CLEAR_NIGHT") {
@@ -252,10 +253,10 @@ void CompositeRenderer::ConfigureLayers(const char *skycon) {
     } else if (skyconStr == "WIND") {
         ConfigureWind(isNight);
     }
-    
+
     SortLayers();
     m_IsInitialized = false;
-    
+
     LOGCATI("CompositeRenderer::ConfigureLayers skycon=%s, layerCount=%d", skycon, GetLayerCount());
 }
 
@@ -272,12 +273,12 @@ void CompositeRenderer::ConfigureClear(bool isNight) {
         skyLayer->SetParamFloat(PARAM_MOON_INTENSITY, 0.9f);
     }
     AddLayer(skyLayer);
-    
+
     if (isNight) {
         StarLayer *starLayer = new StarLayer();
         AddLayer(starLayer);
     }
-    
+
     CloudLayer *cloudLayer = new CloudLayer();
     cloudLayer->SetParamInt(PARAM_TIME_OF_DAY, isNight ? 1 : 0);
     cloudLayer->SetParamFloat(PARAM_CLOUD_COVERAGE, isNight ? 0.35f : 0.20f);
@@ -302,13 +303,13 @@ void CompositeRenderer::ConfigurePartlyCloudy(bool isNight) {
         skyLayer->SetParamFloat(PARAM_MOON_INTENSITY, 0.6f);
     }
     AddLayer(skyLayer);
-    
+
     if (isNight) {
         StarLayer *starLayer = new StarLayer();
         starLayer->SetParamFloat(PARAM_STAR_COUNT, 150.0f);
         AddLayer(starLayer);
     }
-    
+
     CloudLayer *cloudLayer = new CloudLayer();
     cloudLayer->SetParamInt(PARAM_TIME_OF_DAY, isNight ? 1 : 0);
     cloudLayer->SetParamFloat(PARAM_CLOUD_COVERAGE, 0.5f);
@@ -333,13 +334,13 @@ void CompositeRenderer::ConfigureCloudy(bool isNight) {
         skyLayer->SetParamFloat(PARAM_MOON_INTENSITY, 0.1f);
     }
     AddLayer(skyLayer);
-    
+
     if (isNight) {
         StarLayer *starLayer = new StarLayer();
         starLayer->SetParamFloat(PARAM_STAR_COUNT, 30.0f);
         AddLayer(starLayer);
     }
-    
+
     CloudLayer *cloudLayer = new CloudLayer();
     cloudLayer->SetParamInt(PARAM_TIME_OF_DAY, isNight ? 1 : 0);
     cloudLayer->SetParamFloat(PARAM_CLOUD_COVERAGE, 0.9f);
@@ -357,7 +358,7 @@ void CompositeRenderer::ConfigureHaze(int level, bool isNight) {
     float r[] = {0.6f, 0.5f, 0.4f};
     float g[] = {0.55f, 0.45f, 0.35f};
     float b[] = {0.45f, 0.35f, 0.25f};
-    
+
     SkyBackgroundLayer *skyLayer = new SkyBackgroundLayer();
     skyLayer->SetParamInt(PARAM_TIME_OF_DAY, isNight ? 1 : 0);
     if (!isNight) {
@@ -370,13 +371,13 @@ void CompositeRenderer::ConfigureHaze(int level, bool isNight) {
         skyLayer->SetParamFloat(PARAM_MOON_INTENSITY, 0.2f);
     }
     AddLayer(skyLayer);
-    
+
     if (isNight) {
         StarLayer *starLayer = new StarLayer();
         starLayer->SetParamFloat(PARAM_STAR_COUNT, 60.0f);
         AddLayer(starLayer);
     }
-    
+
     CloudLayer *cloudLayer = new CloudLayer();
     cloudLayer->SetParamInt(PARAM_TIME_OF_DAY, isNight ? 1 : 0);
     cloudLayer->SetParamFloat(PARAM_CLOUD_COVERAGE, 0.3f + level * 0.1f);
@@ -386,7 +387,7 @@ void CompositeRenderer::ConfigureHaze(int level, bool isNight) {
     cloudLayer->SetParamFloat(PARAM_CLOUD_SCALE, 0.9f);
     cloudLayer->SetParamFloat(PARAM_CLOUD_ALPHA, 15.0f);
     AddLayer(cloudLayer);
-    
+
     ParticleLayer *particleLayer = new ParticleLayer();
     particleLayer->SetParamInt(PARAM_PARTICLE_TYPE, 0);
     particleLayer->SetParamFloat(PARAM_PARTICLE_DENSITY, density[level]);
@@ -419,11 +420,11 @@ void CompositeRenderer::ConfigureRain(int level, bool isNight) {
     float nr[] = {0.28f, 0.24f, 0.20f, 0.17f};
     float ng[] = {0.32f, 0.28f, 0.24f, 0.20f};
     float nb[] = {0.48f, 0.42f, 0.36f, 0.30f};
-    
-    LOGCATI("CompositeRenderer::ConfigureRain: level=%d, isNight=%d, coverage=%.2f, darkness=%.2f, intensity=%.2f, rainSpeed=%.2f", 
+
+    LOGCATI("CompositeRenderer::ConfigureRain: level=%d, isNight=%d, coverage=%.2f, darkness=%.2f, intensity=%.2f, rainSpeed=%.2f",
             level, isNight, coverage[level], darkness[level], intensity[level], rainSpeed[level]);
     LOGCATI("CompositeRenderer::ConfigureRain: skyColor=(%.2f,%.2f,%.2f)", r[level], g[level], b[level]);
-    
+
     SkyBackgroundLayer *skyLayer = new SkyBackgroundLayer();
     skyLayer->SetParamInt(PARAM_TIME_OF_DAY, isNight ? 1 : 0);
     if (!isNight) {
@@ -439,13 +440,13 @@ void CompositeRenderer::ConfigureRain(int level, bool isNight) {
         skyLayer->SetParamInt(PARAM_SKY_MODE, 1);
     }
     AddLayer(skyLayer);
-    
+
     if (isNight) {
         StarLayer *starLayer = new StarLayer();
         starLayer->SetParamFloat(PARAM_STAR_COUNT, 20.0f);
         AddLayer(starLayer);
     }
-    
+
     CloudLayer *cloudLayer = new CloudLayer();
     cloudLayer->SetParamInt(PARAM_TIME_OF_DAY, isNight ? 1 : 0);
     cloudLayer->SetParamFloat(PARAM_CLOUD_COVERAGE, coverage[level]);
@@ -455,29 +456,29 @@ void CompositeRenderer::ConfigureRain(int level, bool isNight) {
     cloudLayer->SetParamFloat(PARAM_CLOUD_SCALE, scale[level]);
     cloudLayer->SetParamFloat(PARAM_CLOUD_ALPHA, alpha[level]);
     AddLayer(cloudLayer);
-    
+
     RainLayer *rainLayer = new RainLayer();
     float rainIntensity = intensity[level];
     if (level == 3) rainIntensity = 2.2f;
     rainLayer->SetParamFloat(PARAM_RAIN_INTENSITY, rainIntensity);
-    rainLayer->SetParamFloat(PARAM_RAIN_WIND_SPEED, level == 3 ? 0.8f : 0.2f + (float)level * 0.15f);
-    rainLayer->SetParamFloat(PARAM_RAIN_REFRACTION, 0.3f + (float)level * 0.25f);
+    rainLayer->SetParamFloat(PARAM_RAIN_WIND_SPEED, level == 3 ? 0.8f : 0.2f + (float) level * 0.15f);
+    rainLayer->SetParamFloat(PARAM_RAIN_REFRACTION, 0.3f + (float) level * 0.25f);
     AddLayer(rainLayer);
-    
+
     ParticleLayer *particleLayer = new ParticleLayer();
     particleLayer->SetParamInt(PARAM_PARTICLE_TYPE, 1);
     particleLayer->SetParamFloat(PARAM_PARTICLE_DENSITY, level == 3 ? 0.6f : 0.3f);
     particleLayer->SetParamFloat(PARAM_PARTICLE_VISIBILITY, level == 3 ? 0.3f : 0.5f);
     particleLayer->SetParamVec3(PARAM_SKY_COLOR_TOP, r[level] * 0.8f, g[level] * 0.8f, b[level] * 0.8f);
     AddLayer(particleLayer);
-    
+
     if (level == 3) {
         LightningLayer *lightningLayer = new LightningLayer();
         lightningLayer->SetParamInt(PARAM_LIGHTNING_ENABLED, 1);
         lightningLayer->SetParamFloat(PARAM_LIGHTNING_INTERVAL, lightningInterval[level]);
         lightningLayer->SetParamInt(PARAM_LIGHTNING_IS_NIGHT, isNight ? 1 : 0);
         AddLayer(lightningLayer);
-        
+
         AmbientOverlayLayer *ambientLayer = new AmbientOverlayLayer();
         ambientLayer->SetParamInt(PARAM_LIGHTNING_IS_NIGHT, isNight ? 1 : 0);
         AddLayer(ambientLayer);
@@ -497,7 +498,7 @@ void CompositeRenderer::ConfigureFog(bool isNight) {
         skyLayer->SetParamFloat(PARAM_MOON_INTENSITY, 0.1f);
     }
     AddLayer(skyLayer);
-    
+
     CloudLayer *cloudLayer = new CloudLayer();
     cloudLayer->SetParamInt(PARAM_TIME_OF_DAY, isNight ? 1 : 0);
     cloudLayer->SetParamFloat(PARAM_CLOUD_COVERAGE, 0.9f);
@@ -507,13 +508,13 @@ void CompositeRenderer::ConfigureFog(bool isNight) {
     cloudLayer->SetParamFloat(PARAM_CLOUD_SCALE, 0.7f);
     cloudLayer->SetParamFloat(PARAM_CLOUD_ALPHA, 28.0f);
     AddLayer(cloudLayer);
-    
+
     if (isNight) {
         StarLayer *starLayer = new StarLayer();
         starLayer->SetParamFloat(PARAM_STAR_COUNT, 40.0f);
         AddLayer(starLayer);
     }
-    
+
     ParticleLayer *particleLayer = new ParticleLayer();
     particleLayer->SetParamInt(PARAM_PARTICLE_TYPE, 1);
     particleLayer->SetParamFloat(PARAM_PARTICLE_DENSITY, 0.7f);
@@ -553,7 +554,7 @@ void CompositeRenderer::ConfigureSnow(int level, bool isNight) {
     float nb[] = {0.38f, 0.30f, 0.22f, 0.15f};
     float sunIntensity[] = {0.15f, 0.05f, 0.0f, 0.0f};
     int sunVisible[] = {1, 1, 0, 0};
-    
+
     SkyBackgroundLayer *skyLayer = new SkyBackgroundLayer();
     skyLayer->SetParamInt(PARAM_TIME_OF_DAY, isNight ? 1 : 0);
     if (!isNight) {
@@ -569,13 +570,13 @@ void CompositeRenderer::ConfigureSnow(int level, bool isNight) {
         skyLayer->SetParamInt(PARAM_SKY_MODE, 2);
     }
     AddLayer(skyLayer);
-    
+
     if (isNight) {
         StarLayer *starLayer = new StarLayer();
         starLayer->SetParamFloat(PARAM_STAR_COUNT, 50.0f);
         AddLayer(starLayer);
     }
-    
+
     CloudLayer *cloudLayer = new CloudLayer();
     cloudLayer->SetParamInt(PARAM_TIME_OF_DAY, isNight ? 1 : 0);
     cloudLayer->SetParamFloat(PARAM_CLOUD_COVERAGE, coverage[level]);
@@ -585,7 +586,7 @@ void CompositeRenderer::ConfigureSnow(int level, bool isNight) {
     cloudLayer->SetParamFloat(PARAM_CLOUD_SCALE, scale[level]);
     cloudLayer->SetParamFloat(PARAM_CLOUD_ALPHA, alpha[level]);
     AddLayer(cloudLayer);
-    
+
     SnowLayer *snowLayer = new SnowLayer();
     snowLayer->SetParamInt(PARAM_SNOW_PARTICLE_COUNT, particleCounts[level]);
     snowLayer->SetParamFloat(PARAM_SNOW_INTENSITY, intensity[level]);
@@ -594,7 +595,7 @@ void CompositeRenderer::ConfigureSnow(int level, bool isNight) {
     snowLayer->SetParamFloat(PARAM_SNOW_WIND, windForce[level]);
     snowLayer->SetParamFloat(PARAM_SNOW_SHAPE, snowShape[level]);
     AddLayer(snowLayer);
-    
+
     if (level >= 2) {
         ParticleLayer *particleLayer = new ParticleLayer();
         particleLayer->SetParamInt(PARAM_PARTICLE_TYPE, 1);
@@ -611,7 +612,7 @@ void CompositeRenderer::ConfigureSnow(int level, bool isNight) {
         particleLayer->SetParamFloat(PARAM_PARTICLE_VISIBILITY, visibility[level]);
         AddLayer(particleLayer);
     }
-    
+
     if (level == 3) {
         WindLayer *windLayer = new WindLayer();
         windLayer->SetParamInt(PARAM_WIND_LINES_ENABLED, 1);
@@ -633,13 +634,13 @@ void CompositeRenderer::ConfigureDust(bool isNight) {
         skyLayer->SetParamFloat(PARAM_MOON_INTENSITY, 0.15f);
     }
     AddLayer(skyLayer);
-    
+
     if (isNight) {
         StarLayer *starLayer = new StarLayer();
         starLayer->SetParamFloat(PARAM_STAR_COUNT, 50.0f);
         AddLayer(starLayer);
     }
-    
+
     CloudLayer *cloudLayer = new CloudLayer();
     cloudLayer->SetParamInt(PARAM_TIME_OF_DAY, isNight ? 1 : 0);
     cloudLayer->SetParamFloat(PARAM_CLOUD_COVERAGE, 0.7f);
@@ -649,7 +650,7 @@ void CompositeRenderer::ConfigureDust(bool isNight) {
     cloudLayer->SetParamFloat(PARAM_CLOUD_SCALE, 0.8f);
     cloudLayer->SetParamFloat(PARAM_CLOUD_ALPHA, 20.0f);
     AddLayer(cloudLayer);
-    
+
     ParticleLayer *particleLayer = new ParticleLayer();
     particleLayer->SetParamInt(PARAM_PARTICLE_TYPE, 2);
     particleLayer->SetParamFloat(PARAM_PARTICLE_DENSITY, 0.4f);
@@ -679,13 +680,13 @@ void CompositeRenderer::ConfigureSand(bool isNight) {
         skyLayer->SetParamFloat(PARAM_MOON_INTENSITY, 0.1f);
     }
     AddLayer(skyLayer);
-    
+
     if (isNight) {
         StarLayer *starLayer = new StarLayer();
         starLayer->SetParamFloat(PARAM_STAR_COUNT, 35.0f);
         AddLayer(starLayer);
     }
-    
+
     CloudLayer *cloudLayer = new CloudLayer();
     cloudLayer->SetParamInt(PARAM_TIME_OF_DAY, isNight ? 1 : 0);
     cloudLayer->SetParamFloat(PARAM_CLOUD_COVERAGE, 0.8f);
@@ -695,7 +696,7 @@ void CompositeRenderer::ConfigureSand(bool isNight) {
     cloudLayer->SetParamFloat(PARAM_CLOUD_SCALE, 0.75f);
     cloudLayer->SetParamFloat(PARAM_CLOUD_ALPHA, 22.0f);
     AddLayer(cloudLayer);
-    
+
     ParticleLayer *particleLayer = new ParticleLayer();
     particleLayer->SetParamInt(PARAM_PARTICLE_TYPE, 3);
     particleLayer->SetParamFloat(PARAM_PARTICLE_DENSITY, 0.7f);
@@ -710,7 +711,7 @@ void CompositeRenderer::ConfigureSand(bool isNight) {
     }
     particleLayer->SetParamFloat(PARAM_PARTICLE_VISIBILITY, 0.3f);
     AddLayer(particleLayer);
-    
+
     WindLayer *windLayer = new WindLayer();
     windLayer->SetParamInt(PARAM_WIND_LINES_ENABLED, 1);
     windLayer->SetParamFloat(PARAM_WIND_STRENGTH, 0.6f);
@@ -730,13 +731,13 @@ void CompositeRenderer::ConfigureWind(bool isNight) {
         skyLayer->SetParamFloat(PARAM_MOON_INTENSITY, 0.4f);
     }
     AddLayer(skyLayer);
-    
+
     if (isNight) {
         StarLayer *starLayer = new StarLayer();
         starLayer->SetParamFloat(PARAM_STAR_COUNT, 180.0f);
         AddLayer(starLayer);
     }
-    
+
     CloudLayer *cloudLayer = new CloudLayer();
     cloudLayer->SetParamInt(PARAM_TIME_OF_DAY, isNight ? 1 : 0);
     cloudLayer->SetParamFloat(PARAM_CLOUD_COVERAGE, 0.4f);
@@ -746,7 +747,7 @@ void CompositeRenderer::ConfigureWind(bool isNight) {
     cloudLayer->SetParamFloat(PARAM_CLOUD_SCALE, 0.8f);
     cloudLayer->SetParamFloat(PARAM_CLOUD_ALPHA, 18.0f);
     AddLayer(cloudLayer);
-    
+
     WindLayer *windLayer = new WindLayer();
     windLayer->SetParamInt(PARAM_WIND_LINES_ENABLED, 1);
     windLayer->SetParamFloat(PARAM_WIND_STRENGTH, 0.7f);
@@ -755,10 +756,10 @@ void CompositeRenderer::ConfigureWind(bool isNight) {
 
 bool CompositeRenderer::InitFBO(int width, int height) {
     LOGCATI("CompositeRenderer::InitFBO: width=%d, height=%d", width, height);
-    
+
     glGenFramebuffers(1, &m_FBO);
     glBindFramebuffer(GL_FRAMEBUFFER, m_FBO);
-    
+
     glGenTextures(1, &m_FBOTexture);
     glBindTexture(GL_TEXTURE_2D, m_FBOTexture);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
@@ -766,9 +767,9 @@ bool CompositeRenderer::InitFBO(int width, int height) {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    
+
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_FBOTexture, 0);
-    
+
     GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
     if (status != GL_FRAMEBUFFER_COMPLETE) {
         LOGCATE("CompositeRenderer::InitFBO: FBO creation failed, status=%d", status);
@@ -778,10 +779,10 @@ bool CompositeRenderer::InitFBO(int width, int height) {
         m_FBOTexture = 0;
         return false;
     }
-    
+
     glBindTexture(GL_TEXTURE_2D, 0);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    
+
     LOGCATI("CompositeRenderer::InitFBO: success, FBO=%d, texture=%d", m_FBO, m_FBOTexture);
     return true;
 }

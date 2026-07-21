@@ -4,6 +4,7 @@ in vec3 v_color;
 in float v_twinkleOffset;
 out vec4 outColor;
 uniform float u_time;
+
 void main() {
     vec2 coord = gl_PointCoord - vec2(0.5);
     float dist = length(coord);

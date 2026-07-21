@@ -34,7 +34,7 @@ GLuint GLUtils::LoadShader(GLenum shaderType, const char *pSource) {
 }
 
 GLuint GLUtils::CreateProgram(const char *pVertexShaderSource, const char *pFragShaderSource,
-                              GLuint &vertexShaderHandle, GLuint &fragShaderHandle) {
+        GLuint &vertexShaderHandle, GLuint &fragShaderHandle) {
     GLuint program = 0;
     FUN_BEGIN_TIME("GLUtils::CreateProgram")
         vertexShaderHandle = LoadShader(GL_VERTEX_SHADER, pVertexShaderSource);
@@ -98,8 +98,8 @@ void GLUtils::CheckGLError(const char *pGLOperation) {
 
 GLuint
 GLUtils::CreateProgramWithFeedback(const char *pVertexShaderSource, const char *pFragShaderSource,
-                                   GLuint &vertexShaderHandle, GLuint &fragShaderHandle,
-                                   const GLchar **varying, int varyingCount) {
+        GLuint &vertexShaderHandle, GLuint &fragShaderHandle,
+        const GLchar **varying, int varyingCount) {
     GLuint program = 0;
     FUN_BEGIN_TIME("GLUtils::CreateProgramWithFeedback")
         vertexShaderHandle = LoadShader(GL_VERTEX_SHADER, pVertexShaderSource);
@@ -152,7 +152,7 @@ GLUtils::CreateProgramWithFeedback(const char *pVertexShaderSource, const char *
 GLuint GLUtils::CreateProgram(const char *pVertexShaderSource, const char *pFragShaderSource) {
     GLuint vertexShaderHandle, fragShaderHandle;
     return CreateProgram(pVertexShaderSource, pFragShaderSource, vertexShaderHandle,
-                         fragShaderHandle);
+            fragShaderHandle);
 }
 
 GLuint GLUtils::LoadComputeShader(const char *computeShaderSource) {

@@ -3,6 +3,7 @@ precision highp float;
 out vec4 outColor;
 uniform float u_snowIntensity;
 uniform float u_snowShape;
+
 void main() {
     vec2 coord = gl_PointCoord - vec2(0.5);
     float dist = length(coord);

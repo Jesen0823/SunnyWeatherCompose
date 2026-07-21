@@ -1,7 +1,7 @@
 #version 300 es
 precision highp float;
 precision highp int;
-layout(location = 0) out vec4 outColor;
+layout (location = 0) out vec4 outColor;
 uniform float u_time;
 uniform vec2 u_screenSize;
 uniform int u_particleType;

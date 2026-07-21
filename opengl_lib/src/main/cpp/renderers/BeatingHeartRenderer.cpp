@@ -132,7 +132,7 @@ void BeatingHeartRenderer::Destroy() {
 }
 
 void BeatingHeartRenderer::UpdateTransformMatrix(float rotateX, float rotateY, float scaleX,
-                                               float scaleY) {
+        float scaleY) {
     GLRendererBase::UpdateTransformMatrix(rotateX, rotateY, scaleX, scaleY);
     m_AngleX = static_cast<int>(rotateX);
     m_AngleY = static_cast<int>(rotateY);

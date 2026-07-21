@@ -25,8 +25,8 @@ native_OnUnInit(JNIEnv *env, jobject thiz) {
 extern "C"
 JNIEXPORT void JNICALL
 native_SetImageData(JNIEnv *env, jobject thiz,
-                    jint format, jint width,
-                    jint height, jbyteArray imageData) {
+        jint format, jint width,
+        jint height, jbyteArray imageData) {
     int len = env->GetArrayLength(imageData);
     uint8_t *buf = new uint8_t[len];
     env->GetByteArrayRegion(imageData, 0, len, reinterpret_cast<jbyte *>(buf));
@@ -38,14 +38,14 @@ native_SetImageData(JNIEnv *env, jobject thiz,
 extern "C"
 JNIEXPORT void JNICALL
 native_SetParamsInt(JNIEnv *env, jobject thiz,
-                    jint param_type, jint value0, jint value1) {
+        jint param_type, jint value0, jint value1) {
     GLRenderContext::GetInstance()->SetParamsInt(param_type, value0, value1);
 }
 
 extern "C"
 JNIEXPORT void JNICALL native_UpdateTransformMatrix
         (JNIEnv *env, jobject instance, jfloat rotateX, jfloat rotateY, jfloat scaleX,
-         jfloat scaleY) {
+                jfloat scaleY) {
     GLRenderContext::GetInstance()->UpdateTransformMatrix(rotateX, rotateY, scaleX, scaleY);
 }
 
@@ -58,7 +58,7 @@ native_OnSurfaceCreated(JNIEnv *env, jobject thiz) {
 extern "C"
 JNIEXPORT void JNICALL
 native_OnSurfaceChanged(JNIEnv *env, jobject thiz,
-                        jint width, jint height) {
+        jint width, jint height) {
     GLRenderContext::GetInstance()->OnSurfaceChanged(width, height);
 }
 
@@ -105,16 +105,16 @@ native_SetSkycon(JNIEnv *env, jobject thiz, jstring skycon) {
 #endif
 
 static JNINativeMethod g_NativeMethods[] = {
-        {"native_OnInit",                "()V",       (void *) (native_OnInit)},
-        {"native_OnUnInit",              "()V",       (void *) (native_OnUnInit)},
-        {"native_SetImageData",          "(III[B)V",  (void *) (native_SetImageData)},
-        {"native_SetParamsInt",          "(III)V",    (void *) (native_SetParamsInt)},
-        {"native_UpdateTransformMatrix", "(FFFF)V",   (void *) (native_UpdateTransformMatrix)},
-        {"native_OnSurfaceCreated",      "()V",       (void *) (native_OnSurfaceCreated)},
-        {"native_OnSurfaceChanged",      "(II)V",     (void *) (native_OnSurfaceChanged)},
-        {"native_OnDrawFrame",           "()V",       (void *) (native_OnDrawFrame)},
-        {"native_SetSkycon",             "(Ljava/lang/String;)V", (void *) (native_SetSkycon)},
-        {"native_SetAssetManager",       "(Landroid/content/res/AssetManager;)V", (void *) (native_SetAssetManager)}
+        {"native_OnInit", "()V", (void *) (native_OnInit)},
+        {"native_OnUnInit", "()V", (void *) (native_OnUnInit)},
+        {"native_SetImageData", "(III[B)V", (void *) (native_SetImageData)},
+        {"native_SetParamsInt", "(III)V", (void *) (native_SetParamsInt)},
+        {"native_UpdateTransformMatrix", "(FFFF)V", (void *) (native_UpdateTransformMatrix)},
+        {"native_OnSurfaceCreated", "()V", (void *) (native_OnSurfaceCreated)},
+        {"native_OnSurfaceChanged", "(II)V", (void *) (native_OnSurfaceChanged)},
+        {"native_OnDrawFrame", "()V", (void *) (native_OnDrawFrame)},
+        {"native_SetSkycon", "(Ljava/lang/String;)V", (void *) (native_SetSkycon)},
+        {"native_SetAssetManager", "(Landroid/content/res/AssetManager;)V", (void *) (native_SetAssetManager)}
 };
 
 static int
@@ -140,8 +140,8 @@ extern "C" jint JNI_OnLoad(JavaVM *jvm, void *p) {
         return jniRet;
     }
     jint regRet = RegisterNativeMethods(env, NATIVE_RENDER_CLASS_NAME, g_NativeMethods,
-                                        sizeof(g_NativeMethods) /
-                                        sizeof(g_NativeMethods[0]));
+            sizeof(g_NativeMethods) /
+                    sizeof(g_NativeMethods[0]));
     if (regRet != JNI_TRUE) {
         return JNI_ERR;
     }

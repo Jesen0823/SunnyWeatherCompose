@@ -1,6 +1,6 @@
 #version 300 es
 precision highp float;
-layout(location = 0) out vec4 outColor;
+layout (location = 0) out vec4 outColor;
 uniform float u_time;
 uniform vec2 u_screenSize;
 uniform bool u_windLinesEnabled;
@@ -32,7 +32,7 @@ float windLine(vec2 p, float time, float strength) {
         float gapOffset = hash(i * 123.456) * 0.5;
         float gapPos = mod(x + gapOffset, 0.12);
         float gap = smoothstep(0.05, 0.07, gapPos) *
-                    smoothstep(0.12, 0.10, gapPos);
+        smoothstep(0.12, 0.10, gapPos);
         line *= gap;
 
         float fadeY = smoothstep(0.0, 0.3, y) * smoothstep(1.0, 0.7, y);

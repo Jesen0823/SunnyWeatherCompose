@@ -1,6 +1,6 @@
 #version 300 es
 precision highp float;
-layout(location = 0) out vec4 outColor;
+layout (location = 0) out vec4 outColor;
 uniform float u_flashIntensity;
 uniform bool u_isNight;
 

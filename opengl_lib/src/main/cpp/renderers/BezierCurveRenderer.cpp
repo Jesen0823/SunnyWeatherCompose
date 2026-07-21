@@ -51,7 +51,7 @@ bool BezierCurveRenderer::Init() {
     }
 
     m_ProgramObj = GLUtils::CreateProgram(vShaderStr.c_str(), fShaderStr.c_str(),
-                                          m_VertexShader, m_FragmentShader);
+            m_VertexShader, m_FragmentShader);
     if (!m_ProgramObj) {
         LOGCATE("BezierCurveRenderer::Init create program fail");
         return false;
@@ -112,16 +112,16 @@ void BezierCurveRenderer::Draw(int screenW, int screenH) {
 
     glEnable(GL_BLEND);
     glBlendFuncSeparate(GL_ONE, GL_ONE_MINUS_SRC_COLOR, GL_ONE,
-                        GL_ONE_MINUS_SRC_ALPHA);
+            GL_ONE_MINUS_SRC_ALPHA);
     glBlendEquationSeparate(GL_FUNC_ADD, GL_FUNC_ADD);
 
     glBindVertexArray(m_VaoId);
 
     GLUtils::setMat4(m_ProgramObj, "u_MVPMatrix", m_MVPMatrix);
     GLUtils::setVec4(m_ProgramObj, "u_StartEndPoints", glm::vec4(-1, 0,
-                                                                 1, 0));
+            1, 0));
     GLUtils::setVec4(m_ProgramObj, "u_ControlPoints", glm::vec4(-0.04f, 0.99f,
-                                                                0.0f, 0.99f));
+            0.0f, 0.99f));
     GLUtils::setVec4(m_ProgramObj, "u_Color", glm::vec4(1.0f, 0.3f, 0.0f, 1.0f));
     float offset = (m_FrameIndex % 100) * 1.0f / 100;
     offset = (m_FrameIndex / 100) % 2 == 1 ? (1 - offset) : offset;
@@ -140,7 +140,7 @@ void BezierCurveRenderer::Draw(int screenW, int screenH) {
     GLUtils::setFloat(m_ProgramObj, "u_Offset", offset);
     GLUtils::setVec4(m_ProgramObj, "u_Color", glm::vec4(0.0f, 0.3f, 0.8f, 1.0f));
     GLUtils::setVec4(m_ProgramObj, "u_ControlPoints", glm::vec4(-0.8f, 0.99f,
-                                                                0.0f, 0.0f));
+            0.0f, 0.0f));
     UpdateMVPMatrix(m_MVPMatrix, m_AngleX, m_AngleY, (float) screenW / screenH);
     GLUtils::setMat4(m_ProgramObj, "u_MVPMatrix", m_MVPMatrix);
 

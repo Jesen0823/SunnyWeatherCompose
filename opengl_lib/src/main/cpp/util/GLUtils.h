@@ -14,8 +14,8 @@ public:
     static GLuint LoadShader(GLenum shaderType, const char *pSource);
 
     static GLuint CreateProgram(const char *pVertexShaderSource, const char *pFragShaderSource,
-                                GLuint &vertexShaderHandle,
-                                GLuint &fragShaderHandle);
+            GLuint &vertexShaderHandle,
+            GLuint &fragShaderHandle);
 
     static GLuint CreateProgram(const char *pVertexShaderSource, const char *pFragShaderSource);
 
@@ -25,8 +25,8 @@ public:
 
     static GLuint
     CreateProgramWithFeedback(const char *pVertexShaderSource, const char *pFragShaderSource,
-                              GLuint &vertexShaderHandle,
-                              GLuint &fragShaderHandle, const GLchar **varying, int varyingCount);
+            GLuint &vertexShaderHandle,
+            GLuint &fragShaderHandle, const GLchar **varying, int varyingCount);
 
     static void setBool(GLuint programId, const std::string &name, bool value) {
         glUniform1i(glGetUniformLocation(programId, name.c_str()), (int) value);

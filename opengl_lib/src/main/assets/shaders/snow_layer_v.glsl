@@ -1,11 +1,11 @@
 #version 300 es
 precision highp float;
-layout(location = 0) in vec2 a_position;
-layout(location = 1) in vec2 a_speed;
-layout(location = 2) in float a_size;
-layout(location = 3) in float a_swingOffset;
-layout(location = 4) in float a_swingSpeed;
-layout(location = 5) in float a_windOffset;
+layout (location = 0) in vec2 a_position;
+layout (location = 1) in vec2 a_speed;
+layout (location = 2) in float a_size;
+layout (location = 3) in float a_swingOffset;
+layout (location = 4) in float a_swingSpeed;
+layout (location = 5) in float a_windOffset;
 uniform float u_time;
 uniform vec2 u_screenSize;
 uniform float u_snowSpeed;
@@ -18,6 +18,7 @@ uniform float u_gustGroupRatio;
 uniform float u_gustLocalTime;
 uniform float u_gustBlendFactor;
 uniform float u_gustDuration;
+
 float randomHash(float x, float seed) {
     return fract(sin(x * 12.9898 + seed * 78.233) * 43758.5453);
 }

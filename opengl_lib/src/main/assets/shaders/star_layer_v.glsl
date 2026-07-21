@@ -1,9 +1,9 @@
 #version 300 es
 precision highp float;
-layout(location = 0) in vec2 a_position;
-layout(location = 1) in vec3 a_color;
-layout(location = 2) in float a_size;
-layout(location = 3) in float a_twinkleOffset;
+layout (location = 0) in vec2 a_position;
+layout (location = 1) in vec3 a_color;
+layout (location = 2) in float a_size;
+layout (location = 3) in float a_twinkleOffset;
 out vec3 v_color;
 out float v_twinkleOffset;
 uniform vec2 u_screenSize;

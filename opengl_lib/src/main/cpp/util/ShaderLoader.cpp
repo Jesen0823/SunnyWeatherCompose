@@ -45,7 +45,7 @@ std::string ShaderLoader::LoadShaderFromAssets(const char *filename) {
         return "";
     }
 
-    LOGCATI("ShaderLoader::LoadShaderFromAssets: Successfully loaded shader: %s, length: %d", filename, (int)length);
+    LOGCATI("ShaderLoader::LoadShaderFromAssets: Successfully loaded shader: %s, length: %d", filename, (int) length);
     std::string result(buffer);
     delete[] buffer;
     return result;

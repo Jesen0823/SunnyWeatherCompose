@@ -134,8 +134,8 @@ public:
         if (pSrcImg == nullptr || pSrcImg->ppPlane[0] == nullptr) return;
 
         if (pSrcImg->format != pDstImg->format ||
-            pSrcImg->width != pDstImg->width ||
-            pSrcImg->height != pDstImg->height) {
+                pSrcImg->width != pDstImg->width ||
+                pSrcImg->height != pDstImg->height) {
             return;
         }
 
@@ -146,17 +146,17 @@ public:
             case IMAGE_FORMAT_NV21:
             case IMAGE_FORMAT_NV12: {
                 memcpy(pDstImg->ppPlane[0], pSrcImg->ppPlane[0],
-                       pSrcImg->width * pSrcImg->height * 1.5);
+                        pSrcImg->width * pSrcImg->height * 1.5);
             }
                 break;
             case IMAGE_FORMAT_YUYV: {
                 memcpy(pDstImg->ppPlane[0], pSrcImg->ppPlane[0],
-                       pSrcImg->width * pSrcImg->height * 2);
+                        pSrcImg->width * pSrcImg->height * 2);
             }
                 break;
             case IMAGE_FORMAT_RGBA: {
                 memcpy(pDstImg->ppPlane[0], pSrcImg->ppPlane[0],
-                       pSrcImg->width * pSrcImg->height * 4);
+                        pSrcImg->width * pSrcImg->height * 4);
             }
                 break;
             case IMAGE_FORMAT_GRAY: {
@@ -166,12 +166,12 @@ public:
             case IMAGE_FORMAT_P010:
             case IMAGE_FORMAT_I444: {
                 memcpy(pDstImg->ppPlane[0], pSrcImg->ppPlane[0],
-                       pSrcImg->width * pSrcImg->height * 3);
+                        pSrcImg->width * pSrcImg->height * 3);
             }
                 break;
             case IMAGE_FORMAT_GRAY10: {
                 memcpy(pDstImg->ppPlane[0], pSrcImg->ppPlane[0],
-                       pSrcImg->width * pSrcImg->height * 2);
+                        pSrcImg->width * pSrcImg->height * 2);
             }
                 break;
             default: {
@@ -235,61 +235,61 @@ public:
             switch (pSrcImg->format) {
                 case IMAGE_FORMAT_I420: {
                     fwrite(pSrcImg->ppPlane[0],
-                           static_cast<size_t>(pSrcImg->width * pSrcImg->height), 1, fp);
+                            static_cast<size_t>(pSrcImg->width * pSrcImg->height), 1, fp);
                     fwrite(pSrcImg->ppPlane[1],
-                           static_cast<size_t>((pSrcImg->width >> 1) * (pSrcImg->height >> 1)), 1,
-                           fp);
+                            static_cast<size_t>((pSrcImg->width >> 1) * (pSrcImg->height >> 1)), 1,
+                            fp);
                     fwrite(pSrcImg->ppPlane[2],
-                           static_cast<size_t>((pSrcImg->width >> 1) * (pSrcImg->height >> 1)), 1,
-                           fp);
+                            static_cast<size_t>((pSrcImg->width >> 1) * (pSrcImg->height >> 1)), 1,
+                            fp);
                     break;
                 }
                 case IMAGE_FORMAT_NV21:
                 case IMAGE_FORMAT_NV12: {
                     fwrite(pSrcImg->ppPlane[0],
-                           static_cast<size_t>(pSrcImg->width * pSrcImg->height), 1, fp);
+                            static_cast<size_t>(pSrcImg->width * pSrcImg->height), 1, fp);
                     fwrite(pSrcImg->ppPlane[1],
-                           static_cast<size_t>(pSrcImg->width * (pSrcImg->height >> 1)), 1, fp);
+                            static_cast<size_t>(pSrcImg->width * (pSrcImg->height >> 1)), 1, fp);
                     break;
                 }
                 case IMAGE_FORMAT_RGBA: {
                     fwrite(pSrcImg->ppPlane[0],
-                           static_cast<size_t>(pSrcImg->width * pSrcImg->height * 4), 1, fp);
+                            static_cast<size_t>(pSrcImg->width * pSrcImg->height * 4), 1, fp);
                     break;
                 }
                 case IMAGE_FORMAT_YUYV: {
                     fwrite(pSrcImg->ppPlane[0],
-                           static_cast<size_t>(pSrcImg->width * pSrcImg->height * 2), 1, fp);
+                            static_cast<size_t>(pSrcImg->width * pSrcImg->height * 2), 1, fp);
                     break;
                 }
                 case IMAGE_FORMAT_GRAY: {
                     fwrite(pSrcImg->ppPlane[0],
-                           static_cast<size_t>(pSrcImg->width * pSrcImg->height), 1, fp);
+                            static_cast<size_t>(pSrcImg->width * pSrcImg->height), 1, fp);
                     break;
                 }
                 case IMAGE_FORMAT_P010: {
                     fwrite(pSrcImg->ppPlane[0],
-                           static_cast<size_t>(pSrcImg->width * pSrcImg->height * 3), 1, fp);
+                            static_cast<size_t>(pSrcImg->width * pSrcImg->height * 3), 1, fp);
                     break;
                 }
                 case IMAGE_FORMAT_I444: {
                     fwrite(pSrcImg->ppPlane[0],
-                           static_cast<size_t>(pSrcImg->width * pSrcImg->height), 1, fp);
+                            static_cast<size_t>(pSrcImg->width * pSrcImg->height), 1, fp);
                     fwrite(pSrcImg->ppPlane[1],
-                           static_cast<size_t>(pSrcImg->width * pSrcImg->height), 1, fp);
+                            static_cast<size_t>(pSrcImg->width * pSrcImg->height), 1, fp);
                     fwrite(pSrcImg->ppPlane[2],
-                           static_cast<size_t>(pSrcImg->width * pSrcImg->height), 1, fp);
+                            static_cast<size_t>(pSrcImg->width * pSrcImg->height), 1, fp);
                     break;
                 }
                 case IMAGE_FORMAT_GRAY10: {
                     fwrite(pSrcImg->ppPlane[0],
-                           static_cast<size_t>(pSrcImg->width * pSrcImg->height * 2), 1, fp);
+                            static_cast<size_t>(pSrcImg->width * pSrcImg->height * 2), 1, fp);
                     break;
                 }
                 default: {
                     LOGCATE("DumpNativeImage default");
                     fwrite(pSrcImg->ppPlane[0],
-                           static_cast<size_t>(pSrcImg->width * pSrcImg->height), 1, fp);
+                            static_cast<size_t>(pSrcImg->width * pSrcImg->height), 1, fp);
                     break;
                 }
             }
@@ -351,15 +351,15 @@ public:
 
     static int ConvertP010toNV21(NativeImage *pP010Img, NativeImage *pNV21Img) {
         if (pP010Img == nullptr
-            || pNV21Img == nullptr
-            || pP010Img->format != IMAGE_FORMAT_P010
-            || pNV21Img->format != IMAGE_FORMAT_NV21) {
+                || pNV21Img == nullptr
+                || pP010Img->format != IMAGE_FORMAT_P010
+                || pNV21Img->format != IMAGE_FORMAT_NV21) {
             return -1;
         }
 
         int width = pP010Img->width, height = pP010Img->height;
         for (int i = 0; i < height; ++i) {
-            uint16_t *pu16YData = (uint16_t *) (pP010Img->ppPlane[0] + pP010Img->width * 2 * i);
+            uint16_t *pu16YData = (uint16_t * )(pP010Img->ppPlane[0] + pP010Img->width * 2 * i);
             uint8_t *pu8YData = pNV21Img->ppPlane[0] + pNV21Img->width * i;
             for (int j = 0; j < width; j++, pu8YData++, pu16YData++) {
                 *pu8YData = (u_int8_t) (*pu16YData >> 8);
@@ -369,7 +369,7 @@ public:
         width /= 2;
         height /= 2;
         for (int i = 0; i < height; ++i) {
-            uint16_t *pu16UVData = (uint16_t *) (pP010Img->ppPlane[1] + pP010Img->width * 2 * i);
+            uint16_t *pu16UVData = (uint16_t * )(pP010Img->ppPlane[1] + pP010Img->width * 2 * i);
             uint8_t *pu8UVData = pNV21Img->ppPlane[1] + pNV21Img->width * i;
             for (int j = 0; j < width; j++, pu8UVData += 2, pu16UVData += 2) {
                 *pu8UVData = *pu16UVData >> 8;
@@ -381,9 +381,9 @@ public:
 
     static void ConvertP010PlaneTo8Bit(uint16_t *pSrcData, uint8_t *pDstData, int width, int height) {
         if (pSrcData == nullptr
-            || pDstData == nullptr
-            || width <= 0
-            || height <= 0) {
+                || pDstData == nullptr
+                || width <= 0
+                || height <= 0) {
             return;
         }
 
@@ -398,15 +398,15 @@ public:
 
     static int ConvertNV21toP010(NativeImage *pNV21Img, NativeImage *pP010Img) {
         if (pP010Img == nullptr
-            || pNV21Img == nullptr
-            || pP010Img->format != IMAGE_FORMAT_P010
-            || pNV21Img->format != IMAGE_FORMAT_NV21) {
+                || pNV21Img == nullptr
+                || pP010Img->format != IMAGE_FORMAT_P010
+                || pNV21Img->format != IMAGE_FORMAT_NV21) {
             return -1;
         }
 
         int width = pP010Img->width, height = pP010Img->height;
         for (int i = 0; i < height; ++i) {
-            uint16_t *pu16YData = (uint16_t *) (pP010Img->ppPlane[0] + pP010Img->width * 2 * i);
+            uint16_t *pu16YData = (uint16_t * )(pP010Img->ppPlane[0] + pP010Img->width * 2 * i);
             uint8_t *pu8YData = pNV21Img->ppPlane[0] + pNV21Img->width * i;
             for (int j = 0; j < width; j++, pu8YData++, pu16YData++) {
                 *pu16YData = (u_int16_t) *pu8YData << 6;
@@ -416,7 +416,7 @@ public:
         width /= 2;
         height /= 2;
         for (int i = 0; i < height; ++i) {
-            uint16_t *pu16UVData = (uint16_t *) (pP010Img->ppPlane[1] + pP010Img->width * 2 * i);
+            uint16_t *pu16UVData = (uint16_t * )(pP010Img->ppPlane[1] + pP010Img->width * 2 * i);
             uint8_t *pu8UVData = pNV21Img->ppPlane[1] + pNV21Img->width * i;
             for (int j = 0; j < width; j++, pu8UVData += 2, pu16UVData += 2) {
                 *pu16UVData = (u_int16_t) *pu8UVData << 8;
