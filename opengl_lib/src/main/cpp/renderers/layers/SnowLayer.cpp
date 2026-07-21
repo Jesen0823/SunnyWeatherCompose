@@ -66,6 +66,9 @@ bool SnowLayer::Init() {
         "uniform float u_gustStrength;            \n"
         "uniform float u_gustGroupSeed;           \n"
         "uniform float u_gustGroupRatio;          \n"
+        "uniform float u_gustLocalTime;           \n"
+        "uniform float u_gustBlendFactor;         \n"
+        "uniform float u_gustDuration;            \n"
         "float randomHash(float x, float seed) {  \n"
         "    return fract(sin(x * 12.9898 + seed * 78.233) * 43758.5453);\n"
         "}\n"
@@ -78,9 +81,17 @@ bool SnowLayer::Init() {
         "    float randomPerturbX = sin(u_time * a_swingSpeed + a_swingOffset) * 0.02;\n"
         "    float randomPerturbY = cos(u_time * a_swingSpeed * 1.2 + a_swingOffset) * 0.01;\n"
         "    float particleHash = randomHash(a_swingOffset * 100.0, u_gustGroupSeed);\n"
-        "    float gustParticipate = step(0.0, particleHash - (1.0 - u_gustGroupRatio));\n"
-        "    float gustEffectX = u_gustWindX * u_gustStrength * u_time * 0.08 * gustParticipate;\n"
-        "    float gustEffectY = u_gustWindY * u_gustStrength * u_time * 0.05 * gustParticipate;\n"
+        "    float threshold = 1.0 - u_gustGroupRatio;\n"
+        "    float softWidth = 0.15;\n"
+        "    float gustParticipate = smoothstep(threshold - softWidth, threshold + softWidth, particleHash);\n"
+        "    float particleVariation = randomHash(a_swingOffset * 50.0, u_gustGroupSeed * 2.0);\n"
+        "    float individualStrength = gustParticipate * (0.5 + particleVariation * 1.0);\n"
+        "    float effectiveStrength = u_gustStrength * individualStrength;\n"
+        "    float timeProgress = u_gustLocalTime / u_gustDuration;\n"
+        "    float bellEnvelope = sin(timeProgress * 3.14159);\n"
+        "    float turbulence = sin(u_gustLocalTime * 3.0 + a_swingOffset * 10.0) * 0.5 + 0.5;\n"
+        "    float gustEffectX = u_gustWindX * effectiveStrength * bellEnvelope * turbulence * 0.12;\n"
+        "    float gustEffectY = u_gustWindY * effectiveStrength * bellEnvelope * turbulence * 0.08;\n"
         "    pos.x += windBase + windSwing + randomPerturbX + gustEffectX;\n"
         "    pos.y += randomPerturbY + gustEffectY;\n"
         "    pos.x += a_windOffset * u_windForce * 0.10;\n"
@@ -138,6 +149,9 @@ bool SnowLayer::Init() {
     m_GustStrengthLoc = glGetUniformLocation(m_ProgramObj, "u_gustStrength");
     m_GustGroupSeedLoc = glGetUniformLocation(m_ProgramObj, "u_gustGroupSeed");
     m_GustGroupRatioLoc = glGetUniformLocation(m_ProgramObj, "u_gustGroupRatio");
+    m_GustLocalTimeLoc = glGetUniformLocation(m_ProgramObj, "u_gustLocalTime");
+    m_GustBlendFactorLoc = glGetUniformLocation(m_ProgramObj, "u_gustBlendFactor");
+    m_GustDurationLoc = glGetUniformLocation(m_ProgramObj, "u_gustDuration");
 
     GenerateSnowflakes();
 
@@ -210,14 +224,17 @@ void SnowLayer::Draw(int screenW, int screenH) {
     
     m_GustTimer += 0.04f;
     if (m_GustStrength <= 0.01f && m_GustTimer > m_GustDuration) {
+        m_PrevGustWindX = m_GustWindX;
+        m_PrevGustWindY = m_GustWindY;
         float angle = randomRange(0.0f, 6.2831853f);
-        float speed = randomRange(0.15f, 0.4f);
+        float speed = randomRange(0.5f, 1.2f);
         m_GustWindX = cos(angle) * speed;
-        m_GustWindY = sin(angle) * speed * 0.5f;
+        m_GustWindY = sin(angle) * speed * 0.6f;
         m_GustDuration = randomRange(2.0f, 3.5f);
         m_GustTimer = 0.0f;
         m_GustGroupSeed = randomRange(0.0f, 1000.0f);
         m_GustGroupRatio = randomRange(0.3f, 0.6f);
+        m_GustBlendFactor = 0.0f;
     }
     
     if (m_GustTimer < 0.3f) {
@@ -229,6 +246,13 @@ void SnowLayer::Draw(int screenW, int screenH) {
     }
     
     m_GustStrength = std::max(0.0f, std::min(1.0f, m_GustStrength));
+    
+    if (m_GustBlendFactor < 1.0f) {
+        m_GustBlendFactor = std::min(1.0f, m_GustBlendFactor + 0.04f * 2.0f);
+    }
+    
+    float effectiveGustX = m_PrevGustWindX * (1.0f - m_GustBlendFactor) + m_GustWindX * m_GustBlendFactor;
+    float effectiveGustY = m_PrevGustWindY * (1.0f - m_GustBlendFactor) + m_GustWindY * m_GustBlendFactor;
 
     glUniform1f(m_TimeLoc, m_Time);
     glUniform2f(m_ScreenSizeLoc, (float)screenW, (float)screenH);
@@ -236,11 +260,14 @@ void SnowLayer::Draw(int screenW, int screenH) {
     glUniform1f(m_SnowSpeedLoc, m_SnowSpeed);
     glUniform1f(m_WindForceLoc, m_WindForce);
     glUniform1f(m_SnowShapeLoc, m_SnowShape);
-    glUniform1f(m_GustWindXLoc, m_GustWindX);
-    glUniform1f(m_GustWindYLoc, m_GustWindY);
+    glUniform1f(m_GustWindXLoc, effectiveGustX);
+    glUniform1f(m_GustWindYLoc, effectiveGustY);
     glUniform1f(m_GustStrengthLoc, m_GustStrength);
     glUniform1f(m_GustGroupSeedLoc, m_GustGroupSeed);
     glUniform1f(m_GustGroupRatioLoc, m_GustGroupRatio);
+    glUniform1f(m_GustLocalTimeLoc, m_GustTimer);
+    glUniform1f(m_GustBlendFactorLoc, m_GustBlendFactor);
+    glUniform1f(m_GustDurationLoc, m_GustDuration);
 
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);

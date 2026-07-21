@@ -69,6 +69,9 @@ private:
     GLuint m_GustStrengthLoc = -1;
     GLuint m_GustGroupSeedLoc = -1;
     GLuint m_GustGroupRatioLoc = -1;
+    GLuint m_GustLocalTimeLoc = -1;
+    GLuint m_GustBlendFactorLoc = -1;
+    GLuint m_GustDurationLoc = -1;
     
     GLuint m_PositionVBO = 0;
     GLuint m_SpeedVBO = 0;
@@ -95,6 +98,9 @@ private:
     float m_GustDuration = 0.0f;
     float m_GustGroupSeed = 0.0f;
     float m_GustGroupRatio = 0.5f;
+    float m_PrevGustWindX = 0.0f;
+    float m_PrevGustWindY = 0.0f;
+    float m_GustBlendFactor = 1.0f;
     
     int m_ScreenWidth = 0;
     int m_ScreenHeight = 0;

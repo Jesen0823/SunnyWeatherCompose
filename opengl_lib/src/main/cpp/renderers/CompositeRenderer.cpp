@@ -197,6 +197,8 @@ void CompositeRenderer::SortLayers() {
             if (typeB == LAYER_TYPE_RAIN) return true;
             if (typeA == LAYER_TYPE_AMBIENT_OVERLAY) return false;
             if (typeB == LAYER_TYPE_AMBIENT_OVERLAY) return true;
+            if (typeA == LAYER_TYPE_WIND && typeB == LAYER_TYPE_SNOW) return true;
+            if (typeB == LAYER_TYPE_WIND && typeA == LAYER_TYPE_SNOW) return false;
             return typeA < typeB;
         });
 }
