@@ -280,11 +280,12 @@ void CompositeRenderer::ConfigureClear(bool isNight) {
     
     CloudLayer *cloudLayer = new CloudLayer();
     cloudLayer->SetParamInt(PARAM_TIME_OF_DAY, isNight ? 1 : 0);
-    cloudLayer->SetParamFloat(PARAM_CLOUD_COVERAGE, isNight ? 0.4f : 0.12f);
-    cloudLayer->SetParamFloat(PARAM_CLOUD_DARKNESS, isNight ? 0.7f : 0.4f);
-    cloudLayer->SetParamFloat(PARAM_CLOUD_LIGHTNESS, isNight ? 0.55f : 0.8f);
-    cloudLayer->SetParamFloat(PARAM_CLOUD_SPEED, isNight ? 0.05f : 0.15f);
-    cloudLayer->SetParamFloat(PARAM_CLOUD_ALPHA, isNight ? 25.0f : 20.0f);
+    cloudLayer->SetParamFloat(PARAM_CLOUD_COVERAGE, isNight ? 0.35f : 0.20f);
+    cloudLayer->SetParamFloat(PARAM_CLOUD_DARKNESS, isNight ? 0.65f : 0.15f);
+    cloudLayer->SetParamFloat(PARAM_CLOUD_LIGHTNESS, isNight ? 0.50f : 0.98f);
+    cloudLayer->SetParamFloat(PARAM_CLOUD_SPEED, isNight ? 0.02f : 0.025f);
+    cloudLayer->SetParamFloat(PARAM_CLOUD_SCALE, isNight ? 1.1f : 1.0f);
+    cloudLayer->SetParamFloat(PARAM_CLOUD_ALPHA, isNight ? 20.0f : 10.0f);
     AddLayer(cloudLayer);
 }
 
@@ -312,7 +313,10 @@ void CompositeRenderer::ConfigurePartlyCloudy(bool isNight) {
     cloudLayer->SetParamInt(PARAM_TIME_OF_DAY, isNight ? 1 : 0);
     cloudLayer->SetParamFloat(PARAM_CLOUD_COVERAGE, 0.5f);
     cloudLayer->SetParamFloat(PARAM_CLOUD_DARKNESS, isNight ? 0.5f : 0.4f);
+    cloudLayer->SetParamFloat(PARAM_CLOUD_LIGHTNESS, isNight ? 0.6f : 0.8f);
     cloudLayer->SetParamFloat(PARAM_CLOUD_SPEED, isNight ? 0.25f : 0.3f);
+    cloudLayer->SetParamFloat(PARAM_CLOUD_SCALE, 0.85f);
+    cloudLayer->SetParamFloat(PARAM_CLOUD_ALPHA, isNight ? 18.0f : 22.0f);
     AddLayer(cloudLayer);
 }
 
@@ -342,6 +346,8 @@ void CompositeRenderer::ConfigureCloudy(bool isNight) {
     cloudLayer->SetParamFloat(PARAM_CLOUD_DARKNESS, isNight ? 0.85f : 0.7f);
     cloudLayer->SetParamFloat(PARAM_CLOUD_LIGHTNESS, isNight ? 0.1f : 0.2f);
     cloudLayer->SetParamFloat(PARAM_CLOUD_SPEED, 0.15f);
+    cloudLayer->SetParamFloat(PARAM_CLOUD_SCALE, 0.75f);
+    cloudLayer->SetParamFloat(PARAM_CLOUD_ALPHA, isNight ? 25.0f : 28.0f);
     AddLayer(cloudLayer);
 }
 
@@ -375,6 +381,10 @@ void CompositeRenderer::ConfigureHaze(int level, bool isNight) {
     cloudLayer->SetParamInt(PARAM_TIME_OF_DAY, isNight ? 1 : 0);
     cloudLayer->SetParamFloat(PARAM_CLOUD_COVERAGE, 0.3f + level * 0.1f);
     cloudLayer->SetParamFloat(PARAM_CLOUD_DARKNESS, isNight ? 0.7f + level * 0.1f : 0.5f + level * 0.1f);
+    cloudLayer->SetParamFloat(PARAM_CLOUD_LIGHTNESS, isNight ? 0.3f : 0.5f);
+    cloudLayer->SetParamFloat(PARAM_CLOUD_SPEED, 0.08f);
+    cloudLayer->SetParamFloat(PARAM_CLOUD_SCALE, 0.9f);
+    cloudLayer->SetParamFloat(PARAM_CLOUD_ALPHA, 15.0f);
     AddLayer(cloudLayer);
     
     ParticleLayer *particleLayer = new ParticleLayer();
@@ -444,7 +454,6 @@ void CompositeRenderer::ConfigureRain(int level, bool isNight) {
     cloudLayer->SetParamFloat(PARAM_CLOUD_SPEED, speed[level]);
     cloudLayer->SetParamFloat(PARAM_CLOUD_SCALE, scale[level]);
     cloudLayer->SetParamFloat(PARAM_CLOUD_ALPHA, alpha[level]);
-    cloudLayer->SetParamInt(PARAM_CLOUD_MODE, 1);
     AddLayer(cloudLayer);
     
     RainLayer *rainLayer = new RainLayer();
@@ -488,6 +497,16 @@ void CompositeRenderer::ConfigureFog(bool isNight) {
         skyLayer->SetParamFloat(PARAM_MOON_INTENSITY, 0.1f);
     }
     AddLayer(skyLayer);
+    
+    CloudLayer *cloudLayer = new CloudLayer();
+    cloudLayer->SetParamInt(PARAM_TIME_OF_DAY, isNight ? 1 : 0);
+    cloudLayer->SetParamFloat(PARAM_CLOUD_COVERAGE, 0.9f);
+    cloudLayer->SetParamFloat(PARAM_CLOUD_DARKNESS, isNight ? 0.8f : 0.7f);
+    cloudLayer->SetParamFloat(PARAM_CLOUD_LIGHTNESS, isNight ? 0.1f : 0.2f);
+    cloudLayer->SetParamFloat(PARAM_CLOUD_SPEED, 0.05f);
+    cloudLayer->SetParamFloat(PARAM_CLOUD_SCALE, 0.7f);
+    cloudLayer->SetParamFloat(PARAM_CLOUD_ALPHA, 28.0f);
+    AddLayer(cloudLayer);
     
     if (isNight) {
         StarLayer *starLayer = new StarLayer();
@@ -565,7 +584,6 @@ void CompositeRenderer::ConfigureSnow(int level, bool isNight) {
     cloudLayer->SetParamFloat(PARAM_CLOUD_SPEED, speed[level]);
     cloudLayer->SetParamFloat(PARAM_CLOUD_SCALE, scale[level]);
     cloudLayer->SetParamFloat(PARAM_CLOUD_ALPHA, alpha[level]);
-    cloudLayer->SetParamInt(PARAM_CLOUD_MODE, 2);
     AddLayer(cloudLayer);
     
     SnowLayer *snowLayer = new SnowLayer();
@@ -622,6 +640,16 @@ void CompositeRenderer::ConfigureDust(bool isNight) {
         AddLayer(starLayer);
     }
     
+    CloudLayer *cloudLayer = new CloudLayer();
+    cloudLayer->SetParamInt(PARAM_TIME_OF_DAY, isNight ? 1 : 0);
+    cloudLayer->SetParamFloat(PARAM_CLOUD_COVERAGE, 0.7f);
+    cloudLayer->SetParamFloat(PARAM_CLOUD_DARKNESS, isNight ? 0.65f : 0.55f);
+    cloudLayer->SetParamFloat(PARAM_CLOUD_LIGHTNESS, isNight ? 0.2f : 0.4f);
+    cloudLayer->SetParamFloat(PARAM_CLOUD_SPEED, 0.1f);
+    cloudLayer->SetParamFloat(PARAM_CLOUD_SCALE, 0.8f);
+    cloudLayer->SetParamFloat(PARAM_CLOUD_ALPHA, 20.0f);
+    AddLayer(cloudLayer);
+    
     ParticleLayer *particleLayer = new ParticleLayer();
     particleLayer->SetParamInt(PARAM_PARTICLE_TYPE, 2);
     particleLayer->SetParamFloat(PARAM_PARTICLE_DENSITY, 0.4f);
@@ -657,6 +685,16 @@ void CompositeRenderer::ConfigureSand(bool isNight) {
         starLayer->SetParamFloat(PARAM_STAR_COUNT, 35.0f);
         AddLayer(starLayer);
     }
+    
+    CloudLayer *cloudLayer = new CloudLayer();
+    cloudLayer->SetParamInt(PARAM_TIME_OF_DAY, isNight ? 1 : 0);
+    cloudLayer->SetParamFloat(PARAM_CLOUD_COVERAGE, 0.8f);
+    cloudLayer->SetParamFloat(PARAM_CLOUD_DARKNESS, isNight ? 0.7f : 0.6f);
+    cloudLayer->SetParamFloat(PARAM_CLOUD_LIGHTNESS, isNight ? 0.15f : 0.35f);
+    cloudLayer->SetParamFloat(PARAM_CLOUD_SPEED, 0.15f);
+    cloudLayer->SetParamFloat(PARAM_CLOUD_SCALE, 0.75f);
+    cloudLayer->SetParamFloat(PARAM_CLOUD_ALPHA, 22.0f);
+    AddLayer(cloudLayer);
     
     ParticleLayer *particleLayer = new ParticleLayer();
     particleLayer->SetParamInt(PARAM_PARTICLE_TYPE, 3);
@@ -705,6 +743,8 @@ void CompositeRenderer::ConfigureWind(bool isNight) {
     cloudLayer->SetParamFloat(PARAM_CLOUD_DARKNESS, isNight ? 0.5f : 0.4f);
     cloudLayer->SetParamFloat(PARAM_CLOUD_LIGHTNESS, isNight ? 0.2f : 0.5f);
     cloudLayer->SetParamFloat(PARAM_CLOUD_SPEED, 0.9f);
+    cloudLayer->SetParamFloat(PARAM_CLOUD_SCALE, 0.8f);
+    cloudLayer->SetParamFloat(PARAM_CLOUD_ALPHA, 18.0f);
     AddLayer(cloudLayer);
     
     WindLayer *windLayer = new WindLayer();

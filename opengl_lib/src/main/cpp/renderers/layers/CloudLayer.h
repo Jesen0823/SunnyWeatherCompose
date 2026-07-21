@@ -73,7 +73,6 @@ private:
     GLuint m_CloudScaleLoc;             // 云层缩放
     GLuint m_CloudAlphaLoc;             // 云层透明度系数
     GLuint m_IsNightLoc;                // 夜晚模式标识
-    GLuint m_CloudModeLoc;              // 云层模式
     
     glm::mat4 m_MVPMatrix;              // MVP 矩阵
     
@@ -85,7 +84,6 @@ private:
     float m_CloudSpeed;                 // 云层移动速度（0.0~1.0）
     float m_CloudScale;                 // 云层缩放（0.5~2.0）
     float m_CloudAlpha;                 // 云层透明度系数
-    int m_CloudMode;                    // 云层模式（0=正常，1=暴雨乌云，2=雪天云层）
     
     int m_ScreenWidth;                  // 屏幕宽度
     int m_ScreenHeight;                 // 屏幕高度
