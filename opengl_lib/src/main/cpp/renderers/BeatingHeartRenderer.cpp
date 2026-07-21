@@ -1,6 +1,7 @@
 #include <gtc/matrix_transform.hpp>
 #include "BeatingHeartRenderer.h"
 #include "../util/GLUtils.h"
+#include "../util/ShaderLoader.h"
 
 BeatingHeartRenderer::BeatingHeartRenderer() {
     m_SamplerLoc = GL_NONE;
@@ -32,50 +33,26 @@ bool BeatingHeartRenderer::Init() {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glBindTexture(GL_TEXTURE_2D, GL_NONE);
 
-    char vShaderStr[] =
-            "#version 300 es                                \n"
-            "layout(location = 0) in vec4 a_position;       \n"
-            "uniform mat4 u_MVPMatrix;                      \n"
-            "void main(){                                   \n"
-            "    gl_Position = u_MVPMatrix * a_position;    \n"
-            "}";
+    std::string vShaderStr = ShaderLoader::LoadShaderFromAssets("shaders/beating_heart_renderer_v.glsl");
+    std::string fShaderStr = ShaderLoader::LoadShaderFromAssets("shaders/beating_heart_renderer_f.glsl");
 
-    char fShaderStr[] =
-            "#version 300 es                                                                 \n"
-            "precision highp float;                                                          \n"
-            "layout(location = 0) out vec4 outColor;                                         \n"
-            "uniform float u_time;                                                           \n"
-            "uniform vec2 u_screenSize;                                                      \n"
-            "void main(){                                                                    \n"
-            "    vec2 fragCoord = gl_FragCoord.xy;                                           \n"
-            "    vec2 p = (2.0*fragCoord-u_screenSize.xy)/min(u_screenSize.y,u_screenSize.x);\n"
-            "    vec2 uv = fragCoord / u_screenSize;                                         \n"
-            "    vec3 bcol = vec3(1.0,0.8,0.8)*(1.0-0.38*length(p));                         \n"
-            "    float tt = u_time;                                                          \n"
-            "    float ss = pow(tt,.2)*0.5 + 0.5;                                            \n"
-            "    ss = 1.0 + ss*0.5*sin(tt*6.2831*3.0 + p.y*0.5)*exp(-tt*4.0);                \n"
-            "    p *= vec2(0.5,1.5) + ss*vec2(0.5,-0.5);                                     \n"
-            "    p.y -= 0.25;                                                                \n"
-            "    float a = atan(p.x,p.y)/3.141592653;                                        \n"
-            "    float r = length(p);                                                        \n"
-            "    float h = abs(a);                                                           \n"
-            "    float d = (13.0*h - 22.0*h*h + 10.0*h*h*h)/(6.0-5.0*h);                     \n"
-            "    float s = 0.75 + 0.75*p.x;                                                  \n"
-            "    s *= 1.0-0.4*r;                                                             \n"
-            "    s = 0.3 + 0.7*s;                                                            \n"
-            "    s *= 0.5+0.5*pow( 1.0-clamp(r/d, 0.0, 1.0 ), 0.1 );                         \n"
-            "    vec3 hcol = vec3(1.0,0.5*r,0.3)*s;                                          \n"
-            "    vec3 col = mix( bcol, hcol, smoothstep( -0.06, 0.06, d-r) );                \n"
-            "    outColor = vec4(col,1.0);                                                   \n"
-            "}";
+    if (vShaderStr.empty()) {
+        LOGCATE("BeatingHeartRenderer::Init: failed to load vertex shader");
+        return false;
+    }
+    if (fShaderStr.empty()) {
+        LOGCATE("BeatingHeartRenderer::Init: failed to load fragment shader");
+        return false;
+    }
 
-    m_ProgramObj = GLUtils::CreateProgram(vShaderStr, fShaderStr, m_VertexShader, m_FragmentShader);
+    m_ProgramObj = GLUtils::CreateProgram(vShaderStr.c_str(), fShaderStr.c_str(), m_VertexShader, m_FragmentShader);
     if (m_ProgramObj) {
         m_MVPMatLoc = glGetUniformLocation(m_ProgramObj, "u_MVPMatrix");
         m_SizeLoc = glGetUniformLocation(m_ProgramObj, "u_screenSize");
         m_TimeLoc = glGetUniformLocation(m_ProgramObj, "u_time");
     } else {
         LOGCATE("BeatingHeartRenderer::Init create program fail");
+        return false;
     }
 
     GLfloat verticesCoords[] = {

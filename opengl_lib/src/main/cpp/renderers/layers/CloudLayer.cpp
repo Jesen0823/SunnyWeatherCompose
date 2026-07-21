@@ -1,6 +1,7 @@
 #include "CloudLayer.h"
 #include "../../util/GLUtils.h"
 #include "../../util/LogUtil.h"
+#include "../../util/ShaderLoader.h"
 #include "gtc/matrix_transform.hpp"
 
 CloudLayer::CloudLayer() 
@@ -39,116 +40,19 @@ bool CloudLayer::Init() {
         return true;
     }
 
-    // 顶点着色器
-    char vShaderStr[] =
-            "#version 300 es                                       \n"
-            "layout(location = 0) in vec4 a_position;              \n"
-            "uniform mat4 u_MVPMatrix;                             \n"
-            "void main(){                                          \n"
-            "    gl_Position = u_MVPMatrix * a_position;           \n"
-            "}";
+    std::string vShaderStr = ShaderLoader::LoadShaderFromAssets("shaders/cloud_layer_v.glsl");
+    std::string fShaderStr = ShaderLoader::LoadShaderFromAssets("shaders/cloud_layer_f.glsl");
 
-    // 片段着色器：程序化云朵效果（参考 CloudRenderer.cpp 的简洁实现，透明叠加，背景由 SkyBackgroundLayer 提供）
-    char fShaderStr[] =
-            "#version 300 es                                                          \n"
-            "precision highp float;                                                   \n"
-            "layout(location = 0) out vec4 outColor;                                  \n"
-            "uniform float u_time;                                                    \n"
-            "uniform vec2 u_screenSize;                                               \n"
-            "uniform float u_cloudCoverage;                                           \n"
-            "uniform float u_cloudDarkness;                                           \n"
-            "uniform float u_cloudLightness;                                          \n"
-            "uniform float u_cloudSpeed;                                              \n"
-            "uniform float u_cloudScale;                                              \n"
-            "uniform float u_cloudAlpha;                                              \n"
-            "uniform int u_isNight;                                                   \n"
-            "const mat2 m = mat2( 1.6,  1.2, -1.2,  1.6 );                            \n"
-            "vec2 hash( vec2 p ) {                                                    \n"
-            "    p = vec2(dot(p,vec2(127.1,311.7)), dot(p,vec2(269.5,183.3)));        \n"
-            "    return -1.0 + 2.0*fract(sin(p)*43758.5453123);                       \n"
-            "}                                                                        \n"
-            "float noise( in vec2 p ) {                                               \n"
-            "    const float K1 = 0.366025404;                                         \n"
-            "    const float K2 = 0.211324865;                                         \n"
-            "    vec2 i = floor(p + (p.x+p.y)*K1);                                    \n"
-            "    vec2 a = p - i + (i.x+i.y)*K2;                                       \n"
-            "    vec2 o = (a.x>a.y) ? vec2(1.0,0.0) : vec2(0.0,1.0);                 \n"
-            "    vec2 b = a - o + K2;                                                 \n"
-            "    vec2 c = a - 1.0 + 2.0*K2;                                           \n"
-            "    vec3 h = max(0.5-vec3(dot(a,a), dot(b,b), dot(c,c) ), 0.0 );         \n"
-            "    vec3 n = h*h*h*h*vec3( dot(a,hash(i+0.0)), dot(b,hash(i+o)), dot(c,hash(i+1.0)));\n"
-            "    return dot(n, vec3(70.0));                                           \n"
-            "}                                                                        \n"
-            "float fbm(vec2 n) {                                                      \n"
-            "    float total = 0.0, amplitude = 0.1;                                  \n"
-            "    for (int i = 0; i < 7; i++) {                                        \n"
-            "        total += noise(n) * amplitude;                                   \n"
-            "        n = m * n;                                                       \n"
-            "        amplitude *= 0.4;                                                \n"
-            "    }                                                                    \n"
-            "    return total;                                                        \n"
-            "}                                                                        \n"
-            "void main() {                                                            \n"
-            "    vec2 fragCoord = gl_FragCoord.xy;                                    \n"
-            "    vec2 p = fragCoord.xy / u_screenSize.xy;                             \n"
-            "    vec2 uv = p*vec2(u_screenSize.x/u_screenSize.y,1.0);                 \n"
-            "    float time = u_time * u_cloudSpeed;                                  \n"
-            "    float q = fbm(uv * u_cloudScale * 0.5);                              \n"
-            "    float r = 0.0;                                                       \n"
-            "    uv *= u_cloudScale;                                                  \n"
-            "    uv -= q - time;                                                      \n"
-            "    float weight = 0.8;                                                  \n"
-            "    for (int i=0; i<8; i++){                                             \n"
-            "        r += abs(weight*noise( uv ));                                    \n"
-            "        uv = m*uv + time;                                                \n"
-            "        weight *= 0.7;                                                   \n"
-            "    }                                                                    \n"
-            "    float f = 0.0;                                                       \n"
-            "    uv = p*vec2(u_screenSize.x/u_screenSize.y,1.0);                      \n"
-            "    uv *= u_cloudScale;                                                  \n"
-            "    uv -= q - time;                                                      \n"
-            "    weight = 0.7;                                                        \n"
-            "    for (int i=0; i<8; i++){                                             \n"
-            "        f += weight*noise( uv );                                         \n"
-            "        uv = m*uv + time;                                                \n"
-            "        weight *= 0.6;                                                   \n"
-            "    }                                                                    \n"
-            "    f *= r + f;                                                          \n"
-            "    float c = 0.0;                                                       \n"
-            "    time = u_time * u_cloudSpeed * 2.0;                                  \n"
-            "    uv = p*vec2(u_screenSize.x/u_screenSize.y,1.0);                      \n"
-            "    uv *= u_cloudScale*2.0;                                              \n"
-            "    uv -= q - time;                                                      \n"
-            "    weight = 0.4;                                                        \n"
-            "    for (int i=0; i<7; i++){                                             \n"
-            "        c += weight*noise(uv);                                           \n"
-            "        uv = m*uv + time;                                                \n"
-            "        weight *= 0.6;                                                   \n"
-            "    }                                                                    \n"
-            "    float c1 = 0.0;                                                      \n"
-            "    time = u_time * u_cloudSpeed * 3.0;                                  \n"
-            "    uv = p*vec2(u_screenSize.x/u_screenSize.y,1.0);                      \n"
-            "    uv *= u_cloudScale*3.0;                                              \n"
-            "    uv -= q - time;                                                      \n"
-            "    weight = 0.4;                                                        \n"
-            "    for (int i=0; i<7; i++){                                             \n"
-            "        c1 += abs(weight*noise( uv ));                                   \n"
-            "        uv = m*uv + time;                                                \n"
-            "        weight *= 0.6;                                                   \n"
-            "    }                                                                    \n"
-            "    c += c1;                                                             \n"
-            "    vec3 cloudColour = mix(vec3(0.88, 0.90, 0.96), vec3(1.0, 1.0, 1.0), clamp(c * 1.5, 0.0, 1.0));\n"
+    if (vShaderStr.empty()) {
+        LOGCATE("CloudLayer::Init: failed to load vertex shader");
+        return false;
+    }
+    if (fShaderStr.empty()) {
+        LOGCATE("CloudLayer::Init: failed to load fragment shader");
+        return false;
+    }
 
-            "    f = u_cloudCoverage + u_cloudAlpha*f*r;                              \n"
-            "    float cloudAlpha = clamp(f + c, 0.0, 1.0);                           \n"
-            "    float nightAlpha = u_isNight == 1 ? 0.8 : 1.0;                       \n"
-            "    cloudAlpha *= nightAlpha;                                            \n"
-            "    vec3 nightTint = mix(vec3(0.15, 0.18, 0.25), vec3(0.35, 0.38, 0.48), c);\n"
-            "    cloudColour = mix(cloudColour, nightTint, float(u_isNight));         \n"
-            "    outColor = vec4(cloudColour, cloudAlpha);                            \n"
-            "}                                                                        \n";
-
-    m_ProgramObj = GLUtils::CreateProgram(vShaderStr, fShaderStr, m_VertexShader, m_FragmentShader);
+    m_ProgramObj = GLUtils::CreateProgram(vShaderStr.c_str(), fShaderStr.c_str(), m_VertexShader, m_FragmentShader);
     if (!m_ProgramObj) {
         LOGCATE("CloudLayer::Init create program fail");
         return false;

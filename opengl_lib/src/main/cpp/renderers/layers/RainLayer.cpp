@@ -1,5 +1,6 @@
 #include "RainLayer.h"
 #include "../../util/LogUtil.h"
+#include "../../util/ShaderLoader.h"
 #include <cmath>
 #include <algorithm>
 #include <unordered_map>
@@ -17,89 +18,6 @@
 static float randomRange(float min, float max) {
     return min + (float)rand() / RAND_MAX * (max - min);
 }
-
-static const char *distortVShader =
-        "#version 300 es\n"
-        "precision mediump float;\n"
-        "layout(location = 0) in vec4 aPosition;\n"
-        "layout(location = 1) in vec2 aTexCoord;\n"
-        "uniform mat4 uModel;\n"
-        "uniform mat4 uProjection;\n"
-        "out vec2 vTexCoord;\n"
-        "void main() {\n"
-        "    gl_Position = uProjection * uModel * aPosition;\n"
-        "    vTexCoord = aTexCoord;\n"
-        "}\n";
-
-static const char *distortFShader =
-        "#version 300 es\n"
-        "precision mediump float;\n"
-        "in vec2 vTexCoord;\n"
-        "layout(location = 0) out vec4 fragColor;\n"
-        "void main() {\n"
-        "    vec2 centered = vTexCoord - vec2(0.5);\n"
-        "    float dist = length(centered);\n"
-        "    if (dist > 0.5) discard;\n"
-        "    // alpha mask：中心1，在 0.4-0.5 范围内快速衰减到0（锐利轮廓）\n"
-        "    float alpha = 1.0 - smoothstep(0.4, 0.5, dist);\n"
-        "    // 法线方向：从中心向外（边缘处水平）\n"
-        "    vec2 normalDir = (dist > 0.001) ? normalize(centered) : vec2(0.0);\n"
-        "    // 法线长度：中心0（垂直观察），边缘1（水平观察）\n"
-        "    float normalLen = dist / 0.5;\n"
-        "    vec2 normal = normalDir * normalLen;\n"
-        "    // 存储法线（0.5,0.5表示垂直，1.0/0.0表示水平方向）\n"
-        "    fragColor = vec4(normal * 0.5 + 0.5, 0.0, alpha);\n"
-        "}\n";
-
-static const char *refractVShader =
-        "#version 300 es\n"
-        "precision mediump float;\n"
-        "layout(location = 0) in vec4 aPosition;\n"
-        "layout(location = 1) in vec2 aTexCoord;\n"
-        "out vec2 vTexCoord;\n"
-        "void main() {\n"
-        "    gl_Position = aPosition;\n"
-        "    vTexCoord = aTexCoord;\n"
-        "}\n";
-
-static const char *refractFShader =
-        "#version 300 es\n"
-        "precision mediump float;\n"
-        "in vec2 vTexCoord;\n"
-        "layout(location = 0) out vec4 fragColor;\n"
-        "uniform sampler2D uBackground;\n"
-        "uniform sampler2D uDistort;\n"
-        "uniform float uRefraction;\n"
-        "uniform float uTime;\n"
-        "void main() {\n"
-        "    vec4 distort = texture(uDistort, vTexCoord);\n"
-        "    float mask = distort.a;\n"
-        "    if (mask < 0.01) {\n"
-        "        fragColor = texture(uBackground, vTexCoord);\n"
-        "        return;\n"
-        "    }\n"
-        "    vec2 normal = distort.xy * 2.0 - 1.0;\n"
-        "    float normalLen = length(normal);\n"
-        "    vec2 normalDir = (normalLen > 0.001) ? normalize(normal) : vec2(0.0);\n"
-        "    // 折射强度由 normalLen 控制：中心弱（透镜效应），边缘强（扭曲）\n"
-        "    float refractionScale = uRefraction * normalLen * 0.4;\n"
-        "    vec2 refractDir = -normalDir * refractionScale;\n"
-        "    // 色散：RGB通道使用不同折射偏移\n"
-        "    vec3 colorR = texture(uBackground, vTexCoord + refractDir * 1.15).rgb;\n"
-        "    vec3 colorG = texture(uBackground, vTexCoord + refractDir * 1.0).rgb;\n"
-        "    vec3 colorB = texture(uBackground, vTexCoord + refractDir * 0.85).rgb;\n"
-        "    vec3 chromaticColor = vec3(colorR.r, colorG.g, colorB.b);\n"
-        "    // 菲涅尔效应：中心透明（normalLen=0 -> fresnel=0），边缘反射强（normalLen=1 -> fresnel=1）\n"
-        "    float fresnel = pow(normalLen, 3.0);\n"
-        "    chromaticColor = mix(chromaticColor, vec3(0.85, 0.88, 0.92), fresnel * 0.6);\n"
-        "    // 边缘高光：在 normalLen 接近1时最强（雨滴外轮廓），限制最大值避免过曝\n"
-        "    float edgeHighlight = smoothstep(0.7, 0.95, normalLen) * mask;\n"
-        "    chromaticColor = mix(chromaticColor, vec3(0.95, 0.96, 0.98), edgeHighlight * 0.6);\n"
-        "    // 中心透镜效应：中心略亮（光线聚焦），但不超过背景太多\n"
-        "    float centerLens = (1.0 - normalLen) * mask * 0.1;\n"
-        "    chromaticColor += vec3(centerLens);\n"
-        "    fragColor = vec4(chromaticColor, 1.0);\n"
-        "}\n";
 
 static GLuint compileShader(GLenum shaderType, const char *source) {
     GLuint shader = glCreateShader(shaderType);
@@ -190,13 +108,35 @@ RainLayer::~RainLayer() {}
 bool RainLayer::Init() {
     LOGCATI("RainLayer::Init: called");
     
-    m_DistortProgram = createProgram(distortVShader, distortFShader);
+    std::string distortVShaderStr = ShaderLoader::LoadShaderFromAssets("shaders/rain_layer_distort_v.glsl");
+    std::string distortFShaderStr = ShaderLoader::LoadShaderFromAssets("shaders/rain_layer_distort_f.glsl");
+    std::string refractVShaderStr = ShaderLoader::LoadShaderFromAssets("shaders/rain_layer_refract_v.glsl");
+    std::string refractFShaderStr = ShaderLoader::LoadShaderFromAssets("shaders/rain_layer_refract_f.glsl");
+
+    if (distortVShaderStr.empty()) {
+        LOGCATD("RainLayer::Init: failed to load distort vertex shader");
+        return false;
+    }
+    if (distortFShaderStr.empty()) {
+        LOGCATD("RainLayer::Init: failed to load distort fragment shader");
+        return false;
+    }
+    if (refractVShaderStr.empty()) {
+        LOGCATD("RainLayer::Init: failed to load refract vertex shader");
+        return false;
+    }
+    if (refractFShaderStr.empty()) {
+        LOGCATD("RainLayer::Init: failed to load refract fragment shader");
+        return false;
+    }
+    
+    m_DistortProgram = createProgram(distortVShaderStr.c_str(), distortFShaderStr.c_str());
     if (!m_DistortProgram) {
         LOGCATD("RainLayer::Init: distort program creation failed");
         return false;
     }
     
-    m_ProgramObj = createProgram(refractVShader, refractFShader);
+    m_ProgramObj = createProgram(refractVShaderStr.c_str(), refractFShaderStr.c_str());
     if (!m_ProgramObj) {
         LOGCATD("RainLayer::Init: refract program creation failed");
         glDeleteProgram(m_DistortProgram);

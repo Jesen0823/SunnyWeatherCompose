@@ -1,6 +1,7 @@
 #include "StarLayer.h"
 #include "../../util/GLUtils.h"
 #include "../../util/LogUtil.h"
+#include "../../util/ShaderLoader.h"
 
 static const char *TAG = "StarLayer";
 
@@ -78,47 +79,19 @@ bool StarLayer::Init() {
 
     LOGCATI("StarLayer::Init: called, m_ProgramObj=%d, m_StarCount=%d", m_ProgramObj, m_StarCount);
 
-    const char *vShaderStr =
-        "#version 300 es                          \n"
-        "precision highp float;                   \n"
-        "layout(location = 0) in vec2 a_position; \n"
-        "layout(location = 1) in vec3 a_color;    \n"
-        "layout(location = 2) in float a_size;    \n"
-        "layout(location = 3) in float a_twinkleOffset;\n"
-        "out vec3 v_color;                        \n"
-        "out float v_twinkleOffset;               \n"
-        "uniform vec2 u_screenSize;               \n"
-        "void main() {                            \n"
-        "    vec2 clipPos = a_position * 2.0 - 1.0;\n"
-        "    clipPos.x *= u_screenSize.x / u_screenSize.y;\n"
-        "    gl_Position = vec4(clipPos, 0.0, 1.0);\n"
-        "    gl_PointSize = a_size;               \n"
-        "    v_color = a_color;                   \n"
-        "    v_twinkleOffset = a_twinkleOffset;   \n"
-        "}";
+    std::string vShaderStr = ShaderLoader::LoadShaderFromAssets("shaders/star_layer_v.glsl");
+    std::string fShaderStr = ShaderLoader::LoadShaderFromAssets("shaders/star_layer_f.glsl");
 
-    const char *fShaderStr =
-        "#version 300 es                          \n"
-        "precision highp float;                   \n"
-        "in vec3 v_color;                         \n"
-        "in float v_twinkleOffset;                \n"
-        "out vec4 outColor;                       \n"
-        "uniform float u_time;                    \n"
-        "void main() {                            \n"
-        "    vec2 coord = gl_PointCoord - vec2(0.5);\n"
-        "    float dist = length(coord);          \n"
-        "    if (dist > 0.5) discard;             \n"
-        "    float twinkle = sin(u_time * 2.0 + v_twinkleOffset) * 0.3 + sin(u_time * 5.0 + v_twinkleOffset * 1.7) * 0.2 + 0.5;\n"
-        "    float core = 1.0 - smoothstep(0.0, 0.25, dist);\n"
-        "    float glow = 1.0 - smoothstep(0.0, 0.5, dist);\n"
-        "    float spikeX = exp(-abs(coord.x) * 12.0) * (1.0 - smoothstep(0.0, 0.45, abs(coord.y)));\n"
-        "    float spikeY = exp(-abs(coord.y) * 12.0) * (1.0 - smoothstep(0.0, 0.45, abs(coord.x)));\n"
-        "    float spikes = (spikeX + spikeY) * 0.35;\n"
-        "    float finalAlpha = core * twinkle + glow * twinkle * 0.4 + spikes * twinkle;\n"
-        "    outColor = vec4(v_color * twinkle, finalAlpha);\n"
-        "}";
+    if (vShaderStr.empty()) {
+        LOGCATE("StarLayer::Init: failed to load vertex shader");
+        return false;
+    }
+    if (fShaderStr.empty()) {
+        LOGCATE("StarLayer::Init: failed to load fragment shader");
+        return false;
+    }
 
-    m_ProgramObj = GLUtils::CreateProgram(vShaderStr, fShaderStr, m_VertexShader, m_FragmentShader);
+    m_ProgramObj = GLUtils::CreateProgram(vShaderStr.c_str(), fShaderStr.c_str(), m_VertexShader, m_FragmentShader);
     if (m_ProgramObj == 0) {
         LOGCATI("StarLayer::Init create program fail");
         return false;

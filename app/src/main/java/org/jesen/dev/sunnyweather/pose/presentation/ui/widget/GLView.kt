@@ -38,6 +38,7 @@ fun GLView(
     AndroidView(
         factory = { ctx ->
             val glRender = MineGLRender()
+            glRender.setContext(ctx)
             glRender.init()
 
             val view = MineGLSurfaceView(ctx, glRender)

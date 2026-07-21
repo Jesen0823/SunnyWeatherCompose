@@ -1,5 +1,6 @@
 package com.jesen.dev.gllib
 
+import android.content.Context
 import android.opengl.GLSurfaceView
 import android.util.Log
 import javax.microedition.khronos.egl.EGLConfig
@@ -55,6 +56,11 @@ class MineGLRender : GLSurfaceView.Renderer {
 
     fun setImageData(format: Int, width: Int, height: Int, bytes: ByteArray) {
         nativeRender.native_SetImageData(format, width, height, bytes)
+    }
+
+    fun setContext(context: Context) {
+        Log.d(TAG, "setContext() called, setting AssetManager")
+        nativeRender.native_SetAssetManager(context.assets)
     }
 
     fun init() {

@@ -35,7 +35,9 @@ fun GLEffectView(
             Log.d(TAG, "factory: creating GLEffectView, skycon = [$skycon], renderMode = [$renderMode]")
             
             val render = MineGLRender()
-            Log.d(TAG, "factory: MineGLRender created, calling init()")
+            Log.d(TAG, "factory: MineGLRender created, calling setContext()")
+            render.setContext(ctx)
+            Log.d(TAG, "factory: setContext() completed, calling init()")
             render.init()
 
             lastSkycon = skycon

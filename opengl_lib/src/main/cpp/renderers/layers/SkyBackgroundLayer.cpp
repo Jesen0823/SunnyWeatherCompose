@@ -1,6 +1,7 @@
 #include "SkyBackgroundLayer.h"
 #include "../../util/GLUtils.h"
 #include "../../util/LogUtil.h"
+#include "../../util/ShaderLoader.h"
 #include "gtc/matrix_transform.hpp"
 
 SkyBackgroundLayer::SkyBackgroundLayer() 
@@ -37,116 +38,19 @@ bool SkyBackgroundLayer::Init() {
         return true;
     }
 
-    // 顶点着色器
-    char vShaderStr[] =
-            "#version 300 es                                       \n"
-            "layout(location = 0) in vec4 a_position;              \n"
-            "uniform mat4 u_MVPMatrix;                             \n"
-            "void main(){                                          \n"
-            "    gl_Position = u_MVPMatrix * a_position;           \n"
-            "}";
+    std::string vShaderStr = ShaderLoader::LoadShaderFromAssets("shaders/sky_background_layer_v.glsl");
+    std::string fShaderStr = ShaderLoader::LoadShaderFromAssets("shaders/sky_background_layer_f.glsl");
 
-    // ====== 完整版本（已修复）======
-    // 修复内容：将 hash 函数返回类型从 float 改为 vec2
-    // 原问题：sin(p) 返回 vec2，导致整个表达式返回 vec2，但函数声明返回 float
-    // 影响：dot(a, hash(i)) 中 dot(vec2, float) 类型不匹配，编译失败
-    // ========================================
-    char fShaderStr[] =
-            "#version 300 es                                                          \n"
-            "precision highp float;                                                   \n"
-            "layout(location = 0) out vec4 outColor;                                  \n"
-            "uniform float u_time;                                                    \n"
-            "uniform vec2 u_screenSize;                                               \n"
-            "uniform int u_timeOfDay;                                                 \n"
-            "uniform vec3 u_skyColorTop;                                              \n"
-            "uniform vec3 u_skyColorBottom;                                           \n"
-            "uniform float u_sunIntensity;                                             \n"
-            "uniform float u_moonIntensity;                                            \n"
-            "uniform bool u_sunVisible;                                                \n"
-            "uniform int u_skyMode;                                                    \n"
-            "                                                                         \n"
-            "void main() {                                                             \n"
-            "    vec2 p = gl_FragCoord.xy / u_screenSize.xy;                          \n"
-            "    vec3 skyColor = mix(u_skyColorBottom, u_skyColorTop, p.y);            \n"
-            "    vec3 result = skyColor;                                               \n"
-            "    if (u_skyMode == 1) {                                                 \n"
-            "        result = skyColor * 0.85;                                         \n"
-            "    } else if (u_skyMode == 2) {                                          \n"
-            "        result = skyColor * 0.95 + vec3(0.02, 0.02, 0.05);                \n"
-            "    } else if (u_skyMode == 3) {                                          \n"
-            "        result = skyColor + vec3(0.05, 0.03, 0.0);                        \n"
-            "    }                                                                     \n"
-            "    if (u_timeOfDay == 0 && u_sunVisible) {                               \n"
-            "        vec2 sunPos = vec2(0.70, 0.80);                                   \n"
-            "        float dist = distance(p, sunPos);                                  \n"
-            "        float angle = atan(p.y - sunPos.y, p.x - sunPos.x);                \n"
-            "                                                                         \n"
-            "        float sunCore = exp(-dist * 80.0);                                \n"
-            "        float sunInnerGlow = exp(-dist * 12.0);                           \n"
-            "        float sunOuterGlow = exp(-dist * 4.0);                            \n"
-            "                                                                         \n"
-            "        vec3 sunCoreColor = vec3(1.0, 1.0, 0.98);                        \n"
-            "        vec3 sunInnerColor = vec3(1.0, 0.98, 0.92);                      \n"
-            "        vec3 sunOuterColor = vec3(1.0, 0.92, 0.75);                      \n"
-            "                                                                         \n"
-            "        float coreBlend = smoothstep(0.0, 0.025, dist);                  \n"
-            "        result = mix(sunCoreColor, result, coreBlend);                    \n"
-            "                                                                         \n"
-            "        result = result + sunInnerColor * sunInnerGlow * 0.5;            \n"
-            "        result = result + sunOuterColor * sunOuterGlow * 0.35;           \n"
-            "                                                                         \n"
-            "        float rayPattern = sin(angle * 6.0 + u_time * 0.2) * 0.3 + 0.7;  \n"
-            "        rayPattern *= sin(angle * 3.0) * 0.2 + 0.8;                      \n"
-            "        float sunRays = exp(-dist * 2.5);                                \n"
-            "        vec3 sunRayColor = vec3(1.0, 0.95, 0.85);                       \n"
-            "        result = result + sunRayColor * sunRays * rayPattern * 0.12;     \n"
-            "    } else if (u_timeOfDay == 1) {                                        \n"
-            "        vec2 moonPos = vec2(0.25, 0.8);                                   \n"
-            "        float moonDist = distance(p, moonPos);                            \n"
-            "        float moonGlow = 1.0 - smoothstep(0.0, 0.50, moonDist);           \n"
-            "        float moonCore = 1.0 - smoothstep(0.0, 0.06, moonDist);           \n"
-            "        vec3 moonColor = vec3(0.95, 0.96, 1.0) * u_moonIntensity;         \n"
-            "        result = result + moonColor * moonGlow * 0.22;                    \n"
-            "        result = result + vec3(1.0, 1.0, 1.0) * moonCore * 0.6;           \n"
-            "    }                                                                    \n"
-            "    outColor = vec4(result, 1.0);                                         \n"
-            "}";
+    if (vShaderStr.empty()) {
+        LOGCATE("SkyBackgroundLayer::Init: failed to load vertex shader");
+        return false;
+    }
+    if (fShaderStr.empty()) {
+        LOGCATE("SkyBackgroundLayer::Init: failed to load fragment shader");
+        return false;
+    }
 
-    /* ====== 简化版（调试用）======
-    // 功能：仅绘制蓝天渐变 + 太阳效果，无星星和月亮
-    // 使用场景：验证着色器基础架构是否正常工作
-    // ========================================
-    char fShaderStr[] =
-            "#version 300 es                                                          \n"
-            "precision highp float;                                                   \n"
-            "layout(location = 0) out vec4 outColor;                                  \n"
-            "uniform float u_time;                                                    \n"
-            "uniform vec2 u_screenSize;                                               \n"
-            "uniform int u_timeOfDay;                                                 \n"
-            "uniform vec3 u_skyColorTop;                                              \n"
-            "uniform vec3 u_skyColorBottom;                                           \n"
-            "uniform float u_sunIntensity;                                             \n"
-            "uniform float u_moonIntensity;                                            \n"
-            "uniform float u_starDensity;                                              \n"
-            "                                                                         \n"
-            "void main() {                                                             \n"
-            "    vec2 p = gl_FragCoord.xy / u_screenSize.xy;                          \n"
-            "    vec3 skyColor = mix(u_skyColorBottom, u_skyColorTop, p.y);            \n"
-            "    vec3 result = skyColor;                                               \n"
-            "    if (u_timeOfDay == 0) {                                               \n"
-            "        vec2 sunPos = vec2(0.75, 0.85);                                   \n"
-            "        float dist = distance(p, sunPos);                                  \n"
-            "        float sunGlow = 1.0 - smoothstep(0.0, 0.5, dist);                 \n"
-            "        float sunCore = 1.0 - smoothstep(0.0, 0.12, dist);                \n"
-            "        vec3 sunColor = vec3(1.0, 0.9, 0.6) * u_sunIntensity;            \n"
-            "        result = result + sunColor * sunGlow * 0.4;                        \n"
-            "        result = result + vec3(1.0, 1.0, 0.9) * sunCore * 0.6;            \n"
-            "    }                                                                    \n"
-            "    outColor = vec4(result, 1.0);                                         \n"
-            "}";
-    */
-
-    m_ProgramObj = GLUtils::CreateProgram(vShaderStr, fShaderStr, m_VertexShader, m_FragmentShader);
+    m_ProgramObj = GLUtils::CreateProgram(vShaderStr.c_str(), fShaderStr.c_str(), m_VertexShader, m_FragmentShader);
     if (!m_ProgramObj) {
         LOGCATE("SkyBackgroundLayer::Init create program fail");
         return false;

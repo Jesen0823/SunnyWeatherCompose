@@ -1,6 +1,7 @@
 #include <gtc/matrix_transform.hpp>
 #include "BezierCurveRenderer.h"
 #include "../util/GLUtils.h"
+#include "../util/ShaderLoader.h"
 
 #define POINTS_NUM                  256
 #define POINTS_PRE_TRIANGLES         3
@@ -37,61 +38,23 @@ bool BezierCurveRenderer::Init() {
         m_pCoordSystemRenderer->Init();
     }
 
-    char vShaderStr[] =
-            "#version 300 es                                                                 \n"
-            "layout(location = 0) in float a_tData;                                          \n"
-            "uniform vec4 u_StartEndPoints;                                                  \n"
-            "uniform vec4 u_ControlPoints;                                                   \n"
-            "uniform mat4 u_MVPMatrix;                                                       \n"
-            "uniform float u_Offset;                                                         \n"
-            "vec2 bezier3(in vec2 p0, in vec2 p1, in vec2 p2, in vec2 p3, in float t){       \n"
-            "    float tt = (1.0 - t) * (1.0 -t);                                            \n"
-            "    return tt * (1.0 -t) *p0 + 3.0 * t * tt * p1 + 3.0 * t *t *(1.0 -t) *p2 "
-            "           + t *t *t *p3;                                                       \n"
-            "}                                                                               \n"
-            "vec2 bezier3_(in vec2 p0, in vec2 p1, in vec2 p2, in vec2 p3, in float t){      \n"
-            "    vec2 q0 = mix(p0, p1, t);                                                   \n"
-            "    vec2 q1 = mix(p1, p2, t);                                                   \n"
-            "    vec2 q2 = mix(p2, p3, t);                                                   \n"
-            "    vec2 r0 = mix(q0, q1, t);                                                   \n"
-            "    vec2 r1 = mix(q1, q2, t);                                                   \n"
-            "    return mix(r0, r1, t);                                                      \n"
-            "}                                                                               \n"
-            "void main() {                                                                   \n"
-            "    vec4 pos;                                                                   \n"
-            "    pos.w = 1.0;                                                                \n"
-            "    vec2 p0 = u_StartEndPoints.xy;                                              \n"
-            "    vec2 p3 = u_StartEndPoints.zw;                                              \n"
-            "    vec2 p1 = u_ControlPoints.xy;                                               \n"
-            "    vec2 p2 = u_ControlPoints.zw;                                               \n"
-            "    p0.y *= u_Offset;                                                           \n"
-            "    p1.y *= u_Offset;                                                           \n"
-            "    p2.y *= u_Offset;                                                           \n"
-            "    p3.y *= u_Offset;                                                           \n"
-            "    float t = a_tData;                                                          \n"
-            "    vec2 point = bezier3_(p0, p1, p2, p3, t);                                   \n"
-            "    if (t < 0.0){                                                               \n"
-            "        pos.xy = vec2(0.0, 0.0);                                                \n"
-            "    }else{                                                                      \n"
-            "        pos.xy = point;                                                         \n"
-            "    }                                                                           \n"
-            "    gl_PointSize = 4.0;                                                         \n"
-            "    gl_Position = u_MVPMatrix * pos;                                            \n"
-            "}";
+    std::string vShaderStr = ShaderLoader::LoadShaderFromAssets("shaders/bezier_curve_renderer_v.glsl");
+    std::string fShaderStr = ShaderLoader::LoadShaderFromAssets("shaders/bezier_curve_renderer_f.glsl");
 
-    char fShaderStr[] =
-            "#version 300 es                                                                \n"
-            "precision mediump float;                                                       \n"
-            "layout(location = 0) out vec4 outColor;                                        \n"
-            "uniform vec4 u_Color;                                                          \n"
-            "void main(){                                                                   \n"
-            "    outColor = u_Color;                                                        \n"
-            "}";
+    if (vShaderStr.empty()) {
+        LOGCATE("BezierCurveRenderer::Init: failed to load vertex shader");
+        return false;
+    }
+    if (fShaderStr.empty()) {
+        LOGCATE("BezierCurveRenderer::Init: failed to load fragment shader");
+        return false;
+    }
 
-    m_ProgramObj = GLUtils::CreateProgram(vShaderStr, fShaderStr,
+    m_ProgramObj = GLUtils::CreateProgram(vShaderStr.c_str(), fShaderStr.c_str(),
                                           m_VertexShader, m_FragmentShader);
     if (!m_ProgramObj) {
         LOGCATE("BezierCurveRenderer::Init create program fail");
+        return false;
     }
     int tDataSize = POINTS_NUM * POINTS_PRE_TRIANGLES;
     float *p_tData = new float[tDataSize];

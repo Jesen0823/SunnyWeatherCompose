@@ -1,6 +1,7 @@
 #include "WindLayer.h"
 #include "../../util/GLUtils.h"
 #include "../../util/LogUtil.h"
+#include "../../util/ShaderLoader.h"
 #include "gtc/matrix_transform.hpp"
 
 WindLayer::WindLayer() 
@@ -27,77 +28,19 @@ bool WindLayer::Init() {
         return true;
     }
 
-    char vShaderStr[] =
-            "#version 300 es                                       \n"
-            "layout(location = 0) in vec4 a_position;              \n"
-            "uniform mat4 u_MVPMatrix;                             \n"
-            "void main(){                                          \n"
-            "    gl_Position = u_MVPMatrix * a_position;           \n"
-            "}";
+    std::string vShaderStr = ShaderLoader::LoadShaderFromAssets("shaders/wind_layer_v.glsl");
+    std::string fShaderStr = ShaderLoader::LoadShaderFromAssets("shaders/wind_layer_f.glsl");
 
-    char fShaderStr[] =
-            "#version 300 es                                                          \n"
-            "precision highp float;                                                   \n"
-            "layout(location = 0) out vec4 outColor;                                  \n"
-            "uniform float u_time;                                                    \n"
-            "uniform vec2 u_screenSize;                                               \n"
-            "uniform bool u_windLinesEnabled;                                         \n"
-            "uniform float u_windStrength;                                            \n"
-            "                                                                         \n"
-            "float hash(float x) {                                                     \n"
-            "    return fract(sin(x) * 43758.5453123);                                  \n"
-            "}                                                                        \n"
-            "                                                                         \n"
-            "float windLine(vec2 p, float time, float strength) {                      \n"
-            "    float lineCount = 3.0 + strength * 4.0;                              \n"
-            "    float lineSpeed = 0.3 + strength * 0.5;                              \n"
-            "    float lineWidth = 0.001 + strength * 0.0015;                          \n"
-            "    float lineLength = 0.15 + strength * 0.15;                           \n"
-            "    float slope = 0.3 + strength * 0.2;                                   \n"
-            "    float result = 0.0;                                                   \n"
-            "                                                                         \n"
-            "    for (float i = 0.0; i < lineCount; i += 1.0) {                       \n"
-            "        float baseY = 0.1 + i * 0.22;                                     \n"
-            "        float baseX = mod(time * lineSpeed + i * 0.3, 1.5) - 0.25;       \n"
-            "        float y = p.y;                                                    \n"
-            "        float x = p.x - (y - baseY) * slope;                              \n"
-            "        float distX = abs(x - baseX) / lineLength;                        \n"
-            "        float distY = abs(y - baseY) / lineWidth;                         \n"
-            "        float dist = max(distX, distY);                                   \n"
-            "        float line = smoothstep(0.0, 1.0, 1.0 - dist);                   \n"
-            "        line *= line;                                                     \n"
-            "                                                                         \n"
-            "        float gapOffset = hash(i * 123.456) * 0.5;                       \n"
-            "        float gapPos = mod(x + gapOffset, 0.12);                         \n"
-            "        float gap = smoothstep(0.05, 0.07, gapPos) *                      \n"
-            "                    smoothstep(0.12, 0.10, gapPos);                      \n"
-            "        line *= gap;                                                      \n"
-            "                                                                         \n"
-            "        float fadeY = smoothstep(0.0, 0.3, y) * smoothstep(1.0, 0.7, y);\n"
-            "        line *= fadeY;                                                    \n"
-            "                                                                         \n"
-            "        result += line;                                                   \n"
-            "    }                                                                    \n"
-            "                                                                         \n"
-            "    return result;                                                        \n"
-            "}                                                                        \n"
-            "                                                                         \n"
-            "void main() {                                                             \n"
-            "    vec2 p = gl_FragCoord.xy / u_screenSize.xy;                          \n"
-            "    vec3 result = vec3(0.0);                                             \n"
-            "    float alpha = 0.0;                                                   \n"
-            "    \n"
-            "    if (u_windLinesEnabled) {                                            \n"
-            "        float wind = windLine(p, u_time, u_windStrength);                \n"
-            "        result += vec3(0.65, 0.70, 0.75) * wind;                         \n"
-            "        alpha += wind * (0.03 + u_windStrength * 0.05);                   \n"
-            "    }                                                                    \n"
-            "    \n"
-            "    alpha = clamp(alpha, 0.0, 0.2);                                      \n"
-            "    outColor = vec4(result, alpha);                                       \n"
-            "}";
+    if (vShaderStr.empty()) {
+        LOGCATE("WindLayer::Init: failed to load vertex shader");
+        return false;
+    }
+    if (fShaderStr.empty()) {
+        LOGCATE("WindLayer::Init: failed to load fragment shader");
+        return false;
+    }
 
-    m_ProgramObj = GLUtils::CreateProgram(vShaderStr, fShaderStr, m_VertexShader, m_FragmentShader);
+    m_ProgramObj = GLUtils::CreateProgram(vShaderStr.c_str(), fShaderStr.c_str(), m_VertexShader, m_FragmentShader);
     if (!m_ProgramObj) {
         LOGCATE("WindLayer::Init create program fail");
         return false;

@@ -1,6 +1,7 @@
 #include "SnowLayer.h"
 #include "../../util/GLUtils.h"
 #include "../../util/LogUtil.h"
+#include "../../util/ShaderLoader.h"
 #include <stdlib.h>
 #include <time.h>
 
@@ -48,84 +49,19 @@ void SnowLayer::GenerateSnowflakes() {
 }
 
 bool SnowLayer::Init() {
-    const char *vShaderStr =
-        "#version 300 es                          \n"
-        "precision highp float;                   \n"
-        "layout(location = 0) in vec2 a_position; \n"
-        "layout(location = 1) in vec2 a_speed;    \n"
-        "layout(location = 2) in float a_size;    \n"
-        "layout(location = 3) in float a_swingOffset;\n"
-        "layout(location = 4) in float a_swingSpeed;\n"
-        "layout(location = 5) in float a_windOffset;\n"
-        "uniform float u_time;                    \n"
-        "uniform vec2 u_screenSize;               \n"
-        "uniform float u_snowSpeed;               \n"
-        "uniform float u_windForce;               \n"
-        "uniform float u_gustWindX;               \n"
-        "uniform float u_gustWindY;               \n"
-        "uniform float u_gustStrength;            \n"
-        "uniform float u_gustGroupSeed;           \n"
-        "uniform float u_gustGroupRatio;          \n"
-        "uniform float u_gustLocalTime;           \n"
-        "uniform float u_gustBlendFactor;         \n"
-        "uniform float u_gustDuration;            \n"
-        "float randomHash(float x, float seed) {  \n"
-        "    return fract(sin(x * 12.9898 + seed * 78.233) * 43758.5453);\n"
-        "}\n"
-        "void main() {                            \n"
-        "    vec2 pos = a_position;               \n"
-        "    float speedFactor = 0.5 + u_snowSpeed * 2.5; \n"
-        "    pos.y += u_time * a_speed.y * speedFactor * 0.25; \n"
-        "    float windBase = u_windForce * u_time * 0.18;\n"
-        "    float windSwing = u_windForce * sin(u_time * 0.5 + a_swingOffset) * 0.08;\n"
-        "    float randomPerturbX = sin(u_time * a_swingSpeed + a_swingOffset) * 0.02;\n"
-        "    float randomPerturbY = cos(u_time * a_swingSpeed * 1.2 + a_swingOffset) * 0.01;\n"
-        "    float particleHash = randomHash(a_swingOffset * 100.0, u_gustGroupSeed);\n"
-        "    float threshold = 1.0 - u_gustGroupRatio;\n"
-        "    float softWidth = 0.15;\n"
-        "    float gustParticipate = smoothstep(threshold - softWidth, threshold + softWidth, particleHash);\n"
-        "    float particleVariation = randomHash(a_swingOffset * 50.0, u_gustGroupSeed * 2.0);\n"
-        "    float individualStrength = gustParticipate * (0.5 + particleVariation * 1.0);\n"
-        "    float effectiveStrength = u_gustStrength * individualStrength;\n"
-        "    float timeProgress = u_gustLocalTime / u_gustDuration;\n"
-        "    float bellEnvelope = sin(timeProgress * 3.14159);\n"
-        "    float turbulence = sin(u_gustLocalTime * 3.0 + a_swingOffset * 10.0) * 0.5 + 0.5;\n"
-        "    float gustEffectX = u_gustWindX * effectiveStrength * bellEnvelope * turbulence * 0.12;\n"
-        "    float gustEffectY = u_gustWindY * effectiveStrength * bellEnvelope * turbulence * 0.08;\n"
-        "    pos.x += windBase + windSwing + randomPerturbX + gustEffectX;\n"
-        "    pos.y += randomPerturbY + gustEffectY;\n"
-        "    pos.x += a_windOffset * u_windForce * 0.10;\n"
-        "    pos.y = fract(pos.y + 1.25);         \n"
-        "    pos.x = fract(pos.x + 0.5);          \n"
-        "    vec2 clipPos = pos * 2.0 - 1.0;      \n"
-        "    clipPos.x *= u_screenSize.x / u_screenSize.y;\n"
-        "    gl_Position = vec4(clipPos, 0.0, 1.0);\n"
-        "    gl_PointSize = a_size * u_snowSpeed * 32.0;\n"
-        "}";
+    std::string vShaderStr = ShaderLoader::LoadShaderFromAssets("shaders/snow_layer_v.glsl");
+    std::string fShaderStr = ShaderLoader::LoadShaderFromAssets("shaders/snow_layer_f.glsl");
 
-    const char *fShaderStr =
-        "#version 300 es                          \n"
-        "precision highp float;                   \n"
-        "out vec4 outColor;                       \n"
-        "uniform float u_snowIntensity;           \n"
-        "uniform float u_snowShape;               \n"
-        "void main() {                            \n"
-        "    vec2 coord = gl_PointCoord - vec2(0.5);\n"
-        "    float dist = length(coord);          \n"
-        "    if (dist > 0.45) discard;            \n"
-        "    float alpha;\n"
-        "    if (u_snowShape < 0.5) {\n"
-        "        alpha = smoothstep(0.45, 0.0, dist);\n"
-        "    } else {\n"
-        "        float angle = atan(coord.y, coord.x);\n"
-        "        float r = 0.38 + 0.08 * cos(6.0 * angle);\n"
-        "        alpha = smoothstep(r + 0.05, r - 0.05, dist);\n"
-        "    }\n"
-        "    alpha *= u_snowIntensity;            \n"
-        "    outColor = vec4(0.85, 0.88, 0.92, alpha);\n"
-        "}";
+    if (vShaderStr.empty()) {
+        LOGCATE("SnowLayer::Init: failed to load vertex shader");
+        return false;
+    }
+    if (fShaderStr.empty()) {
+        LOGCATE("SnowLayer::Init: failed to load fragment shader");
+        return false;
+    }
 
-    m_ProgramObj = GLUtils::CreateProgram(vShaderStr, fShaderStr, m_VertexShader, m_FragmentShader);
+    m_ProgramObj = GLUtils::CreateProgram(vShaderStr.c_str(), fShaderStr.c_str(), m_VertexShader, m_FragmentShader);
     if (!m_ProgramObj) {
         LOGCATE("SnowLayer::Init: CreateProgram failed");
         return false;

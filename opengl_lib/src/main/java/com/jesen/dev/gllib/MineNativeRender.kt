@@ -22,4 +22,6 @@ class MineNativeRender {
     external fun native_OnSurfaceChanged(width: Int, height: Int)
     external fun native_OnDrawFrame()
     external fun native_SetSkycon(skycon: String)
+
+    external fun native_SetAssetManager(assetManager: android.content.res.AssetManager)
 }

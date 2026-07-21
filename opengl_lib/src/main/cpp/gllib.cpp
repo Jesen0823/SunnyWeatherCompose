@@ -1,6 +1,9 @@
 #include "util/LogUtil.h"
 #include "GLRenderContext.h"
+#include "util/ShaderLoader.h"
 #include "jni.h"
+#include <android/asset_manager.h>
+#include <android/asset_manager_jni.h>
 
 #define NATIVE_RENDER_CLASS_NAME "com/jesen/dev/gllib/MineNativeRender"
 
@@ -67,6 +70,23 @@ native_OnDrawFrame(JNIEnv *env, jobject thiz) {
 
 extern "C"
 JNIEXPORT void JNICALL
+native_SetAssetManager(JNIEnv *env, jobject thiz, jobject assetManager) {
+    LOGCATE("native_SetAssetManager: JNI bridge called");
+    if (assetManager == nullptr) {
+        LOGCATE("native_SetAssetManager: assetManager is null, returning");
+        return;
+    }
+    AAssetManager *pAssetManager = AAssetManager_fromJava(env, assetManager);
+    if (pAssetManager == nullptr) {
+        LOGCATE("native_SetAssetManager: Failed to get AAssetManager from Java");
+        return;
+    }
+    ShaderLoader::SetAssetManager(pAssetManager);
+    LOGCATI("native_SetAssetManager: completed successfully");
+}
+
+extern "C"
+JNIEXPORT void JNICALL
 native_SetSkycon(JNIEnv *env, jobject thiz, jstring skycon) {
     LOGCATE("native_SetSkycon: JNI bridge called");
     if (skycon == nullptr) {
@@ -93,7 +113,8 @@ static JNINativeMethod g_NativeMethods[] = {
         {"native_OnSurfaceCreated",      "()V",       (void *) (native_OnSurfaceCreated)},
         {"native_OnSurfaceChanged",      "(II)V",     (void *) (native_OnSurfaceChanged)},
         {"native_OnDrawFrame",           "()V",       (void *) (native_OnDrawFrame)},
-        {"native_SetSkycon",             "(Ljava/lang/String;)V", (void *) (native_SetSkycon)}
+        {"native_SetSkycon",             "(Ljava/lang/String;)V", (void *) (native_SetSkycon)},
+        {"native_SetAssetManager",       "(Landroid/content/res/AssetManager;)V", (void *) (native_SetAssetManager)}
 };
 
 static int

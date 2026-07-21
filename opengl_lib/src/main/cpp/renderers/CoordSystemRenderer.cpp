@@ -1,5 +1,6 @@
 #include "CoordSystemRenderer.h"
 #include "../util/GLUtils.h"
+#include "../util/ShaderLoader.h"
 #include <gtc/matrix_transform.hpp>
 
 CoordSystemRenderer::CoordSystemRenderer() {
@@ -30,33 +31,25 @@ bool CoordSystemRenderer::Init() {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glBindTexture(GL_TEXTURE_2D, GL_NONE);
 
-    char vShaderStr[] =
-            "#version 300 es                                \n"
-            "layout(location = 0) in vec4 a_position;       \n"
-            "layout(location = 1) in vec2 a_texCoord;       \n"
-            "uniform mat4 u_MVPMatrix;                      \n"
-            "out vec2 v_texCoord;                           \n"
-            "void main(){                                   \n"
-            "   gl_Position = u_MVPMatrix * a_position;     \n"
-            "   v_texCoord = a_texCoord;                    \n"
-            "}";
+    std::string vShaderStr = ShaderLoader::LoadShaderFromAssets("shaders/coord_system_renderer_v.glsl");
+    std::string fShaderStr = ShaderLoader::LoadShaderFromAssets("shaders/coord_system_renderer_f.glsl");
 
-    char fShaderStr[] =
-            "#version 300 es                                  \n"
-            "precision mediump float;                         \n"
-            "in vec2 v_texCoord;                              \n"
-            "layout(location = 0) out vec4 outColor;          \n"
-            "uniform sampler2D s_TextureMap;                  \n"
-            "void main(){                                     \n"
-            "   outColor = texture(s_TextureMap, v_texCoord); \n"
-            "}";
+    if (vShaderStr.empty()) {
+        LOGCATE("CoordSystemRenderer::Init: failed to load vertex shader");
+        return false;
+    }
+    if (fShaderStr.empty()) {
+        LOGCATE("CoordSystemRenderer::Init: failed to load fragment shader");
+        return false;
+    }
 
-    m_ProgramObj = GLUtils::CreateProgram(vShaderStr, fShaderStr, m_VertexShader, m_FragmentShader);
+    m_ProgramObj = GLUtils::CreateProgram(vShaderStr.c_str(), fShaderStr.c_str(), m_VertexShader, m_FragmentShader);
     if (m_ProgramObj) {
         m_SamplerLoc = glGetUniformLocation(m_ProgramObj, "s_TextureMap");
         m_MVPMatLoc = glGetUniformLocation(m_ProgramObj, "u_MVPMatrix");
     } else {
         LOGCATE("CoordSystemRenderer::Init create program fail");
+        return false;
     }
     GLfloat verticesCoords[] = {
             -1.0f, 1.0f, 0.0f,

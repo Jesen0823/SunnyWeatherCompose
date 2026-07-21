@@ -1,6 +1,7 @@
 #include "ParticleLayer.h"
 #include "../../util/GLUtils.h"
 #include "../../util/LogUtil.h"
+#include "../../util/ShaderLoader.h"
 #include "gtc/matrix_transform.hpp"
 
 ParticleLayer::ParticleLayer() 
@@ -33,108 +34,19 @@ bool ParticleLayer::Init() {
         return true;
     }
 
-    // 顶点着色器
-    char vShaderStr[] =
-            "#version 300 es                                       \n"
-            "layout(location = 0) in vec4 a_position;              \n"
-            "uniform mat4 u_MVPMatrix;                             \n"
-            "void main(){                                          \n"
-            "    gl_Position = u_MVPMatrix * a_position;           \n"
-            "}";
+    std::string vShaderStr = ShaderLoader::LoadShaderFromAssets("shaders/particle_layer_v.glsl");
+    std::string fShaderStr = ShaderLoader::LoadShaderFromAssets("shaders/particle_layer_f.glsl");
 
-    // 片段着色器：雾霾、雾、浮尘、沙尘颗粒效果
-    char fShaderStr[] =
-            "#version 300 es                                                          \n"
-            "precision highp float;                                                   \n"
-            "precision highp int;                                                     \n"
-            "layout(location = 0) out vec4 outColor;                                  \n"
-            "uniform float u_time;                                                    \n"
-            "uniform vec2 u_screenSize;                                               \n"
-            "uniform int u_particleType;                                              \n"
-            "uniform float u_particleDensity;                                         \n"
-            "uniform vec3 u_particleColor;                                            \n"
-            "uniform float u_particleVisibility;                                      \n"
-            "                                                                         \n"
-            "vec2 hash(vec2 p) {                                                     \n"
-            "    p = vec2(dot(p, vec2(127.1, 311.7)), dot(p, vec2(269.5, 183.3)));    \n"
-            "    return -1.0 + 2.0 * fract(sin(p) * 43758.5453123);                   \n"
-            "}                                                                        \n"
-            "                                                                         \n"
-            "float noise(vec2 p) {                                                     \n"
-            "    const float K1 = 0.366025404;                                         \n"
-            "    const float K2 = 0.211324865;                                         \n"
-            "    vec2 i = floor(p + (p.x + p.y) * K1);                                 \n"
-            "    vec2 a = p - i + (i.x + i.y) * K2;                                   \n"
-            "    vec2 o = (a.x > a.y) ? vec2(1.0, 0.0) : vec2(0.0, 1.0);              \n"
-            "    vec2 b = a - o + K2;                                                 \n"
-            "    vec2 c = a - 1.0 + 2.0 * K2;                                         \n"
-            "    vec3 h = max(0.5 - vec3(dot(a, a), dot(b, b), dot(c, c)), 0.0);      \n"
-            "    vec3 n = h * h * h * h * vec3(dot(a, hash(i)), dot(b, hash(i + o)), dot(c, hash(i + 1.0)));\n"
-            "    return dot(n, vec3(70.0));                                            \n"
-            "}                                                                        \n"
-            "                                                                         \n"
-            "float fbm(vec2 n) {                                                       \n"
-            "    float total = 0.0, amplitude = 0.5;                                  \n"
-            "    for (int i = 0; i < 5; i++) {                                        \n"
-            "        total += noise(n) * amplitude;                                   \n"
-            "        n *= 2.0;                                                        \n"
-            "        amplitude *= 0.5;                                                \n"
-            "    }                                                                    \n"
-            "    return total;                                                        \n"
-            "}                                                                        \n"
-            "                                                                         \n"
-            "void main() {                                                             \n"
-            "    vec2 p = gl_FragCoord.xy / u_screenSize.xy;                          \n"
-            "    vec2 uv = p * vec2(u_screenSize.x / u_screenSize.y, 1.0);            \n"
-            "    vec3 result = vec3(0.0);                                             \n"
-            "    float alpha = 0.0;                                                   \n"
-            "                                                                         \n"
-            "    float speed = 0.02;                                                   \n"
-            "    if (u_particleType == 3) {                                           \n"
-            "        speed = 0.05;                                                    \n"
-            "    }                                                                    \n"
-            "                                                                         \n"
-            "    // 基础颗粒效果                                                       \n"
-            "    float particleNoise = fbm(uv * 5.0 + vec2(u_time * speed, 0.0));     \n"
-            "    float particle = smoothstep(0.3, 0.7, particleNoise);                \n"
-            "    particle *= u_particleDensity;                                        \n"
-            "                                                                         \n"
-            "    // 根据类型调整效果                                                   \n"
-            "    if (u_particleType == 0) {                                           \n"
-            "        // 雾霾效果：均匀分布的颗粒                                       \n"
-            "        alpha = particle * (1.0 - u_particleVisibility) * 0.8;           \n"
-            "    } else if (u_particleType == 1) {                                    \n"
-            "        // 雾效果：底部更浓，顶部渐淡                                     \n"
-            "        float fogDensity = 1.0 - smoothstep(0.0, 1.0, p.y);              \n"
-            "        alpha = particle * fogDensity * (1.0 - u_particleVisibility);    \n"
-            "    } else if (u_particleType == 2) {                                    \n"
-            "        // 浮尘效果：中等颗粒感                                           \n"
-            "        alpha = particle * (1.0 - u_particleVisibility) * 0.6;           \n"
-            "    } else {                                                              \n"
-            "        // 沙尘效果：大颗粒，横向飘动                                     \n"
-            "        float sandNoise = fbm(uv * 3.0 + vec2(u_time * speed * 2.0, 0.0));\n"
-            "        float sand = smoothstep(0.2, 0.8, sandNoise);                    \n"
-            "        alpha = sand * u_particleDensity * (1.0 - u_particleVisibility) * 0.7;\n"
-            "    }                                                                    \n"
-            "                                                                         \n"
-            "    // 边缘模糊效果：使用径向距离实现自然的边缘衰减                         \n"
-            "    vec2 center = vec2(0.5);                                             \n"
-            "    float distToCenter = length(p - center);                             \n"
-            "    float maxDist = length(vec2(0.5));                                   \n"
-            "    float radialBlur = smoothstep(maxDist * 0.8, maxDist * 1.1, distToCenter);\n"
-            "    radialBlur = 1.0 - radialBlur;                                       \n"
-            "    \n"
-            "    float edgeBlurX = smoothstep(0.0, 0.15, p.x) * smoothstep(0.85, 1.0, p.x);\n"
-            "    float edgeBlurY = smoothstep(0.0, 0.15, p.y) * smoothstep(0.85, 1.0, p.y);\n"
-            "    float combinedEdgeBlur = edgeBlurX * edgeBlurY * 0.6 + radialBlur * 0.4;\n"
-            "    alpha *= combinedEdgeBlur;                                           \n"
-            "                                                                         \n"
-            "    result = u_particleColor * alpha;                                    \n"
-            "    alpha = clamp(alpha, 0.0, 1.0);                                      \n"
-            "    outColor = vec4(result, alpha);                                       \n"
-            "}";
+    if (vShaderStr.empty()) {
+        LOGCATE("ParticleLayer::Init: failed to load vertex shader");
+        return false;
+    }
+    if (fShaderStr.empty()) {
+        LOGCATE("ParticleLayer::Init: failed to load fragment shader");
+        return false;
+    }
 
-    m_ProgramObj = GLUtils::CreateProgram(vShaderStr, fShaderStr, m_VertexShader, m_FragmentShader);
+    m_ProgramObj = GLUtils::CreateProgram(vShaderStr.c_str(), fShaderStr.c_str(), m_VertexShader, m_FragmentShader);
     if (!m_ProgramObj) {
         LOGCATE("ParticleLayer::Init create program fail");
         return false;

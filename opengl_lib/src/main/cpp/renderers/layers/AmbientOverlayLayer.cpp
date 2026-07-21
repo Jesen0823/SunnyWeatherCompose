@@ -1,6 +1,7 @@
 #include "AmbientOverlayLayer.h"
 #include "../../util/GLUtils.h"
 #include "../../util/LogUtil.h"
+#include "../../util/ShaderLoader.h"
 #include "gtc/matrix_transform.hpp"
 
 AmbientOverlayLayer::AmbientOverlayLayer() 
@@ -23,30 +24,19 @@ bool AmbientOverlayLayer::Init() {
         return true;
     }
 
-    char vShaderStr[] =
-            "#version 300 es                                       \n"
-            "layout(location = 0) in vec4 a_position;              \n"
-            "uniform mat4 u_MVPMatrix;                             \n"
-            "void main(){                                          \n"
-            "    gl_Position = u_MVPMatrix * a_position;           \n"
-            "}";
+    std::string vShaderStr = ShaderLoader::LoadShaderFromAssets("shaders/ambient_overlay_layer_v.glsl");
+    std::string fShaderStr = ShaderLoader::LoadShaderFromAssets("shaders/ambient_overlay_layer_f.glsl");
 
-    char fShaderStr[] =
-            "#version 300 es                                                          \n"
-            "precision highp float;                                                   \n"
-            "layout(location = 0) out vec4 outColor;                                  \n"
-            "uniform float u_flashIntensity;                                          \n"
-            "uniform bool u_isNight;                                                  \n"
-            "                                                                         \n"
-            "void main() {                                                             \n"
-            "    vec3 flashColor = u_isNight ? vec3(0.25, 0.35, 0.55) : vec3(0.4, 0.5, 0.65);\n"
-            "    float intensity = u_flashIntensity * 0.18;                           \n"
-            "    vec3 result = flashColor * intensity;                                 \n"
-            "    result = clamp(result, 0.0, 1.0);                                     \n"
-            "    outColor = vec4(result, intensity);                                   \n"
-            "}";
+    if (vShaderStr.empty()) {
+        LOGCATE("AmbientOverlayLayer::Init: failed to load vertex shader");
+        return false;
+    }
+    if (fShaderStr.empty()) {
+        LOGCATE("AmbientOverlayLayer::Init: failed to load fragment shader");
+        return false;
+    }
 
-    m_ProgramObj = GLUtils::CreateProgram(vShaderStr, fShaderStr, m_VertexShader, m_FragmentShader);
+    m_ProgramObj = GLUtils::CreateProgram(vShaderStr.c_str(), fShaderStr.c_str(), m_VertexShader, m_FragmentShader);
     if (!m_ProgramObj) {
         LOGCATE("AmbientOverlayLayer::Init create program fail");
         return false;
