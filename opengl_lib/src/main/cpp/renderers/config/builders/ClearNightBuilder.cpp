@@ -11,16 +11,17 @@ WeatherProfile ClearNightBuilder::Build(bool isNight) {
     skyLayer.SetParamFloat(PARAM_MOON_INTENSITY, 0.9f);
 
     LayerConfig& starLayer = profile.AddLayer(LAYER_TYPE_STAR);
-    starLayer.SetParamFloat(PARAM_STAR_COUNT, 300.0f);
+    starLayer.SetParamFloat(PARAM_STAR_COUNT, 180.0f);
 
     LayerConfig& cloudLayer = profile.AddLayer(LAYER_TYPE_CLOUD);
     cloudLayer.SetParamInt(PARAM_TIME_OF_DAY, 1);
-    cloudLayer.SetParamFloat(PARAM_CLOUD_COVERAGE, 0.35f);
-    cloudLayer.SetParamFloat(PARAM_CLOUD_DARKNESS, 0.65f);
-    cloudLayer.SetParamFloat(PARAM_CLOUD_LIGHTNESS, 0.50f);
+    cloudLayer.SetParamFloat(PARAM_CLOUD_COVERAGE, 0.15f);
+    cloudLayer.SetParamFloat(PARAM_CLOUD_DARKNESS, 0.55f);
+    cloudLayer.SetParamFloat(PARAM_CLOUD_LIGHTNESS, 0.70f);
     cloudLayer.SetParamFloat(PARAM_CLOUD_SPEED, 0.02f);
-    cloudLayer.SetParamFloat(PARAM_CLOUD_SCALE, 1.1f);
-    cloudLayer.SetParamFloat(PARAM_CLOUD_ALPHA, 20.0f);
+    cloudLayer.SetParamFloat(PARAM_CLOUD_SCALE, 1.2f);
+    cloudLayer.SetParamFloat(PARAM_CLOUD_ALPHA, 12.0f);
+    cloudLayer.SetParamVec2(PARAM_MOON_POSITION, 0.25f, 0.8f);
 
     return profile;
 }

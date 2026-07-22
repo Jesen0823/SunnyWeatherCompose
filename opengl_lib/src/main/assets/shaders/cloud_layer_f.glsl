@@ -11,6 +11,7 @@ uniform float u_cloudScale;
 uniform float u_cloudAlpha;
 uniform int u_isNight;
 uniform int u_cloudMode;
+uniform vec2 u_moonPos;
 const mat2 m = mat2(1.6, 1.2, -1.2, 1.6);
 
 vec2 hash(vec2 p) {
@@ -150,6 +151,36 @@ void main() {
     float snowBrightness = u_cloudMode == 2 ? (1.0 - u_cloudDarkness * 0.3) : 1.0;
     cloudColour *= snowBrightness;
     cloudColour = clamp(cloudColour, 0.0, 1.0);
+    
+    if (u_isNight == 1) {
+        float moonDist = distance(p, u_moonPos);
+        float moonInfluence = smoothstep(0.40, 0.0, moonDist);
+        
+        float moonGlowFactor = smoothstep(0.18, 0.0, moonDist);
+        float moonCoreFactor = smoothstep(0.085, 0.0, moonDist);
+        
+        float cloudThickness = clamp(cloudAlpha * 1.8, 0.0, 1.0);
+        
+        float randomFactor = fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453);
+        randomFactor = randomFactor * 0.6 + 0.7;
+        
+        float opacityReduction = 0.0;
+        if (moonDist < 0.18) {
+            float coreReduction = moonCoreFactor * (1.0 - cloudThickness * 0.4);
+            float glowReduction = moonGlowFactor * (1.0 - cloudThickness * 0.7);
+            opacityReduction = mix(glowReduction, coreReduction, moonCoreFactor);
+            opacityReduction *= randomFactor;
+        }
+        
+        cloudAlpha *= (1.0 - opacityReduction * 0.8);
+        
+        float moonGlowStrength = moonGlowFactor * (1.0 - cloudThickness * 0.5);
+        vec3 moonGlowColor = vec3(0.92, 0.94, 0.99);
+        cloudColour = mix(cloudColour, moonGlowColor, moonGlowStrength * 0.4);
+        
+        float moonLight = moonInfluence * (1.0 - cloudThickness * 0.6);
+        cloudColour = cloudColour + moonGlowColor * moonLight * 0.25 * randomFactor;
+    }
     
     outColor = vec4(cloudColour, cloudAlpha);
 }

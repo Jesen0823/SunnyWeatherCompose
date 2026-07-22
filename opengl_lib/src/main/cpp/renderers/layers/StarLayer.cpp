@@ -47,13 +47,13 @@ void StarLayer::GenerateStars() {
         float size, brightness;
         
         if (sizeRand < 0.1f) {
-            size = 8.0f + ((float)rand() / RAND_MAX) * 5.0f;
+            size = 16.0f + ((float)rand() / RAND_MAX) * 10.0f;
             brightness = 0.9f + ((float)rand() / RAND_MAX) * 0.1f;
         } else if (sizeRand < 0.4f) {
-            size = 5.0f + ((float)rand() / RAND_MAX) * 3.0f;
+            size = 10.0f + ((float)rand() / RAND_MAX) * 6.0f;
             brightness = 0.75f + ((float)rand() / RAND_MAX) * 0.25f;
         } else {
-            size = 3.0f + ((float)rand() / RAND_MAX) * 2.0f;
+            size = 6.0f + ((float)rand() / RAND_MAX) * 4.0f;
             brightness = 0.5f + ((float)rand() / RAND_MAX) * 0.3f;
         }
         m_StarSizes[i] = size;

@@ -50,6 +50,10 @@ struct LayerConfig {
         params[paramType] = LayerParamValue(value);
     }
 
+    void SetParamVec2(LayerParamType paramType, float x, float y) {
+        params[paramType] = LayerParamValue(glm::vec3(x, y, 0.0f));
+    }
+
     void SetParamVec3(LayerParamType paramType, float x, float y, float z) {
         params[paramType] = LayerParamValue(glm::vec3(x, y, z));
     }

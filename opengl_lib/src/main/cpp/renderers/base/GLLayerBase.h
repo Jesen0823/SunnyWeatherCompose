@@ -53,6 +53,7 @@ enum LayerParamType {
     PARAM_CLOUD_SCALE = 304,           // 云层缩放（0.5~2.0）
     PARAM_CLOUD_ALPHA = 305,           // 云层透明度系数
     PARAM_CLOUD_MODE = 306,            // 云层模式（0=正常，1=暴雨乌云，2=雪天云层）
+    PARAM_MOON_POSITION = 307,         // 月亮位置（归一化坐标）
 
     // SnowLayer 参数
     PARAM_SNOW_INTENSITY = 400,        // 雪量强度（0.0~1.0）

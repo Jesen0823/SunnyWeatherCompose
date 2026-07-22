@@ -12,12 +12,12 @@ WeatherProfile ClearDayBuilder::Build(bool isNight) {
 
     LayerConfig& cloudLayer = profile.AddLayer(LAYER_TYPE_CLOUD);
     cloudLayer.SetParamInt(PARAM_TIME_OF_DAY, 0);
-    cloudLayer.SetParamFloat(PARAM_CLOUD_COVERAGE, 0.20f);
-    cloudLayer.SetParamFloat(PARAM_CLOUD_DARKNESS, 0.15f);
-    cloudLayer.SetParamFloat(PARAM_CLOUD_LIGHTNESS, 0.98f);
-    cloudLayer.SetParamFloat(PARAM_CLOUD_SPEED, 0.025f);
-    cloudLayer.SetParamFloat(PARAM_CLOUD_SCALE, 1.0f);
-    cloudLayer.SetParamFloat(PARAM_CLOUD_ALPHA, 10.0f);
+    cloudLayer.SetParamFloat(PARAM_CLOUD_COVERAGE, 0.30f);
+    cloudLayer.SetParamFloat(PARAM_CLOUD_DARKNESS, 0.08f);
+    cloudLayer.SetParamFloat(PARAM_CLOUD_LIGHTNESS, 1.10f);
+    cloudLayer.SetParamFloat(PARAM_CLOUD_SPEED, 0.02f);
+    cloudLayer.SetParamFloat(PARAM_CLOUD_SCALE, 0.9f);
+    cloudLayer.SetParamFloat(PARAM_CLOUD_ALPHA, 14.0f);
 
     return profile;
 }

@@ -49,11 +49,41 @@ void main() {
     } else if (u_timeOfDay == 1) {
         vec2 moonPos = vec2(0.25, 0.8);
         float moonDist = distance(p, moonPos);
-        float moonGlow = 1.0 - smoothstep(0.0, 0.50, moonDist);
-        float moonCore = 1.0 - smoothstep(0.0, 0.06, moonDist);
-        vec3 moonColor = vec3(0.95, 0.96, 1.0) * u_moonIntensity;
-        result = result + moonColor * moonGlow * 0.22;
-        result = result + vec3(1.0, 1.0, 1.0) * moonCore * 0.6;
+        
+        float moonCore = smoothstep(0.065, 0.048, moonDist);
+        float moonGlow1 = smoothstep(0.15, 0.065, moonDist);
+        float moonGlow2 = smoothstep(0.30, 0.15, moonDist);
+        float moonGlow3 = smoothstep(0.50, 0.30, moonDist);
+        float moonGlow4 = smoothstep(0.80, 0.50, moonDist);
+        
+        vec2 moonUV = (p - moonPos) * 20.0;
+        float moonCrater1 = smoothstep(0.18, 0.14, length(moonUV - vec2(0.35, 0.25)));
+        float moonCrater2 = smoothstep(0.12, 0.09, length(moonUV + vec2(0.25, -0.35)));
+        float moonCrater3 = smoothstep(0.09, 0.06, length(moonUV - vec2(-0.35, 0.15)));
+        float moonCrater4 = smoothstep(0.14, 0.10, length(moonUV + vec2(0.15, 0.35)));
+        float moonCrater5 = smoothstep(0.07, 0.04, length(moonUV - vec2(0.0, -0.2)));
+        float moonCrater6 = smoothstep(0.10, 0.07, length(moonUV + vec2(-0.2, 0.3)));
+        
+        float moonSurface = 1.0 - (moonCrater1 * 0.15 + moonCrater2 * 0.12 + moonCrater3 * 0.10 + moonCrater4 * 0.13 + moonCrater5 * 0.08 + moonCrater6 * 0.11);
+        float moonShadow = smoothstep(-0.15, 0.15, moonUV.x) * 0.15;
+        moonSurface *= (1.0 - moonShadow);
+        
+        float moonEdgeSoftness = smoothstep(0.065, 0.055, moonDist) * 0.4;
+        moonSurface = mix(moonSurface, moonSurface * 0.65, moonEdgeSoftness);
+        
+        vec3 moonCoreColor = vec3(1.0, 1.0, 0.98) * u_moonIntensity;
+        vec3 moonGlowColor1 = vec3(0.95, 0.96, 0.99) * u_moonIntensity;
+        vec3 moonGlowColor2 = vec3(0.88, 0.90, 0.96) * u_moonIntensity * 0.85;
+        vec3 moonGlowColor3 = vec3(0.78, 0.80, 0.90) * u_moonIntensity * 0.65;
+        vec3 moonGlowColor4 = vec3(0.65, 0.68, 0.80) * u_moonIntensity * 0.45;
+        
+        float moonCoreGlow = smoothstep(0.08, 0.065, moonDist);
+        result = mix(result, moonCoreColor * moonSurface, moonCore);
+        result = result + moonGlowColor1 * moonCoreGlow * 0.35;
+        result = result + moonGlowColor1 * moonGlow1 * 0.35;
+        result = result + moonGlowColor2 * moonGlow2 * 0.25;
+        result = result + moonGlowColor3 * moonGlow3 * 0.12;
+        result = result + moonGlowColor4 * moonGlow4 * 0.06;
     }
     outColor = vec4(result, 1.0);
 }

@@ -14,6 +14,7 @@ CloudLayer::CloudLayer()
       m_CloudAlpha(20.0f),
       m_IsNight(false),
       m_CloudMode(0),
+      m_MoonPos(0.25f, 0.8f),
       m_ScreenWidth(0),
       m_ScreenHeight(0),
       m_Time(0.0f),
@@ -71,6 +72,7 @@ bool CloudLayer::Init() {
     m_CloudAlphaLoc = glGetUniformLocation(m_ProgramObj, "u_cloudAlpha");
     m_IsNightLoc = glGetUniformLocation(m_ProgramObj, "u_isNight");
     m_CloudModeLoc = glGetUniformLocation(m_ProgramObj, "u_cloudMode");
+    m_MoonPosLoc = glGetUniformLocation(m_ProgramObj, "u_moonPos");
 
     // 顶点坐标
     GLfloat verticesCoords[] = {
@@ -145,6 +147,7 @@ void CloudLayer::Draw(int screenW, int screenH) {
     glUniform1f(m_CloudAlphaLoc, m_CloudAlpha);
     glUniform1i(m_IsNightLoc, m_IsNight ? 1 : 0);
     glUniform1i(m_CloudModeLoc, m_CloudMode);
+    glUniform2f(m_MoonPosLoc, m_MoonPos.x, m_MoonPos.y);
 
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -172,6 +175,26 @@ void CloudLayer::SetParamInt(LayerParamType paramType, int value) {
             break;
         case PARAM_CLOUD_MODE:
             m_CloudMode = value;
+            break;
+        default:
+            break;
+    }
+}
+
+void CloudLayer::SetParamVec2(LayerParamType paramType, float x, float y) {
+    switch (paramType) {
+        case PARAM_MOON_POSITION:
+            m_MoonPos = glm::vec2(x, y);
+            break;
+        default:
+            break;
+    }
+}
+
+void CloudLayer::SetParamVec3(LayerParamType paramType, float x, float y, float z) {
+    switch (paramType) {
+        case PARAM_MOON_POSITION:
+            m_MoonPos = glm::vec2(x, y);
             break;
         default:
             break;
