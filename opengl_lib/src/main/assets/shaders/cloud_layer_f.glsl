@@ -32,7 +32,7 @@ float noise(in vec2 p) {
 }
 float fbm(vec2 n) {
     float total = 0.0, amplitude = 0.1;
-    for (int i = 0; i < 7; i++) {
+    for (int i = 0; i < 5; i++) {
         total += noise(n) * amplitude;
         n = m * n;
         amplitude *= 0.4;
@@ -58,7 +58,7 @@ void main() {
     vec2 uv_r = uv * u_cloudScale;
     uv_r -= q - time;
     float weight = 0.8;
-    for (int i = 0; i < 8; i++) {
+    for (int i = 0; i < 6; i++) {
         r += abs(weight * noise(uv_r));
         uv_r = m * uv_r + time;
         weight *= 0.7;
@@ -68,7 +68,7 @@ void main() {
     vec2 uv_f = uv * u_cloudScale;
     uv_f -= q - time;
     weight = 0.7;
-    for (int i = 0; i < 8; i++) {
+    for (int i = 0; i < 6; i++) {
         f += weight * noise(uv_f);
         uv_f = m * uv_f + time;
         weight *= 0.6;
@@ -80,7 +80,7 @@ void main() {
     vec2 uv_c = uv * u_cloudScale * 2.0;
     uv_c -= q - time_c;
     weight = 0.4;
-    for (int i = 0; i < 7; i++) {
+    for (int i = 0; i < 5; i++) {
         c += weight * noise(uv_c);
         uv_c = m * uv_c + time_c;
         weight *= 0.6;
@@ -91,7 +91,7 @@ void main() {
     vec2 uv_c1 = uv * u_cloudScale * 3.0;
     uv_c1 -= q - time_c1;
     weight = 0.4;
-    for (int i = 0; i < 7; i++) {
+    for (int i = 0; i < 5; i++) {
         c1 += abs(weight * noise(uv_c1));
         uv_c1 = m * uv_c1 + time_c1;
         weight *= 0.6;
@@ -137,6 +137,10 @@ void main() {
     
     float nightAlpha = u_isNight == 1 ? 0.85 : 1.0;
     cloudAlpha *= nightAlpha;
+    
+    if (cloudAlpha < 0.005) {
+        discard;
+    }
     
     cloudColour = mix(cloudColour, vec3(0.25, 0.28, 0.32), u_cloudDarkness);
     cloudColour *= (1.0 + u_cloudLightness * 0.3);

@@ -9,7 +9,13 @@ void main() {
     vec2 coord = gl_PointCoord - vec2(0.5);
     float dist = length(coord);
     if (dist > 0.5) discard;
+    
     float twinkle = sin(u_time * 2.0 + v_twinkleOffset) * 0.3 + sin(u_time * 5.0 + v_twinkleOffset * 1.7) * 0.2 + 0.5;
+    
+    if (twinkle < 0.15) {
+        discard;
+    }
+    
     float core = 1.0 - smoothstep(0.0, 0.25, dist);
     float glow = 1.0 - smoothstep(0.0, 0.5, dist);
     float spikeX = exp(-abs(coord.x) * 12.0) * (1.0 - smoothstep(0.0, 0.45, abs(coord.y)));

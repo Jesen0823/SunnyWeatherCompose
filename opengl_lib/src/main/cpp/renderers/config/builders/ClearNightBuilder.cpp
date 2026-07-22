@@ -11,7 +11,7 @@ WeatherProfile ClearNightBuilder::Build(bool isNight) {
     skyLayer.SetParamFloat(PARAM_MOON_INTENSITY, 0.9f);
 
     LayerConfig& starLayer = profile.AddLayer(LAYER_TYPE_STAR);
-    starLayer.SetParamFloat(PARAM_STAR_COUNT, 180.0f);
+    starLayer.SetParamFloat(PARAM_STAR_COUNT, 100.0f);
 
     LayerConfig& cloudLayer = profile.AddLayer(LAYER_TYPE_CLOUD);
     cloudLayer.SetParamInt(PARAM_TIME_OF_DAY, 1);
