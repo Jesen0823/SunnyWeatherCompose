@@ -1,12 +1,12 @@
 #include "SnowBuilder.h"
 
 WeatherProfile SnowBuilder::Build(bool isNight) {
-    float coverage[] = {0.60f, 0.75f, 0.85f, 0.92f};
-    float darkness[] = {0.15f, 0.25f, 0.45f, 0.55f};
-    float lightness[] = {1.20f, 1.00f, 0.70f, 0.60f};
+    float coverage[] = {0.45f, 0.60f, 0.85f, 0.92f};
+    float darkness[] = {0.28f, 0.38f, 0.45f, 0.55f};
+    float lightness[] = {0.95f, 0.85f, 0.70f, 0.60f};
     float speed[] = {0.002f, 0.0025f, 0.003f, 0.0035f};
-    float scale[] = {0.90f, 0.75f, 0.60f, 0.50f};
-    float alpha[] = {10.0f, 14.0f, 18.0f, 22.0f};
+    float scale[] = {1.20f, 1.05f, 0.60f, 0.50f};
+    float alpha[] = {8.0f, 11.0f, 18.0f, 22.0f};
     float intensity[] = {0.6f, 0.7f, 0.8f, 0.95f};
     float snowSpeed[] = {0.3f, 0.4f, 0.65f, 0.9f};
     float snowSize[] = {3.5f, 5.0f, 2.0f, 2.2f};

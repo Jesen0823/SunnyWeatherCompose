@@ -1,20 +1,20 @@
 #include "RainBuilder.h"
 
 WeatherProfile RainBuilder::Build(bool isNight) {
-    float coverage[] = {0.6f, 0.8f, 0.9f, 1.0f};
-    float darkness[] = {0.30f, 0.40f, 0.50f, 0.65f};
-    float lightness[] = {0.75f, 0.65f, 0.50f, 0.35f};
-    float speed[] = {0.08f, 0.06f, 0.04f, 0.02f};
-    float scale[] = {0.90f, 0.80f, 0.70f, 0.55f};
-    float alpha[] = {14.0f, 18.0f, 22.0f, 28.0f};
+    float coverage[] = {0.55f, 0.65f, 0.78f, 0.88f};
+    float darkness[] = {0.13f, 0.28f, 0.58f, 0.70f};
+    float lightness[] = {1.25f, 1.00f, 0.55f, 0.40f};
+    float speed[] = {0.005f, 0.010f, 0.020f, 0.035f};
+    float scale[] = {1.10f, 0.95f, 0.75f, 0.60f};
+    float alpha[] = {12.0f, 16.0f, 20.0f, 24.0f};
     float intensity[] = {0.3f, 0.7f, 1.3f, 1.8f};
     float rainSpeed[] = {0.5f, 0.7f, 0.9f, 1.0f};
-    float r[] = {0.48f, 0.38f, 0.28f, 0.20f};
-    float g[] = {0.52f, 0.44f, 0.33f, 0.25f};
-    float b[] = {0.68f, 0.58f, 0.48f, 0.38f};
-    float nr[] = {0.28f, 0.24f, 0.20f, 0.17f};
-    float ng[] = {0.32f, 0.28f, 0.24f, 0.20f};
-    float nb[] = {0.48f, 0.42f, 0.36f, 0.30f};
+    float r[] = {0.62f, 0.52f, 0.35f, 0.28f};
+    float g[] = {0.65f, 0.57f, 0.40f, 0.32f};
+    float b[] = {0.72f, 0.65f, 0.50f, 0.42f};
+    float nr[] = {0.35f, 0.30f, 0.22f, 0.18f};
+    float ng[] = {0.39f, 0.34f, 0.26f, 0.22f};
+    float nb[] = {0.50f, 0.45f, 0.35f, 0.30f};
 
     WeatherProfile profile;
     profile.skycon = m_Skycon;
@@ -40,6 +40,7 @@ WeatherProfile RainBuilder::Build(bool isNight) {
 
     LayerConfig& cloudLayer = profile.AddLayer(LAYER_TYPE_CLOUD);
     cloudLayer.SetParamInt(PARAM_TIME_OF_DAY, isNight ? 1 : 0);
+    cloudLayer.SetParamInt(PARAM_CLOUD_MODE, 1);
     cloudLayer.SetParamFloat(PARAM_CLOUD_COVERAGE, coverage[m_Level]);
     cloudLayer.SetParamFloat(PARAM_CLOUD_DARKNESS, isNight ? darkness[m_Level] * 1.1f : darkness[m_Level]);
     cloudLayer.SetParamFloat(PARAM_CLOUD_LIGHTNESS, isNight ? lightness[m_Level] * 0.8f : lightness[m_Level]);
