@@ -83,6 +83,10 @@ enum LayerParamType {
     PARAM_LIGHTNING_INTERVAL = 901,          // 闪电间隔（秒）
     PARAM_LIGHTNING_IS_NIGHT = 902,          // 是否夜间（0=白天，1=夜间）
 
+    // AmbientOverlayLayer 参数
+    PARAM_FOG_MODE = 903,                    // 雾天模式（0=关闭，1=开启）
+    PARAM_FOG_INTENSITY = 904,               // 雾天遮罩强度（0.0~1.0）
+
     // WindLayer 参数
     PARAM_WIND_LINES_ENABLED = 910,          // 风力线条启用（0=关闭，1=开启）
     PARAM_WIND_STRENGTH = 911,               // 风力强度（0.0~1.0）

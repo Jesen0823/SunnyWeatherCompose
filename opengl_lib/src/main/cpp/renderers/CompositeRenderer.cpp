@@ -131,6 +131,8 @@ void CompositeRenderer::Draw(int screenW, int screenH) {
             ambientLayer->SetFlashIntensity(flashIntensity);
             ambientLayer->Draw(screenW, screenH);
         }
+    } else if (ambientLayer != nullptr && ambientLayer->IsEnabled()) {
+        ambientLayer->Draw(screenW, screenH);
     }
 }
 

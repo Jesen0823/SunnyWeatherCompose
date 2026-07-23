@@ -8,12 +8,16 @@ AmbientOverlayLayer::AmbientOverlayLayer()
     : GLLayerBase(LAYER_TYPE_AMBIENT_OVERLAY),
       m_FlashIntensity(0.0f),
       m_IsNight(false),
+      m_IsFogMode(false),
+      m_FogIntensity(0.0f),
       m_ScreenWidth(0),
       m_ScreenHeight(0),
       m_VaoId(GL_NONE),
       m_MVPMatLoc(GL_NONE),
       m_FlashIntensityLoc(GL_NONE),
-      m_IsNightLoc(GL_NONE) {
+      m_IsNightLoc(GL_NONE),
+      m_IsFogModeLoc(GL_NONE),
+      m_FogIntensityLoc(GL_NONE) {
     m_VboIds[0] = m_VboIds[1] = m_VboIds[2] = GL_NONE;
 }
 
@@ -45,6 +49,8 @@ bool AmbientOverlayLayer::Init() {
     m_MVPMatLoc = glGetUniformLocation(m_ProgramObj, "u_MVPMatrix");
     m_FlashIntensityLoc = glGetUniformLocation(m_ProgramObj, "u_flashIntensity");
     m_IsNightLoc = glGetUniformLocation(m_ProgramObj, "u_isNight");
+    m_IsFogModeLoc = glGetUniformLocation(m_ProgramObj, "u_isFogMode");
+    m_FogIntensityLoc = glGetUniformLocation(m_ProgramObj, "u_fogIntensity");
 
     GLfloat verticesCoords[] = {
             -1.0f, 1.0f, 0.0f,
@@ -80,6 +86,11 @@ bool AmbientOverlayLayer::Init() {
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (const void *) 0);
     glBindBuffer(GL_ARRAY_BUFFER, GL_NONE);
 
+    glBindBuffer(GL_ARRAY_BUFFER, m_VboIds[1]);
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(GLfloat), (const void *) 0);
+    glBindBuffer(GL_ARRAY_BUFFER, GL_NONE);
+
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_VboIds[2]);
 
     glBindVertexArray(GL_NONE);
@@ -87,7 +98,11 @@ bool AmbientOverlayLayer::Init() {
 }
 
 void AmbientOverlayLayer::Draw(int screenW, int screenH) {
-    if (!m_ProgramObj || !m_Enabled || m_FlashIntensity < 0.001f) {
+    if (!m_ProgramObj || !m_Enabled) {
+        return;
+    }
+
+    if (!m_IsFogMode && m_FlashIntensity < 0.001f) {
         return;
     }
 
@@ -103,9 +118,15 @@ void AmbientOverlayLayer::Draw(int screenW, int screenH) {
     glUniformMatrix4fv(m_MVPMatLoc, 1, GL_FALSE, &m_MVPMatrix[0][0]);
     glUniform1f(m_FlashIntensityLoc, m_FlashIntensity);
     glUniform1i(m_IsNightLoc, m_IsNight ? 1 : 0);
+    glUniform1i(m_IsFogModeLoc, m_IsFogMode ? 1 : 0);
+    glUniform1f(m_FogIntensityLoc, m_FogIntensity);
 
     glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+    if (m_IsFogMode) {
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    } else {
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+    }
 
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, (const void *) 0);
 
@@ -128,6 +149,9 @@ void AmbientOverlayLayer::SetParamInt(LayerParamType paramType, int value) {
         case PARAM_LIGHTNING_IS_NIGHT:
             m_IsNight = (value != 0);
             break;
+        case PARAM_FOG_MODE:
+            m_IsFogMode = (value != 0);
+            break;
         default:
             break;
     }
@@ -136,6 +160,9 @@ void AmbientOverlayLayer::SetParamInt(LayerParamType paramType, int value) {
 void AmbientOverlayLayer::SetParamFloat(LayerParamType paramType, float value) {
     switch (paramType) {
         case PARAM_LIGHTNING_INTERVAL:
+            break;
+        case PARAM_FOG_INTENSITY:
+            m_FogIntensity = value;
             break;
         default:
             break;

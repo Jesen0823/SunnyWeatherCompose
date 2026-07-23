@@ -40,14 +40,16 @@ interface Constants {
         /** 轻度雾霾
          * 空气污染细颗粒物（PM2.5）是形成霾天气的重要原因
          * 天空淡黄色或土黄色
-         *
+         * 能见度较低
+         * 太阳亮度微弱
          */
         const val SKYCON_LIGHT_HAZE = "LIGHT_HAZE"
 
         /** 中度雾霾
          * 空气污染细颗粒物（PM2.5）是形成霾天气的重要原因
          * 空气较为浑浊，天空黄色
-         * 能见度低
+         * 能见度较低
+         * 太阳亮度极弱
          */
         const val SKYCON_MODERATE_HAZE = "MODERATE_HAZE"
 
@@ -55,6 +57,7 @@ interface Constants {
          * 空气污染细颗粒物（PM2.5）是形成霾天气的重要原因
          * 空气浑浊，天空深黄接近红色
          * 能见度极低
+         * ，看不见太阳或没有太阳
          */
         const val SKYCON_HEAVY_HAZE = "HEAVY_HAZE"
 
