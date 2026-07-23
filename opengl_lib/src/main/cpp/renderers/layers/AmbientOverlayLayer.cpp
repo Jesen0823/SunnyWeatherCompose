@@ -8,16 +8,18 @@ AmbientOverlayLayer::AmbientOverlayLayer()
     : GLLayerBase(LAYER_TYPE_AMBIENT_OVERLAY),
       m_FlashIntensity(0.0f),
       m_IsNight(false),
-      m_IsFogMode(false),
+      m_OverlayMode(0),
       m_FogIntensity(0.0f),
+      m_OverlayColor(0.8f, 0.82f, 0.8f),
       m_ScreenWidth(0),
       m_ScreenHeight(0),
       m_VaoId(GL_NONE),
       m_MVPMatLoc(GL_NONE),
       m_FlashIntensityLoc(GL_NONE),
       m_IsNightLoc(GL_NONE),
-      m_IsFogModeLoc(GL_NONE),
-      m_FogIntensityLoc(GL_NONE) {
+      m_OverlayModeLoc(GL_NONE),
+      m_FogIntensityLoc(GL_NONE),
+      m_OverlayColorLoc(GL_NONE) {
     m_VboIds[0] = m_VboIds[1] = m_VboIds[2] = GL_NONE;
 }
 
@@ -49,8 +51,9 @@ bool AmbientOverlayLayer::Init() {
     m_MVPMatLoc = glGetUniformLocation(m_ProgramObj, "u_MVPMatrix");
     m_FlashIntensityLoc = glGetUniformLocation(m_ProgramObj, "u_flashIntensity");
     m_IsNightLoc = glGetUniformLocation(m_ProgramObj, "u_isNight");
-    m_IsFogModeLoc = glGetUniformLocation(m_ProgramObj, "u_isFogMode");
+    m_OverlayModeLoc = glGetUniformLocation(m_ProgramObj, "u_overlayMode");
     m_FogIntensityLoc = glGetUniformLocation(m_ProgramObj, "u_fogIntensity");
+    m_OverlayColorLoc = glGetUniformLocation(m_ProgramObj, "u_overlayColor");
 
     GLfloat verticesCoords[] = {
             -1.0f, 1.0f, 0.0f,
@@ -102,7 +105,7 @@ void AmbientOverlayLayer::Draw(int screenW, int screenH) {
         return;
     }
 
-    if (!m_IsFogMode && m_FlashIntensity < 0.001f) {
+    if (m_OverlayMode == 0 && m_FlashIntensity < 0.001f) {
         return;
     }
 
@@ -118,11 +121,12 @@ void AmbientOverlayLayer::Draw(int screenW, int screenH) {
     glUniformMatrix4fv(m_MVPMatLoc, 1, GL_FALSE, &m_MVPMatrix[0][0]);
     glUniform1f(m_FlashIntensityLoc, m_FlashIntensity);
     glUniform1i(m_IsNightLoc, m_IsNight ? 1 : 0);
-    glUniform1i(m_IsFogModeLoc, m_IsFogMode ? 1 : 0);
+    glUniform1i(m_OverlayModeLoc, m_OverlayMode);
     glUniform1f(m_FogIntensityLoc, m_FogIntensity);
+    glUniform3f(m_OverlayColorLoc, m_OverlayColor.x, m_OverlayColor.y, m_OverlayColor.z);
 
     glEnable(GL_BLEND);
-    if (m_IsFogMode) {
+    if (m_OverlayMode > 0) {
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     } else {
         glBlendFunc(GL_SRC_ALPHA, GL_ONE);
@@ -150,7 +154,10 @@ void AmbientOverlayLayer::SetParamInt(LayerParamType paramType, int value) {
             m_IsNight = (value != 0);
             break;
         case PARAM_FOG_MODE:
-            m_IsFogMode = (value != 0);
+            m_OverlayMode = (value != 0) ? 1 : 0;
+            break;
+        case PARAM_OVERLAY_MODE:
+            m_OverlayMode = value;
             break;
         default:
             break;
@@ -163,6 +170,15 @@ void AmbientOverlayLayer::SetParamFloat(LayerParamType paramType, float value) {
             break;
         case PARAM_FOG_INTENSITY:
             m_FogIntensity = value;
+            break;
+        case PARAM_OVERLAY_COLOR_R:
+            m_OverlayColor.x = value;
+            break;
+        case PARAM_OVERLAY_COLOR_G:
+            m_OverlayColor.y = value;
+            break;
+        case PARAM_OVERLAY_COLOR_B:
+            m_OverlayColor.z = value;
             break;
         default:
             break;

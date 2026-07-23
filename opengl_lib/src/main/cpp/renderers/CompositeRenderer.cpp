@@ -83,11 +83,9 @@ void CompositeRenderer::Draw(int screenW, int screenH) {
     }
 
     AmbientOverlayLayer *ambientLayer = nullptr;
-    if (m_RenderFlags.requiresLightningLink) {
-        auto ambientIt = m_LayerMap.find(LAYER_TYPE_AMBIENT_OVERLAY);
-        if (ambientIt != m_LayerMap.end()) {
-            ambientLayer = static_cast<AmbientOverlayLayer *>(ambientIt->second);
-        }
+    auto ambientIt = m_LayerMap.find(LAYER_TYPE_AMBIENT_OVERLAY);
+    if (ambientIt != m_LayerMap.end()) {
+        ambientLayer = static_cast<AmbientOverlayLayer *>(ambientIt->second);
     }
 
     if (rainLayer != nullptr && m_FBO != 0) {

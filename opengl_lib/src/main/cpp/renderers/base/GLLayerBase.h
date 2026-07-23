@@ -86,6 +86,10 @@ enum LayerParamType {
     // AmbientOverlayLayer 参数
     PARAM_FOG_MODE = 903,                    // 雾天模式（0=关闭，1=开启）
     PARAM_FOG_INTENSITY = 904,               // 雾天遮罩强度（0.0~1.0）
+    PARAM_OVERLAY_MODE = 905,                // 覆盖层模式（0=闪电，1=雾天，2=浮尘，3=沙尘）
+    PARAM_OVERLAY_COLOR_R = 906,             // 覆盖层颜色 R 分量
+    PARAM_OVERLAY_COLOR_G = 907,             // 覆盖层颜色 G 分量
+    PARAM_OVERLAY_COLOR_B = 908,              // 覆盖层颜色 B 分量,
 
     // WindLayer 参数
     PARAM_WIND_LINES_ENABLED = 910,          // 风力线条启用（0=关闭，1=开启）
