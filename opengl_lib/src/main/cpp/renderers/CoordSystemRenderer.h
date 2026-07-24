@@ -7,6 +7,13 @@
 #include "base/GLRendererBase.h"
 #include "ImageDef.h"
 
+/**
+ * 坐标系统渲染器（旧版）
+ * 
+ * 负责渲染3D坐标系（X/Y/Z轴），用于辅助调试和可视化。
+ * 
+ * 注意：此类为旧版渲染器，不参与天气动效系统。
+ */
 class CoordSystemRenderer : public GLRendererBase {
 public:
     CoordSystemRenderer();

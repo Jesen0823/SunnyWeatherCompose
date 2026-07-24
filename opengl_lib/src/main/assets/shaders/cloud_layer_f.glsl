@@ -32,7 +32,8 @@ float noise(in vec2 p) {
 }
 float fbm(vec2 n) {
     float total = 0.0, amplitude = 0.1;
-    for (int i = 0; i < 5; i++) {
+    int iterations = u_cloudMode == 0 ? 5 : 4;
+    for (int i = 0; i < iterations; i++) {
         total += noise(n) * amplitude;
         n = m * n;
         amplitude *= 0.4;
@@ -44,6 +45,19 @@ void main() {
     vec2 fragCoord = gl_FragCoord.xy;
     vec2 p = fragCoord.xy / u_screenSize.xy;
     vec2 uv = p * vec2(u_screenSize.x / u_screenSize.y, 1.0);
+    
+    float verticalGradient = 0.3 + p.y * 0.7;
+    if (u_cloudMode == 1) {
+        verticalGradient = 1.0 - p.y * 0.7;
+        float bottomCutoff = smoothstep(0.5, 0.85, p.y);
+        if (bottomCutoff > 0.9) {
+            discard;
+        }
+    }
+    
+    if (verticalGradient < 0.05) {
+        discard;
+    }
     
     vec3 dayCloudBase = vec3(0.88, 0.90, 0.96);
     vec3 snowCloudBase = vec3(0.92, 0.93, 0.96);
@@ -58,7 +72,8 @@ void main() {
     vec2 uv_r = uv * u_cloudScale;
     uv_r -= q - time;
     float weight = 0.8;
-    for (int i = 0; i < 6; i++) {
+    int noiseIterations = u_cloudMode == 0 ? 6 : 5;
+    for (int i = 0; i < noiseIterations; i++) {
         r += abs(weight * noise(uv_r));
         uv_r = m * uv_r + time;
         weight *= 0.7;
@@ -68,7 +83,7 @@ void main() {
     vec2 uv_f = uv * u_cloudScale;
     uv_f -= q - time;
     weight = 0.7;
-    for (int i = 0; i < 6; i++) {
+    for (int i = 0; i < noiseIterations; i++) {
         f += weight * noise(uv_f);
         uv_f = m * uv_f + time;
         weight *= 0.6;
@@ -117,11 +132,7 @@ void main() {
         cloudAlpha = baseAlpha + layer1 * 0.3 + layer2 * 0.2 + layer3 * 0.15;
         cloudAlpha = clamp(cloudAlpha, 0.0, 1.0);
         
-        float verticalGradient = 1.0 - p.y * 0.7;
         cloudAlpha *= verticalGradient;
-        
-        float bottomCutoff = smoothstep(0.5, 0.85, p.y);
-        cloudAlpha *= (1.0 - bottomCutoff * 0.9);
         
         float gapNoise = smoothstep(0.3, 0.7, noise(uv * 2.0 + time * 0.2));
         cloudAlpha *= (1.0 - gapNoise * 0.3);
@@ -131,7 +142,6 @@ void main() {
         f = u_cloudCoverage + u_cloudAlpha * f * r;
         cloudAlpha = clamp(f + c, 0.0, 1.0);
         
-        float verticalGradient = 0.3 + p.y * 0.7;
         cloudAlpha *= verticalGradient;
     }
     
@@ -158,6 +168,12 @@ void main() {
     
     if (u_isNight == 1) {
         float moonDist = distance(p, u_moonPos);
+        
+        if (moonDist > 0.5) {
+            outColor = vec4(cloudColour, cloudAlpha);
+            return;
+        }
+        
         float moonInfluence = smoothstep(0.40, 0.0, moonDist);
         
         float moonGlowFactor = smoothstep(0.18, 0.0, moonDist);

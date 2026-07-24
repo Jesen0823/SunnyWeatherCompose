@@ -12,16 +12,20 @@
  * 
  * 负责管理多个渲染层，按顺序渲染各层，支持层的添加、移除和清空操作。
  * 
- * 渲染顺序（按 LayerType 升序）：
+ * 渲染顺序（按 LayerType 排序，特殊层有优先级调整）：
  * 1. SkyBackgroundLayer（天空背景层）- 全屏天空渐变 + 太阳/月亮光晕
  * 2. StarLayer（星星层）- 星星粒子系统（仅夜间显示）
- * 3. CloudLayer（云层）- 程序化云层，遮挡星星
- * 4. WindLayer（风力层）- 风线效果
+ * 3. CloudLayer（云层）- 程序化云层，遮挡星星和太阳/月亮
+ * 4. WindLayer（风力层）- 风线效果，在雪层之前绘制
  * 5. SnowLayer（雪层）- 雪花粒子效果
  * 6. ParticleLayer（颗粒层）- 雾霾/雾/沙尘效果
- * 7. RainLayer（雨层）- 全屏程序化雨丝效果（使用FBO）
- * 8. LightningLayer（闪电层）- 闪电特效
- * 9. AmbientOverlayLayer（环境光覆盖层）- 闪电时全局亮变
+ * 7. RainLayer（雨层）- 全屏程序化雨丝效果（使用FBO离屏渲染）
+ * 8. LightningLayer（闪电层）- 闪电特效，单独绘制阶段
+ * 9. AmbientOverlayLayer（环境光覆盖层）- 闪电时全局亮变，最后绘制
+ * 
+ * 特殊渲染流程：
+ * - 雨天模式（requiresFBO=true）：先将除雨层外的所有层渲染到FBO纹理，然后雨层使用此纹理作为背景实现折射效果
+ * - 闪电模式（requiresLightningLink=true）：闪电层与环境覆盖层联动，闪电亮度实时传递给环境层
  * 
  * 层堆栈按照 LayerType 自动排序，确保渲染顺序正确。
  * 

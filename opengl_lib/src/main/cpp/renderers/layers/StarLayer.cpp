@@ -5,6 +5,13 @@
 
 static const char *TAG = "StarLayer";
 
+struct StarVertex {
+    glm::vec2 pos;
+    glm::vec3 color;
+    float size;
+    float twinkleOffset;
+};
+
 StarLayer::StarLayer() : GLLayerBase(LAYER_TYPE_STAR) {
     GenerateStars();
 }
@@ -109,23 +116,46 @@ bool StarLayer::Init() {
     LOGCATI("StarLayer::Init: uniform locations - time=%d, screenSize=%d", 
             m_TimeLoc, m_ScreenSizeLoc);
 
-    glGenBuffers(1, &m_VBO);
-    glBindBuffer(GL_ARRAY_BUFFER, m_VBO);
-    glBufferData(GL_ARRAY_BUFFER, m_StarCount * sizeof(glm::vec2), m_StarPositions.data(), GL_STATIC_DRAW);
+    std::vector<StarVertex> vertices(m_StarCount);
+    for (int i = 0; i < m_StarCount; i++) {
+        vertices[i].pos = m_StarPositions[i];
+        vertices[i].color = m_StarColors[i];
+        vertices[i].size = m_StarSizes[i];
+        vertices[i].twinkleOffset = m_StarTwinkleOffsets[i];
+    }
 
-    glGenBuffers(1, &m_ColorVBO);
-    glBindBuffer(GL_ARRAY_BUFFER, m_ColorVBO);
-    glBufferData(GL_ARRAY_BUFFER, m_StarCount * sizeof(glm::vec3), m_StarColors.data(), GL_STATIC_DRAW);
+    GLuint vao;
+    glGenVertexArrays(1, &vao);
+    glBindVertexArray(vao);
 
-    glGenBuffers(1, &m_SizeVBO);
-    glBindBuffer(GL_ARRAY_BUFFER, m_SizeVBO);
-    glBufferData(GL_ARRAY_BUFFER, m_StarCount * sizeof(float), m_StarSizes.data(), GL_STATIC_DRAW);
+    GLuint vbo;
+    glGenBuffers(1, &vbo);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    glBufferData(GL_ARRAY_BUFFER, m_StarCount * sizeof(StarVertex), vertices.data(), GL_STATIC_DRAW);
 
-    glGenBuffers(1, &m_TwinkleVBO);
-    glBindBuffer(GL_ARRAY_BUFFER, m_TwinkleVBO);
-    glBufferData(GL_ARRAY_BUFFER, m_StarCount * sizeof(float), m_StarTwinkleOffsets.data(), GL_STATIC_DRAW);
+    const size_t stride = sizeof(StarVertex);
+    glVertexAttribPointer(m_PositionLoc, 2, GL_FLOAT, GL_FALSE, stride, (const void*)offsetof(StarVertex, pos));
+    glEnableVertexAttribArray(m_PositionLoc);
 
+    glVertexAttribPointer(m_ColorLoc, 3, GL_FLOAT, GL_FALSE, stride, (const void*)offsetof(StarVertex, color));
+    glEnableVertexAttribArray(m_ColorLoc);
+
+    glVertexAttribPointer(m_SizeLoc, 1, GL_FLOAT, GL_FALSE, stride, (const void*)offsetof(StarVertex, size));
+    glEnableVertexAttribArray(m_SizeLoc);
+
+    glVertexAttribPointer(m_TwinkleOffsetLoc, 1, GL_FLOAT, GL_FALSE, stride, (const void*)offsetof(StarVertex, twinkleOffset));
+    glEnableVertexAttribArray(m_TwinkleOffsetLoc);
+
+    glBindVertexArray(0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+    m_VBO = vbo;
+    m_VaoId = vao;
+
+    m_StarPositions.clear();
+    m_StarColors.clear();
+    m_StarSizes.clear();
+    m_StarTwinkleOffsets.clear();
 
     LOGCATI("StarLayer::Init success, m_ProgramObj=%d, starCount=%d", m_ProgramObj, m_StarCount);
     return true;
@@ -143,36 +173,15 @@ void StarLayer::Draw(int screenW, int screenH) {
     glUniform1f(m_TimeLoc, m_Time);
     glUniform2f(m_ScreenSizeLoc, (float)screenW, (float)screenH);
 
-    glBindVertexArray(0);
+    glBindVertexArray(m_VaoId);
     glDisable(GL_DEPTH_TEST);
     glDepthMask(GL_FALSE);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE);
 
-    glBindBuffer(GL_ARRAY_BUFFER, m_VBO);
-    glVertexAttribPointer(m_PositionLoc, 2, GL_FLOAT, GL_FALSE, 0, nullptr);
-    glEnableVertexAttribArray(m_PositionLoc);
-
-    glBindBuffer(GL_ARRAY_BUFFER, m_ColorVBO);
-    glVertexAttribPointer(m_ColorLoc, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
-    glEnableVertexAttribArray(m_ColorLoc);
-
-    glBindBuffer(GL_ARRAY_BUFFER, m_SizeVBO);
-    glVertexAttribPointer(m_SizeLoc, 1, GL_FLOAT, GL_FALSE, 0, nullptr);
-    glEnableVertexAttribArray(m_SizeLoc);
-
-    glBindBuffer(GL_ARRAY_BUFFER, m_TwinkleVBO);
-    glVertexAttribPointer(m_TwinkleOffsetLoc, 1, GL_FLOAT, GL_FALSE, 0, nullptr);
-    glEnableVertexAttribArray(m_TwinkleOffsetLoc);
-
     glDrawArrays(GL_POINTS, 0, m_StarCount);
 
-    glDisableVertexAttribArray(m_PositionLoc);
-    glDisableVertexAttribArray(m_ColorLoc);
-    glDisableVertexAttribArray(m_SizeLoc);
-    glDisableVertexAttribArray(m_TwinkleOffsetLoc);
-
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
     glDisable(GL_BLEND);
     glDepthMask(GL_TRUE);
 }
@@ -186,17 +195,9 @@ void StarLayer::Destroy() {
         glDeleteBuffers(1, &m_VBO);
         m_VBO = 0;
     }
-    if (m_ColorVBO != 0) {
-        glDeleteBuffers(1, &m_ColorVBO);
-        m_ColorVBO = 0;
-    }
-    if (m_SizeVBO != 0) {
-        glDeleteBuffers(1, &m_SizeVBO);
-        m_SizeVBO = 0;
-    }
-    if (m_TwinkleVBO != 0) {
-        glDeleteBuffers(1, &m_TwinkleVBO);
-        m_TwinkleVBO = 0;
+    if (m_VaoId != 0) {
+        glDeleteVertexArrays(1, &m_VaoId);
+        m_VaoId = 0;
     }
 }
 

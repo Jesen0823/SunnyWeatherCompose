@@ -9,26 +9,25 @@
  * 星空层
  * 
  * 负责渲染夜间星星效果，包括：
- * - 随机分布的星星位置
- * - 星星闪烁动画（不同频率和相位）
- * - 星星颜色变化（白色到淡黄色）
- * - 星星大小变化（随机大小）
+ * - 聚类分布的星星位置（60%概率属于星团，40%随机分布）
+ * - 星星闪烁动画（不同频率和相位的正弦波叠加）
+ * - 星星颜色变化（白色、淡蓝色、淡黄色）
+ * - 星星大小变化（三等分级：亮星、中等星、暗星）
  * 
  * 实现原理：
- * 使用 VBO 存储星星的位置、颜色、大小和闪烁偏移量，通过顶点着色器计算
- * 闪烁动画，片段着色器绘制带发光效果的星星。星星数量可配置，支持不同
- * 天气场景下的可见性变化。
+ * 使用 VAO + 单个合并 VBO 存储星星数据（StarVertex 结构体包含位置、颜色、大小、闪烁偏移），
+ * 通过顶点着色器传递属性，片段着色器绘制带发光效果的星星。初始化后释放 CPU 端数据节省内存。
+ * 使用加法混合模式（GL_SRC_ALPHA, GL_ONE）实现星星发光叠加效果。
  * 
  * 参数配置：
  * - starCount: 星星数量（10~500），控制屏幕上星星总数
  * - twinkleSpeed: 闪烁速度（0.5~2.0），控制星星闪烁快慢
- * - starColor: 星星颜色（RGB），默认为白色偏黄
  * 
  * 使用场景：
  * - CLEAR_NIGHT（晴朗夜间）：300颗星星，正常闪烁
- * - PARTLY_CLOUDY_NIGHT（多云夜间）：150颗星星，部分被云层遮挡
- * - CLOUDY（阴天）：30颗星星，大部分被云层遮挡
- * - RAIN/SNOW（雨雪天气）：20颗星星，几乎不可见
+ * - PARTLY_CLOUDY_NIGHT（多云夜间）：50颗星星，部分被云层遮挡
+ * - CLOUDY（阴天）：星星不可见
+ * - RAIN/SNOW（雨雪天气）：星星不可见
  */
 class StarLayer : public GLLayerBase {
 public:
@@ -56,9 +55,7 @@ private:
     GLuint m_ScreenSizeLoc = -1;
 
     GLuint m_VBO = 0;
-    GLuint m_ColorVBO = 0;
-    GLuint m_SizeVBO = 0;
-    GLuint m_TwinkleVBO = 0;
+    GLuint m_VaoId = 0;
 
     GLuint m_TwinkleOffsetLoc = -1;
 

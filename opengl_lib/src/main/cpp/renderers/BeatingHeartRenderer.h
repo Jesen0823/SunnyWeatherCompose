@@ -5,6 +5,14 @@
 #include <detail/type_mat4x4.hpp>
 #include "base/GLRendererBase.h"
 
+/**
+ * 心跳动画渲染器（旧版）
+ * 
+ * 负责渲染心跳动画效果，使用纹理图片作为心跳素材，
+ * 通过时间参数控制心跳的缩放动画。
+ * 
+ * 注意：此类为旧版渲染器，不参与天气动效系统。
+ */
 class BeatingHeartRenderer : public GLRendererBase {
 
 public:

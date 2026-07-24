@@ -121,10 +121,11 @@ void SkyBackgroundLayer::Draw(int screenW, int screenH) {
         return;
     }
 
-    m_ScreenWidth = screenW;
-    m_ScreenHeight = screenH;
-
-    UpdateMVPMatrix();
+    if (m_ScreenWidth != screenW || m_ScreenHeight != screenH) {
+        m_ScreenWidth = screenW;
+        m_ScreenHeight = screenH;
+        UpdateMVPMatrix();
+    }
 
     glUseProgram(m_ProgramObj);
 

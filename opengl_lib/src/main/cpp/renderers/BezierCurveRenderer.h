@@ -6,6 +6,14 @@
 #include "base/GLRendererBase.h"
 #include "CoordSystemRenderer.h"
 
+/**
+ * 贝塞尔曲线渲染器（旧版）
+ * 
+ * 负责渲染贝塞尔曲线，支持二阶贝塞尔曲线的绘制和动画。
+ * 内置坐标系统渲染器，用于显示坐标系参考。
+ * 
+ * 注意：此类为旧版渲染器，不参与天气动效系统。
+ */
 class BezierCurveRenderer : public GLRendererBase {
 
 public:

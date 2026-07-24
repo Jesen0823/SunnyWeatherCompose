@@ -14,8 +14,15 @@
  * - speed: 云层移动速度（0.0~1.0）
  * - scale: 云层缩放（0.5~2.0）
  * - alpha: 云层透明度系数
+ * - cloudMode: 云层模式（0=正常，1=暴雨乌云，2=雪天云层）
+ * - moonPosition: 月亮位置（夜间模式下影响云层光照）
  * 
- * 复用现有 CloudRenderer 的 shader 逻辑，将常量改为 uniform 参数
+ * 实现原理：
+ * 使用程序化噪声算法（fbm + 多层噪声叠加）生成云朵形状，
+ * 通过 shader 动态调整噪声迭代次数：正常模式（晴天/多云/阴天）使用完整迭代次数，
+ * 雨/雪模式使用较少迭代次数以优化性能。支持夜间模式下月亮对云层的光照影响。
+ * 
+ * 使用加法混合模式（GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA）实现云层半透明效果。
  */
 class CloudLayer : public GLLayerBase {
 public:
