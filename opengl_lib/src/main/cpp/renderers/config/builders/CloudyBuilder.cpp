@@ -6,27 +6,25 @@ WeatherProfile CloudyBuilder::Build(bool isNight) {
 
     LayerConfig& skyLayer = profile.AddLayer(LAYER_TYPE_SKY_BACKGROUND);
     skyLayer.SetParamInt(PARAM_TIME_OF_DAY, isNight ? 1 : 0);
+    skyLayer.SetParamInt(PARAM_SUN_VISIBLE, 0);
     if (!isNight) {
-        skyLayer.SetParamVec3(PARAM_SKY_COLOR_TOP, 0.3f, 0.35f, 0.4f);
-        skyLayer.SetParamVec3(PARAM_SKY_COLOR_BOTTOM, 0.25f, 0.3f, 0.35f);
-        skyLayer.SetParamFloat(PARAM_SUN_INTENSITY, 0.2f);
+        skyLayer.SetParamVec3(PARAM_SKY_COLOR_TOP, 0.65f, 0.68f, 0.75f);
+        skyLayer.SetParamVec3(PARAM_SKY_COLOR_BOTTOM, 0.70f, 0.73f, 0.80f);
+        skyLayer.SetParamFloat(PARAM_SUN_INTENSITY, 0.0f);
     } else {
-        skyLayer.SetParamVec3(PARAM_SKY_COLOR_TOP, 0.08f, 0.1f, 0.15f);
-        skyLayer.SetParamVec3(PARAM_SKY_COLOR_BOTTOM, 0.1f, 0.12f, 0.18f);
-        skyLayer.SetParamFloat(PARAM_MOON_INTENSITY, 0.1f);
-
-        LayerConfig& starLayer = profile.AddLayer(LAYER_TYPE_STAR);
-        starLayer.SetParamFloat(PARAM_STAR_COUNT, 30.0f);
+        skyLayer.SetParamVec3(PARAM_SKY_COLOR_TOP, 0.20f, 0.22f, 0.28f);
+        skyLayer.SetParamVec3(PARAM_SKY_COLOR_BOTTOM, 0.25f, 0.27f, 0.33f);
+        skyLayer.SetParamFloat(PARAM_MOON_INTENSITY, 0.0f);
     }
 
     LayerConfig& cloudLayer = profile.AddLayer(LAYER_TYPE_CLOUD);
     cloudLayer.SetParamInt(PARAM_TIME_OF_DAY, isNight ? 1 : 0);
-    cloudLayer.SetParamFloat(PARAM_CLOUD_COVERAGE, 0.9f);
-    cloudLayer.SetParamFloat(PARAM_CLOUD_DARKNESS, isNight ? 0.85f : 0.7f);
-    cloudLayer.SetParamFloat(PARAM_CLOUD_LIGHTNESS, isNight ? 0.1f : 0.2f);
-    cloudLayer.SetParamFloat(PARAM_CLOUD_SPEED, 0.15f);
+    cloudLayer.SetParamFloat(PARAM_CLOUD_COVERAGE, 0.85f);
+    cloudLayer.SetParamFloat(PARAM_CLOUD_DARKNESS, isNight ? 0.45f : 0.3f);
+    cloudLayer.SetParamFloat(PARAM_CLOUD_LIGHTNESS, isNight ? 0.5f : 0.9f);
+    cloudLayer.SetParamFloat(PARAM_CLOUD_SPEED, 0.01f);
     cloudLayer.SetParamFloat(PARAM_CLOUD_SCALE, 0.75f);
-    cloudLayer.SetParamFloat(PARAM_CLOUD_ALPHA, isNight ? 25.0f : 28.0f);
+    cloudLayer.SetParamFloat(PARAM_CLOUD_ALPHA, isNight ? 30.0f : 35.0f);
 
     return profile;
 }
